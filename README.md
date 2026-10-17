@@ -12,7 +12,7 @@ Both ROMs are 16384 bytes and are produced from the same source tree.
 | Branch | Content |
 |---|---|
 | `rtl` | Builds both the Persian and the Arabic ROM (this branch). |
-| `arabrom` | The original reverse-engineered Arabic ROM source only. |
+| `autoram_arabram_48k_rom` | The original reverse-engineered Arabic ROM source only. |
 
 ## Requirements
 
