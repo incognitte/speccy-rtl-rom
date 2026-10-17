@@ -1,3 +1,6 @@
+;;; @file 01_restarts_and_tables.asm
+;;; @brief Part 1. RESTART ROUTINES AND TABLES
+
 ;*****************************************
 ;** Part 1. RESTART ROUTINES AND TABLES **
 ;*****************************************
@@ -10,41 +13,41 @@
 
         ORG 0000
 
-; -----------
-; THE 'START'
-; -----------
-;   At switch on, the Z80 chip is in Interrupt Mode 0.
-;   The Spectrum uses Interrupt Mode 1.
-;   This location can also be 'called' to reset the machine.
-;   Typically with PRINT USR 0.
+;;; @brief THE 'START'
+;;;
+;;;   At switch on, the Z80 chip is in Interrupt Mode 0.
+;;;   The Spectrum uses Interrupt Mode 1.
+;;;   This location can also be 'called' to reset the machine.
+;;;   Typically with PRINT USR 0.
+;;; @jumps START_NEW
 START:
         DI                      ; Disable Interrupts.
         XOR     A               ; Signal coming from START.
         LD      DE,$FFFF        ; Set pointer to top of possible physical RAM.
         JP      START_NEW       ; Jump forward to common code at START-NEW.
 
-; -------------------
-; THE 'ERROR' RESTART
-; -------------------
-;   The error pointer is made to point to the position of the error to enable
-;   the editor to highlight the error position if it occurred during syntax
-;   checking.  It is used at 37 places in the program.  An instruction fetch
-;   on address $0008 may page in a peripheral ROM such as the Sinclair
-;   Interface 1 or Disciple Disk Interface.  This was not an original design
-;   concept and not all errors pass through here.
+;;; @brief THE 'ERROR' RESTART
+;;;
+;;;   The error pointer is made to point to the position of the error to enable
+;;;   the editor to highlight the error position if it occurred during syntax
+;;;   checking.  It is used at 37 places in the program.  An instruction fetch
+;;;   on address $0008 may page in a peripheral ROM such as the Sinclair
+;;;   Interface 1 or Disciple Disk Interface.  This was not an original design
+;;;   concept and not all errors pass through here.
+;;; @jumps ERROR_2
 ERROR_1:
         LD      HL,(CH_ADD)      ; Fetch the character address from CH_ADD.
         LD      (X_PTR),HL      ; Copy it to the error pointer X_PTR.
         JR      ERROR_2         ; Forward to continue at ERROR-2.
 
-; -----------------------------
-; THE 'PRINT CHARACTER' RESTART
-; -----------------------------
-;   The A register holds the code of the character that is to be sent to
-;   the output stream of the current channel.  The alternate register set is
-;   used to output a character in the A register so there is no need to
-;   preserve any of the current main registers (HL, DE, BC).
-;   This restart is used 21 times.
+;;; @brief THE 'PRINT CHARACTER' RESTART
+;;;
+;;;   The A register holds the code of the character that is to be sent to
+;;;   the output stream of the current channel.  The alternate register set is
+;;;   used to output a character in the A register so there is no need to
+;;;   preserve any of the current main registers (HL, DE, BC).
+;;;   This restart is used 21 times.
+;;; @jumps PRINT_A_2
 PRINT_A:
         JP      PRINT_A_2           ; Jump forward to continue at PRINT-A-2.
 
@@ -68,21 +71,26 @@ PRINT_A:
 ;   force-reset, presumably so that a half-typed Arabic multi-key
 ;   sequence from a previous line can't bleed into the next one.
 ;==========================================================================
-ARAB_TEMPS_HOOK:
+;;; @brief Entry point RTL_TEMPS_HOOK (no original comment).
+;;; @calls L1391
+;;; @calledby L111D
+RTL_TEMPS_HOOK:
         CALL    L1391                   ; reset the keyboard-mode flags before falling into TEMPS
-        JR      ARAB_TEMPS_HOOK_CONT    ; continue at the TEMPS wrapper's second half
+        JR      RTL_TEMPS_HOOK_CONT    ; continue at the TEMPS wrapper's second half
 
-; -------------------------------
-; THE 'COLLECT CHARACTER' RESTART
-; -------------------------------
-;   The contents of the location currently addressed by CH_ADD are fetched.
-;   A return is made if the value represents a character that has
-;   relevance to the BASIC parser. Otherwise CH_ADD is incremented and the
-;   tests repeated. CH_ADD will be addressing somewhere -
-;   1) in the BASIC program area during line execution.
-;   2) in workspace if evaluating, for example, a string expression.
-;   3) in the edit buffer if parsing a direct command or a new BASIC line.
-;   4) in workspace if accepting input but not that from INPUT LINE.
+;;; @brief THE 'COLLECT CHARACTER' RESTART
+;;;
+;;;   The contents of the location currently addressed by CH_ADD are fetched.
+;;;   A return is made if the value represents a character that has
+;;;   relevance to the BASIC parser. Otherwise CH_ADD is incremented and the
+;;;   tests repeated. CH_ADD will be addressing somewhere -
+;;;   1) in the BASIC program area during line execution.
+;;;   2) in workspace if evaluating, for example, a string expression.
+;;;   3) in the edit buffer if parsing a direct command or a new BASIC line.
+;;;   4) in workspace if accepting input but not that from INPUT LINE.
+;;; @calls SKIP_OVER
+;;; @jumpedfrom S_LOOP
+;;; @fallthrough NEXT_CHAR
 GET_CHAR:
         LD      HL,(CH_ADD)      ; fetch the address from CH_ADD.
         LD      A,(HL)          ; use it to pick up current character.
@@ -92,11 +100,12 @@ TEST_CHAR:
                                 ; relevant.
         RET     NC              ; Return if it is significant.
 
-; ------------------------------------
-; THE 'COLLECT NEXT CHARACTER' RESTART
-; ------------------------------------
-;   As the BASIC commands and expressions are interpreted, this routine is
-;   called repeatedly to step along the line.  It is used 83 times.
+;;; @brief THE 'COLLECT NEXT CHARACTER' RESTART
+;;;
+;;;   As the BASIC commands and expressions are interpreted, this routine is
+;;;   called repeatedly to step along the line.  It is used 83 times.
+;;; @calls CH_ADD_1
+;;; @jumps TEMPS
 NEXT_CHAR:
         CALL    CH_ADD_1        ; routine CH-ADD+1 fetches the next immediate
                                 ; character.
@@ -113,16 +122,16 @@ NEXT_CHAR:
 ;   real RST $20 code immediately after it (at $0028, unaffected) is not
 ;   disturbed.
 ;==========================================================================
-ARAB_TEMPS_HOOK_CONT:
+RTL_TEMPS_HOOK_CONT:
         JP      TEMPS           ; chain on to the original TEMPS routine
 
-; -----------------------
-; THE 'CALCULATE' RESTART
-; -----------------------
-;   This restart enters the Spectrum's internal, floating-point, stack-based,
-;   FORTH-like language.
-;   It is further used recursively from within the calculator.
-;   It is used on 77 occasions.
+;;; @brief THE 'CALCULATE' RESTART
+;;;
+;;;   This restart enters the Spectrum's internal, floating-point, stack-based,
+;;;   FORTH-like language.
+;;;   It is further used recursively from within the calculator.
+;;;   It is used on 77 occasions.
+;;; @jumps CALCULATE
 FP_CALC:
         JP      CALCULATE       ; jump forward to the CALCULATE routine.
 
@@ -149,30 +158,32 @@ FP_CALC:
 ;   re-installs the normal handler, i.e. calls back into this very
 ;   routine, once it has consumed its one special byte).
 ;==========================================================================
-ARAB_INSTALL_PRINT_HOOK:
-        LD      DE,ARAB_PO_FETCH_EXT    ; DE = address of the Arabic-aware print dispatcher
-        JR      ARAB_SET_CURCHL_VECTOR  ; install DE as the current channel's output routine
+;;; @brief Entry point RTL_INSTALL_PRINT_HOOK (no original comment).
+;;; @calledby RTL_PO_FETCH_EXT, L1543
+RTL_INSTALL_PRINT_HOOK:
+        LD      DE,RTL_PO_FETCH_EXT    ; DE = address of the Arabic-aware print dispatcher
+        JR      RTL_SET_CURCHL_VECTOR  ; install DE as the current channel's output routine
                                         ; used for the five-byte end-calc literal.
 
-; ------------------------------
-; THE 'CREATE BC SPACES' RESTART
-; ------------------------------
-;   This restart is used on only 12 occasions to create BC spaces
-;   between workspace and the calculator stack.
+;;; @brief THE 'CREATE BC SPACES' RESTART
+;;;
+;;;   This restart is used on only 12 occasions to create BC spaces
+;;;   between workspace and the calculator stack.
+;;; @jumps RESERVE
 BC_SPACES:
         PUSH    BC              ; Save number of spaces.
         LD      HL,(WORKSP)      ; Fetch WORKSP.
         PUSH    HL              ; Save address of workspace.
         JP      RESERVE         ; Jump forward to continuation code RESERVE.
 
-; --------------------------------
-; THE 'MASKABLE INTERRUPT' ROUTINE
-; --------------------------------
-;   This routine increments the Spectrum's three-byte FRAMES counter fifty
-;   times a second (sixty times a second in the USA ).
-;   Both this routine and the called KEYBOARD subroutine use the IY register
-;   to access system variables and flags so a user-written program must
-;   disable interrupts to make use of the IY register.
+;;; @brief THE 'MASKABLE INTERRUPT' ROUTINE
+;;;
+;;;   This routine increments the Spectrum's three-byte FRAMES counter fifty
+;;;   times a second (sixty times a second in the USA ).
+;;;   Both this routine and the called KEYBOARD subroutine use the IY register
+;;;   to access system variables and flags so a user-written program must
+;;;   disable interrupts to make use of the IY register.
+;;; @calls KEYBOARD
 MASK_INT:
         PUSH    AF              ; Save the registers that will be used but not
         PUSH    HL              ; the IY register unfortunately.
@@ -201,21 +212,26 @@ KEY_INT:
         EI                      ; Enable Interrupts.
         RET                     ; Return.
 
-; ---------------------
-; THE 'ERROR-2' ROUTINE
-; ---------------------
-;   A continuation of the code at 0008.
-;   The error code is stored and after clearing down stacks, an indirect jump
-;   is made to MAIN-4, etc. to handle the error.
+;;; @brief THE 'ERROR-2' ROUTINE
+;;;
+;;;   A continuation of the code at 0008.
+;;;   The error code is stored and after clearing down stacks, an indirect jump
+;;;   is made to MAIN-4, etc. to handle the error.
+;;; @jumpedfrom ERROR_1
+;;; @fallthrough ERROR_3
 ERROR_2:
         POP     HL              ; drop the return address - the location
                                 ; after the RST 08H instruction.
         LD      L,(HL)          ; fetch the error code that follows.
                                 ; (nice to see this instruction used.)
 
-;   Note. this entry point is used when out of memory at REPORT-4.
-;   The L register has been loaded with the report code but X-PTR is not
-;   updated.
+;;; @brief Note. this entry point is used when out of memory at REPORT-4
+;;;
+;;;   Note. this entry point is used when out of memory at REPORT-4.
+;;;   The L register has been loaded with the report code but X-PTR is not
+;;;   updated.
+;;; @jumps SET_STK
+;;; @jumpedfrom REPORT_4
 ERROR_3:
         LD      (IY+$00),L      ; Store it in the system variable ERR_NR.
         LD      SP,(ERR_SP)      ; ERR_SP points to an error handler on the
@@ -244,40 +260,39 @@ ERROR_3:
 ;   from the small state-machine dispatch at $0A64) or as a shared tail
 ;   call from several places.
 ;==========================================================================
-ARAB_SET_CURCHL_VECTOR:
+RTL_SET_CURCHL_VECTOR:
         LD      HL,(CURCHL)              ; fetch CURCHL, the current channel's descriptor pointer
         LD      (HL),E                  ; store E into the channel's output-routine address (low byte)
         INC     HL                      ; move to the output-routine address high byte
         LD      (HL),D                  ; store D into the channel's output-routine address (high byte)
         RET                             ; return
 
-; ------------------------------------
-; THE 'NON-MASKABLE INTERRUPT' ROUTINE
-; ------------------------------------
-;   New
-;   There is no NMI switch on the standard Spectrum or its peripherals.
-;   When the NMI line is held low, then no matter what the Z80 was doing at
-;   the time, it will now execute the code at 66 Hex.
-;   This Interrupt Service Routine will jump to location zero if the contents
-;   of the system variable NMIADD are zero or return if the location holds a
-;   non-zero address.   So attaching a simple switch to the NMI as in the book
-;   "Spectrum Hardware Manual" causes a reset.  The logic was obviously
-;   intended to work the other way.  Sinclair Research said that, since they
-;   had never advertised the NMI, they had no plans to fix the error "until
-;   the opportunity arose".
-;
-;   Note. The location NMIADD was, in fact, later used by Sinclair Research
-;   to enhance the text channel on the ZX Interface 1.
-;   On later Amstrad-made Spectrums, and the Brazilian Spectrum, the logic of
-;   this routine was indeed reversed but not as at first intended.
-;
-;   It can be deduced by looking elsewhere in this ROM that the NMIADD system
-;   variable pointed to NMI_VECT and that this enabled a Warm Restart to be
-;   performed at any time, even while playing machine code games, or while
-;   another Spectrum has been allowed to gain control of this one.
-;
-;   Software houses would have been able to protect their games from attack by
-;   placing two zeros in the NMIADD system variable.
+;;; @brief THE 'NON-MASKABLE INTERRUPT' ROUTINE
+;;;
+;;;   New
+;;;   There is no NMI switch on the standard Spectrum or its peripherals.
+;;;   When the NMI line is held low, then no matter what the Z80 was doing at
+;;;   the time, it will now execute the code at 66 Hex.
+;;;   This Interrupt Service Routine will jump to location zero if the contents
+;;;   of the system variable NMIADD are zero or return if the location holds a
+;;;   non-zero address.   So attaching a simple switch to the NMI as in the book
+;;;   "Spectrum Hardware Manual" causes a reset.  The logic was obviously
+;;;   intended to work the other way.  Sinclair Research said that, since they
+;;;   had never advertised the NMI, they had no plans to fix the error "until
+;;;   the opportunity arose".
+;;;
+;;;   Note. The location NMIADD was, in fact, later used by Sinclair Research
+;;;   to enhance the text channel on the ZX Interface 1.
+;;;   On later Amstrad-made Spectrums, and the Brazilian Spectrum, the logic of
+;;;   this routine was indeed reversed but not as at first intended.
+;;;
+;;;   It can be deduced by looking elsewhere in this ROM that the NMIADD system
+;;;   variable pointed to NMI_VECT and that this enabled a Warm Restart to be
+;;;   performed at any time, even while playing machine code games, or while
+;;;   another Spectrum has been allowed to gain control of this one.
+;;;
+;;;   Software houses would have been able to protect their games from attack by
+;;;   placing two zeros in the NMIADD system variable.
 RESET:
         PUSH    AF              ; save the
         PUSH    HL              ; registers.
@@ -293,41 +308,48 @@ NO_RESET:
         POP     AF              ; registers.
         RETN                    ; return to previous interrupt state.
 
-; ---------------------------
-; THE 'CH ADD + 1' SUBROUTINE
-; ---------------------------
-;   This subroutine is called from RST 20, and three times from elsewhere
-;   to fetch the next immediate character following the current valid character
-;   address and update the associated system variable.
-;   The entry point TEMP-PTR1 is used from the SCANNING routine.
-;   Both TEMP-PTR1 and TEMP-PTR2 are used by the READ command routine.
+;;; @brief THE 'CH ADD + 1' SUBROUTINE
+;;;
+;;;   This subroutine is called from RST 20, and three times from elsewhere
+;;;   to fetch the next immediate character following the current valid character
+;;;   address and update the associated system variable.
+;;;   The entry point TEMP-PTR1 is used from the SCANNING routine.
+;;;   Both TEMP-PTR1 and TEMP-PTR2 are used by the READ command routine.
+;;; @calledby NEXT_CHAR, S_QUOTE_S, NXT_DGT_2
+;;; @fallthrough TEMP_PTR1
 CH_ADD_1:
         LD      HL,(CH_ADD)      ; fetch address from CH_ADD.
 
+;;; @brief Entry point TEMP_PTR1 (no original comment).
+;;; @calledby READ_1, S_DECIMAL
+;;; @fallthrough TEMP_PTR2
 TEMP_PTR1:
         INC     HL              ; increase the character address by one.
 
+;;; @brief Entry point TEMP_PTR2 (no original comment).
+;;; @calledby L139E, READ_1
+;;; @jumpedfrom L139E
 TEMP_PTR2:
         LD      (CH_ADD),HL      ; update CH_ADD with character address.
 X007B:
         LD      A,(HL)          ; load character to A from HL.
         RET                     ; and return.
 
-; --------------------------
-; THE 'SKIP OVER' SUBROUTINE
-; --------------------------
-;   This subroutine is called once from RST 18 to skip over white-space and
-;   other characters irrelevant to the parsing of a BASIC line etc. .
-;   Initially the A register holds the character to be considered
-;   and HL holds its address which will not be within quoted text
-;   when a BASIC line is parsed.
-;   Although the 'tab' and 'at' characters will not appear in a BASIC line,
-;   they could be present in a string expression, and in other situations.
-;   Note. although white-space is usually placed in a program to indent loops
-;   and make it more readable, it can also be used for the opposite effect and
-;   spaces may appear in variable names although the parser never sees them.
-;   It is this routine that helps make the variables 'Anum bEr5 3BUS' and
-;   'a number 53 bus' appear the same to the parser.
+;;; @brief THE 'SKIP OVER' SUBROUTINE
+;;;
+;;;   This subroutine is called once from RST 18 to skip over white-space and
+;;;   other characters irrelevant to the parsing of a BASIC line etc. .
+;;;   Initially the A register holds the character to be considered
+;;;   and HL holds its address which will not be within quoted text
+;;;   when a BASIC line is parsed.
+;;;   Although the 'tab' and 'at' characters will not appear in a BASIC line,
+;;;   they could be present in a string expression, and in other situations.
+;;;   Note. although white-space is usually placed in a program to indent loops
+;;;   and make it more readable, it can also be used for the opposite effect and
+;;;   spaces may appear in variable names although the parser never sees them.
+;;;   It is this routine that helps make the variables 'Anum bEr5 3BUS' and
+;;;   'a number 53 bus' appear the same to the parser.
+;;; @calledby GET_CHAR
 SKIP_OVER:
         CP      $21             ; test if higher than space.
         RET     NC              ; return with carry clear if so.
@@ -364,338 +386,55 @@ SKIPS:
         RET                     ; return with carry set.
 
 
-; ------------------
-; THE 'TOKEN' TABLES
-; ------------------
-;   The tokenized characters 134d (RND) to 255d (COPY) are expanded using
-;   this table. The last byte of a token is inverted to denote the end of
-;   the word. The first is an inverted step-over byte.
-
-;; TKN-TABLE
-;   ARABIC KEYWORD (TOKEN) TABLE.  Same format as the original English table:
-;   one word per token $A5-$FF, the LAST character of each word has bit 7 set,
-;   and the table starts with a dummy inverted byte ('?') so that PO-SEARCH can
-;   skip entries by counting inverted bytes.  PO-TOKENS reads it from $0095.
-;
-;   The words are stored as KEY CODES, exactly as typed on the Arabic keyboard;
-;   the Arabic ROM's print routine (ARAB_GLYPH_SUBSTITUTE, file 06) turns them
-;   into joined Arabic letters on screen.  The Arabic text in the comments below
-;   is the CORRECT decoding:
-;       G ا  H ب  I ة  J ت  K ث  L ج  M ح  N خ  O د  P ذ  Q ر  R ز  S س  T ش
-;       U ص  V ض  W ط  X ظ  Y ع  Z غ   A ء  B لا  C أ  D ؤ  E إ  F ئ
-;       a ف  b ق  c ك  d ل  e م  f ن  g ه  h و  i ي  j ى  k ال
-;   Plain symbols ($ # < > = space) are printed as they are.  '[' prints as the
-;   pi glyph and ']' as an 'E' glyph (the exponent marker) - see file 11.
-;
-;   Each entry below: token code, English keyword, decoded Arabic, literal gloss.
-;   The words are shorter than the English ones, which freed the space at the
-;   end of the table that now holds the Arabic copyright line and the $01FE
-;   control-code stub (see the end of this table).
-
+;;; @brief THE 'TOKEN' TABLES
+;;;
+;;;   The tokenized characters 134d (RND) to 255d (COPY) are expanded using
+;;;   this table. The last byte of a token is inverted to denote the end of
+;;;   the word. The first is an inverted step-over byte.
+;;;
+;;; ; TKN-TABLE
+;;;   ARABIC KEYWORD (TOKEN) TABLE.  Same format as the original English table:
+;;;   one word per token $A5-$FF, the LAST character of each word has bit 7 set,
+;;;   and the table starts with a dummy inverted byte ('?') so that PO-SEARCH can
+;;;   skip entries by counting inverted bytes.  PO-TOKENS reads it from $0095.
+;;;
+;;;   The words are stored as KEY CODES, exactly as typed on the Arabic keyboard;
+;;;   the Arabic ROM's print routine (RTL_GLYPH_SUBSTITUTE, file 06) turns them
+;;;   into joined Arabic letters on screen.  The Arabic text in the comments below
+;;;   is the CORRECT decoding:
+;;; @verbatim
+;;;       G ا  H ب  I ة  J ت  K ث  L ج  M ح  N خ  O د  P ذ  Q ر  R ز  S س  T ش
+;;;       U ص  V ض  W ط  X ظ  Y ع  Z غ   A ء  B لا  C أ  D ؤ  E إ  F ئ
+;;;       a ف  b ق  c ك  d ل  e م  f ن  g ه  h و  i ي  j ى  k ال
+;;; @endverbatim
+;;;   Plain symbols ($ # < > = space) are printed as they are.  '[' prints as the
+;;;   pi glyph and ']' as an 'E' glyph (the exponent marker) - see file 11.
+;;;
+;;;   Each entry below: token code, English keyword, decoded Arabic, literal gloss.
+;;;   The words are shorter than the English ones, which freed the space at the
+;;;   end of the table that now holds the Arabic copyright line and the $01FE
+;;;   control-code stub (see the end of this table).
 TKN_TABLE:
-        DB          '?'+$80        ; dummy inverted step-over byte (precedes RND)
-; $A5 (165)  RND       عشوا   - random
-        DM          "YTh"
-        DB          'G'+$80
-; $A6 (166)  INKEY$    ياخذم$   - takes key (INKEY$)
-        DM          "iGNPe"
-        DB          '$'+$80
-; $A7 (167)  PI        [   - pi (glyph is the pi symbol)
-        DB          '['+$80
-; $A8 (168)  FN        حالة   - state/function
-        DM          "MGd"
-        DB          'I'+$80
-; $A9 (169)  POINT     نقطة   - point
-        DM          "fbW"
-        DB          'I'+$80
-; $AA (170)  SCREEN$   شاشة$   - screen$
-        DM          "TGTI"
-        DB          '$'+$80
-; $AB (171)  ATTR      عزا   - attribute
-        DM          "YR"
-        DB          'G'+$80
-; $AC (172)  AT        عند   - at
-        DM          "Yf"
-        DB          'O'+$80
-; $AD (173)  TAB       جدول   - table/tab
-        DM          "LOh"
-        DB          'd'+$80
-; $AE (174)  VAL$      قيم$   - evaluate$
-        DM          "bie"
-        DB          '$'+$80
-; $AF (175)  CODE      شفرة   - code/cipher
-        DM          "TaQ"
-        DB          'I'+$80
-; $B0 (176)  VAL       قيم   - evaluate
-        DM          "bi"
-        DB          'e'+$80
-; $B1 (177)  LEN       طول   - length
-        DM          "Wh"
-        DB          'd'+$80
-; $B2 (178)  SIN       جا   - sine (abbr.)
-        DM          "L"
-        DB          'G'+$80
-; $B3 (179)  COS       جتا   - cosine (abbr.)
-        DM          "LJ"
-        DB          'G'+$80
-; $B4 (180)  TAN       ظل   - tangent (shadow)
-        DM          "X"
-        DB          'd'+$80
-; $B5 (181)  ASN       قوجا   - arc-sine (qaws-jaa)
-        DM          "bhL"
-        DB          'G'+$80
-; $B6 (182)  ACS       قوجتا   - arc-cosine
-        DM          "bhLJ"
-        DB          'G'+$80
-; $B7 (183)  ATN       قوظل   - arc-tangent
-        DM          "bhX"
-        DB          'd'+$80
-; $B8 (184)  LN        لوغ ط   - log + 't' (abbreviation: natural log)
-        DM          "dhZ "
-        DB          'W'+$80
-; $B9 (185)  EXP       اس   - exponent
-        DM          "G"
-        DB          'S'+$80
-; $BA (186)  INT       صحيح   - integer (correct)
-        DM          "UMi"
-        DB          'M'+$80
-; $BB (187)  SQR       جذر   - root
-        DM          "LP"
-        DB          'Q'+$80
-; $BC (188)  SGN       اشارة   - sign/signal
-        DM          "GTGQ"
-        DB          'I'+$80
-; $BD (189)  ABS       مطلق   - absolute
-        DM          "eWd"
-        DB          'b'+$80
-; $BE (190)  PEEK      يجد   - finds
-        DM          "iL"
-        DB          'O'+$80
-; $BF (191)  IN        في   - in
-        DM          "a"
-        DB          'i'+$80
-; $C0 (192)  USR       خاص   - special/user
-        DM          "NG"
-        DB          'U'+$80
-; $C1 (193)  STR$      مجموعة$   - set (string)$
-        DM          "eLehYI"
-        DB          '$'+$80
-; $C2 (194)  CHR$      حرف$   - character$
-        DM          "MQa"
-        DB          '$'+$80
-; $C3 (195)  NOT       لا   - no/not
-        DB          'B'+$80
-; $C4 (196)  BIN       ثنائي   - binary
-        DM          "KfGF"
-        DB          'i'+$80
-; $C5 (197)  OR        او   - or
-        DM          "G"
-        DB          'h'+$80
-; $C6 (198)  AND       ايضا   - also
-        DM          "GiV"
-        DB          'G'+$80
-; $C7 (199)  <=        <=   - less or equal (plain symbols)
-        DM          "<"
-        DB          '='+$80
-; $C8 (200)  >=        >=   - greater or equal (plain symbols)
-        DM          ">"
-        DB          '='+$80
-; $C9 (201)  <>        <>   - not equal (plain symbols)
-        DM          "<"
-        DB          '>'+$80
-; $CA (202)  LINE      خط   - line
-        DM          "N"
-        DB          'W'+$80
-; $CB (203)  THEN      اذن   - then
-        DM          "GP"
-        DB          'f'+$80
-; $CC (204)  TO        الى   - to
-        DM          "Gd"
-        DB          'j'+$80
-; $CD (205)  STEP      خطوة   - step
-        DM          "NWh"
-        DB          'I'+$80
-; $CE (206)  DEF FN    حاله معرفه   - state defined (function)
-        DM          "MGdg eYQa"
-        DB          'g'+$80
-; $CF (207)  CAT       كتلوج   - catalogue
-        DM          "cJdh"
-        DB          'L'+$80
-; $D0 (208)  FORMAT    تصميم   - design
-        DM          "JUei"
-        DB          'e'+$80
-; $D1 (209)  MOVE      حركه   - movement
-        DM          "MQc"
-        DB          'g'+$80
-; $D2 (210)  ERASE     امسح   - wipe/erase
-        DM          "GeS"
-        DB          'M'+$80
-; $D3 (211)  OPEN #    فتح #   - open #
-        DM          "aJM "
-        DB          '#'+$80
-; $D4 (212)  CLOSE #   اغلق #   - close #
-        DM          "GZdb "
-        DB          '#'+$80
-; $D5 (213)  MERGE     دمج   - merge
-        DM          "Oe"
-        DB          'L'+$80
-; $D6 (214)  VERIFY    تحقق   - verify
-        DM          "JMb"
-        DB          'b'+$80
-; $D7 (215)  BEEP      نغمة   - tone
-        DM          "fZe"
-        DB          'I'+$80
-; $D8 (216)  CIRCLE    دائرة   - circle
-        DM          "OGFQ"
-        DB          'I'+$80
-; $D9 (217)  INK       حبر   - ink
-        DM          "MH"
-        DB          'Q'+$80
-; $DA (218)  PAPER     ورقة   - paper
-        DM          "hQb"
-        DB          'I'+$80
-; $DB (219)  FLASH     ومض   - flash
-        DM          "he"
-        DB          'V'+$80
-; $DC (220)  BRIGHT    لامع   - bright
-        DM          "Be"
-        DB          'Y'+$80
-; $DD (221)  INVERSE   معكوس   - inverted
-        DM          "eYch"
-        DB          'S'+$80
-; $DE (222)  OVER      فوق   - over
-        DM          "ah"
-        DB          'b'+$80
-; $DF (223)  OUT       خارج   - out
-        DM          "NGQ"
-        DB          'L'+$80
-; $E0 (224)  LPRINT    اطبع ط   - print + 't' (abbreviation: printer print)
-        DM          "GWHY "
-        DB          'W'+$80
-; $E1 (225)  LLIST     بيان ط   - list + 't' (abbreviation: printer list)
-        DM          "HiGf "
-        DB          'W'+$80
-; $E2 (226)  STOP      قف   - stop
-        DM          "b"
-        DB          'a'+$80
-; $E3 (227)  READ      اقرأ   - read
-        DM          "GbQ"
-        DB          'C'+$80
-; $E4 (228)  DATA      افادة   - statement/data
-        DM          "GaGO"
-        DB          'I'+$80
-; $E5 (229)  RESTORE   استعاد   - restore
-        DM          "GSJYG"
-        DB          'O'+$80
-; $E6 (230)  NEW       جدد   - renew
-        DM          "LO"
-        DB          'O'+$80
-; $E7 (231)  BORDER    جوانب   - sides/borders
-        DM          "LhGf"
-        DB          'H'+$80
-; $E8 (232)  CONTINUE  تابع   - continue
-        DM          "JGH"
-        DB          'Y'+$80
-; $E9 (233)  DIM       بعد   - dimension
-        DM          "HY"
-        DB          'O'+$80
-; $EA (234)  REM       لاحظ   - note
-        DM          "BM"
-        DB          'X'+$80
-; $EB (235)  FOR       لاجل   - for the sake of
-        DM          "BL"
-        DB          'd'+$80
-; $EC (236)  GO TO     اذهب الى   - go to
-        DM          "GPgH Gd"
-        DB          'j'+$80
-; $ED (237)  GO SUB    اقصد   - go (aim) to
-        DM          "GbU"
-        DB          'O'+$80
-; $EE (238)  INPUT     ادخل   - enter
-        DM          "GON"
-        DB          'd'+$80
-; $EF (239)  LOAD      عبا   - load (fill)
-        DM          "YH"
-        DB          'G'+$80
-; $F0 (240)  LIST      بيان   - statement/list
-        DM          "HiG"
-        DB          'f'+$80
-; $F1 (241)  LET       دع   - let
-        DM          "O"
-        DB          'Y'+$80
-; $F2 (242)  PAUSE     وقف   - pause
-        DM          "hb"
-        DB          'a'+$80
-; $F3 (243)  NEXT      يلي   - follows
-        DM          "id"
-        DB          'i'+$80
-; $F4 (244)  POKE      ضع   - put
-        DM          "V"
-        DB          'Y'+$80
-; $F5 (245)  PRINT     اطبع   - print
-        DM          "GWH"
-        DB          'Y'+$80
-; $F6 (246)  PLOT      رسم   - draw/plot
-        DM          "QS"
-        DB          'e'+$80
-; $F7 (247)  RUN       شغل   - operate/run
-        DM          "TZ"
-        DB          'd'+$80
-; $F8 (248)  SAVE      سجل   - record
-        DM          "SL"
-        DB          'd'+$80
-; $F9 (249)  RANDOMIZE  عشواي   - randomize
-        DM          "YThG"
-        DB          'i'+$80
-; $FA (250)  IF        اذا   - if
-        DM          "GP"
-        DB          'G'+$80
-; $FB (251)  CLS       امح ش   - erase + 'sh' (abbreviation: erase screen)
-        DM          "GeM "
-        DB          'T'+$80
-; $FC (252)  DRAW      يرسم   - draws
-        DM          "iQS"
-        DB          'e'+$80
-; $FD (253)  CLEAR     امح   - erase/clear
-        DM          "Ge"
-        DB          'M'+$80
-; $FE (254)  RETURN    ارجع   - return
-        DM          "GQL"
-        DB          'Y'+$80
-; $FF (255)  COPY      نسخ   - copy
-        DM          "fS"
-        DB          'N'+$80
-
-; ----------------------------------------------------------------------------
-; ARABIC BOOT COPYRIGHT LINE  ($01ED-$01FD).  Replaces the original
-; " 1982 Sinclair Research Lt" + 'd' message that used to live at $1539.
-; It is one message (last character inverted) printed by START-NEW (file 06)
-; with  XOR A / LD DE,$01EC / CALL PO-MSG  at the bottom of the boot screen:
-;
-;       (c)   اوتورام   كمبيوتر        =  "(c) AutoRAM Computer"
-;
-; ($7F is the copyright glyph; the text is printed right to left, so the
-; (c) sign appears at the right-hand end of the line - bottom row, columns 7-23.)
-; ----------------------------------------------------------------------------
-ARAB_BOOT_COPYRIGHT_MSG:
-        DB          $7F             ; (c)  copyright glyph
-        DM          " GhJhQGe ceHihJ"   ; ' ' + اوتورام ('AutoRAM') + ' ' + كمبيوت...
-        DB          'Q'+$80        ; ...ر  (end of message)  -> كمبيوتر ('computer')
-
-; ----------------------------------------------------------------------------
-; $01FE: ENTRY FOR CONTROL CODES 0-3 (form override).  Jumped to from
-; ARAB_NEW_CTRL_HANDLER (file 11).  A = control code 0-3.
-;   ADD A,A       A = 2*code  (0,2,4,6)
-;   LD DE,$154C   one-shot output routine = the handler at $154C (file 06)
-;   JP $0A7B      store A in TVDATA ($5C0E) and install DE as the output
-;                 routine for exactly the NEXT character, which will then be
-;                 printed with a forced letter form: 0 initial, 1 medial,
-;                 2 isolated, 3 final.
-; ----------------------------------------------------------------------------
-ARAB_FORM_OVERRIDE_ENTRY:
+        IFDEF   LANG_PERSIAN
+        INCLUDE "lang/persian/keywords.asm"
+        ELSE
+        INCLUDE "lang/arabic/keywords.asm"
+        ENDIF
+LANG_BOOT_COPYRIGHT_MSG:
+        IFDEF   LANG_PERSIAN
+        INCLUDE "lang/persian/copyright.asm"
+        ELSE
+        INCLUDE "lang/arabic/copyright.asm"
+        ENDIF
+        IFDEF   LANG_PERSIAN
+        ASSERT  $ <= $0205
+        DS      $0205-$, $FF
+        ELSE
+RTL_FORM_OVERRIDE_ENTRY:
         ADD     A,A
-        LD      DE,ARAB_FORM_OVERRIDE_OUT ; one-shot output handler for the next character
+        LD      DE,RTL_FORM_OVERRIDE_OUT ; one-shot output handler for the next character
         JP      L0A7B
+        ENDIF
 
 MAIN_KEYS:
         DB          $42             ; B
@@ -739,8 +478,10 @@ MAIN_KEYS:
         DB          $41             ; A
 
 
-;  The 26 unshifted extended mode keys for the alphabetic characters.
-;  The green keywords on the original keyboard.
+;;; @brief The 26 unshifted extended mode keys for the alphabetic characters
+;;;
+;;;  The 26 unshifted extended mode keys for the alphabetic characters.
+;;;  The green keywords on the original keyboard.
 E_UNSHIFT:
         DB          $E3             ; READ
         DB          $C4             ; BIN
@@ -770,8 +511,10 @@ E_UNSHIFT:
         DB          $B8             ; LN
 
 
-;  The 26 shifted extended mode keys for the alphabetic characters.
-;  The red keywords below keys on the original keyboard.
+;;; @brief The 26 shifted extended mode keys for the alphabetic characters
+;;;
+;;;  The 26 shifted extended mode keys for the alphabetic characters.
+;;;  The red keywords below keys on the original keyboard.
 EXT_SHIFT:
         DB          $7E             ; ~
         DB          $DC             ; BRIGHT
@@ -800,8 +543,10 @@ EXT_SHIFT:
         DB          $3F             ; table data
         DB          $D7             ; BEEP
 
-;  The ten control codes assigned to the top line of digits when the shift
-;  key is pressed.
+;;; @brief The ten control codes assigned to the top line of digits when the shift key is pressed
+;;;
+;;;  The ten control codes assigned to the top line of digits when the shift
+;;;  key is pressed.
 CTL_CODES:
         DB          $0C             ; DELETE
         DB          $07             ; EDIT
@@ -814,9 +559,11 @@ CTL_CODES:
         DB          $08             ; table data
         DB          $0F             ; GRAPHICS
 
-;  The 26 red symbols assigned to the alphabetic characters of the keyboard.
-;  The ten single-character digit symbols are converted without the aid of
-;  a table using subtraction and minor manipulation.
+;;; @brief The 26 red symbols assigned to the alphabetic characters of the keyboard
+;;;
+;;;  The 26 red symbols assigned to the alphabetic characters of the keyboard.
+;;;  The ten single-character digit symbols are converted without the aid of
+;;;  a table using subtraction and minor manipulation.
 SYM_CODES:
         DB          $E2             ; STOP
         DB          $2A             ; *
@@ -845,8 +592,10 @@ SYM_CODES:
         DB          $C6             ; AND
         DB          $3A             ; :
 
-;  The ten keywords assigned to the digits in extended mode.
-;  The remaining red keywords below the keys.
+;;; @brief The ten keywords assigned to the digits in extended mode
+;;;
+;;;  The ten keywords assigned to the digits in extended mode.
+;;;  The remaining red keywords below the keys.
 E_DIGITS:
         DB          $D0             ; FORMAT
         DB          $CE             ; DEF FN

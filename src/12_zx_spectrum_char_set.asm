@@ -1,13 +1,27 @@
+;;; @file 12_zx_spectrum_char_set.asm
+;;; @brief Standard Sinclair 8x8 character set, CHR$ 32-127 ($3D00-$3FFF)
+
 ; -------------------------------
 ; THE 'ZX SPECTRUM CHARACTER SET'
 ; -------------------------------
 
-        ORG $3D00
+        ASSERT  $ <= $3D00
+        IF      $ < $3D00
+        DS      $3D00-$, $FF
+        ENDIF
+        ORG     $3D00
 
 
 ;; char-set
 
 ; $20 - Character: ' '          CHR$(32)
+;;; @data
+;;; @brief Standard character set bitmaps, CHR$ 32-127 ($3D00-$3FFF).
+;;;
+;;; 96 glyphs of 8 bytes each (one byte per pixel row, leftmost pixel = bit 7),
+;;; starting with SPACE at $3D00. The region is fixed: it is addressed through
+;;; the CHARS system variable (CHARS = $3D00 - 256).
+;;; @address $3D00
 L3D00:
         DB          %00000000
         DB          %00000000

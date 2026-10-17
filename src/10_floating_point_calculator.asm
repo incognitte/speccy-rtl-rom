@@ -1,3 +1,6 @@
+;;; @file 10_floating_point_calculator.asm
+;;; @brief Part 10. FLOATING-POINT CALCULATOR
+
 ;****************************************
 ;** Part 10. FLOATING-POINT CALCULATOR **
 ;****************************************
@@ -9,11 +12,7 @@
 ; purposes.
 
 
-; ------------------------
-; THE 'TABLE OF CONSTANTS'
-; ------------------------
-;
-;
+;;; @brief THE 'TABLE OF CONSTANTS'
 CONST_ZERO:
         ; 00 00 00 00 00
         DB          $00             ;;Bytes: 1
@@ -38,11 +37,10 @@ CONST_TEN:
         DB          $B0             ;;Exponent $00
         DB          $00,$0A         ;;(+00,+00)
 
-; ------------------------
-; THE 'TABLE OF ADDRESSES'
-; ------------------------
-;   Starts with binary operations which have two operands and one result.
-;   Three pseudo binary operations first.
+;;; @brief THE 'TABLE OF ADDRESSES'
+;;;
+;;;   Starts with binary operations which have two operands and one result.
+;;;   Three pseudo binary operations first.
 TBL_ADDRS:
         DW    JUMP_TRUE        ; $00 Address: $368F - jump-true
         DW    EXCHANGE         ; $01 Address: $343C - exchange
@@ -77,7 +75,11 @@ TBL_ADDRS:
 ;   Unary follow.
 
         DW    VAL           ; $18 Address: $35DE - val$
+        IFDEF LANG_PERSIAN
+        DW    REPORT_A
+        ELSE
         DW    USR           ; $19 Address: $34BC - usr-$
+        ENDIF
         DW    READ_IN       ; $1A Address: $3645 - read-in
         DW    NEGATE        ; $1B Address: $346E - negate
 
@@ -131,9 +133,10 @@ TBL_ADDRS:
 ;   If the literal has to be also usable as a function then bits 6 and 7 are
 ;   used to show type of arguments and result.
 
-; --------------
-; The Calculator
-; --------------
+;;; @brief The Calculator
+;;; @calls STK_PNTRS
+;;; @jumpedfrom FP_CALC
+;;; @fallthrough GEN_ENT_1
 CALCULATE:
         CALL    STK_PNTRS           ; routine STK-PNTRS is called to set up the
                                 ; calculator stack pointers for a default
@@ -142,6 +145,9 @@ CALCULATE:
 
 ; the calculate routine is called at this point by the series generator...
 
+;;; @brief Entry point GEN_ENT_1 (no original comment).
+;;; @calledby SERIES_XX
+;;; @fallthrough GEN_ENT_2
 GEN_ENT_1:
         LD      A,B             ; fetch the Z80 B register to A
         LD      (BREG),A       ; and store value in system variable BREG.
@@ -151,6 +157,9 @@ GEN_ENT_1:
 
 ; ... and again later at this point
 
+;;; @brief Entry point GEN_ENT_2 (no original comment).
+;;; @calledby SERIES_XX
+;;; @fallthrough DELETE
 GEN_ENT_2:
         EXX                     ; switch sets
         EX      (SP),HL         ; and store the address of next instruction,
@@ -237,23 +246,21 @@ ENT_TABLE:
                                 ; which has a dual identity
 
 
-; ------------------
-; Handle delete (02)
-; ------------------
-; A simple return but when used as a calculator literal this
-; deletes the last value from the calculator stack.
-; On entry, as always with binary operations,
-; HL=first number, DE=second number
-; On exit, HL=result, DE=stkend.
-; So nothing to do
+;;; @brief Handle delete (02)
+;;;
+;;; A simple return but when used as a calculator literal this
+;;; deletes the last value from the calculator stack.
+;;; On entry, as always with binary operations,
+;;; HL=first number, DE=second number
+;;; On exit, HL=result, DE=stkend.
+;;; So nothing to do
 DELETE:
         RET                     ; return - indirect jump if from above.
 
-; ---------------------
-; Single operation (3B)
-; ---------------------
-;   This single operation is used, in the first instance, to evaluate most
-;   of the mathematical and string functions found in BASIC expressions.
+;;; @brief Single operation (3B)
+;;;
+;;;   This single operation is used, in the first instance, to evaluate most
+;;;   of the mathematical and string functions found in BASIC expressions.
 FP_CALC_2:
         POP     AF              ; drop return address.
         LD      A,(BREG)       ; load accumulator from system variable BREG
@@ -262,13 +269,14 @@ FP_CALC_2:
         JR      SCAN_ENT        ; back to SCAN-ENT
                                 ; next literal will be end-calc at L2758
 
-; ---------------------------------
-; THE 'TEST FIVE SPACES' SUBROUTINE
-; ---------------------------------
-;   This routine is called from MOVE-FP, STK-CONST and STK-STORE to test that
-;   there is enough space between the calculator stack and the machine stack
-;   for another five-byte value.  It returns with BC holding the value 5 ready
-;   for any subsequent LDIR.
+;;; @brief THE 'TEST FIVE SPACES' SUBROUTINE
+;;;
+;;;   This routine is called from MOVE-FP, STK-CONST and STK-STORE to test that
+;;;   there is enough space between the calculator stack and the machine stack
+;;;   for another five-byte value.  It returns with BC holding the value 5 ready
+;;;   for any subsequent LDIR.
+;;; @calls TEST_ROOM
+;;; @calledby STK_STORE, MOVE_FP, STK_CONST
 TEST_5_SP:
         PUSH    DE              ; save
         PUSH    HL              ; registers
@@ -279,14 +287,15 @@ TEST_5_SP:
         POP     DE              ; registers.
         RET                     ; return with BC set at 5.
 
-; -----------------------------
-; THE 'STACK NUMBER' SUBROUTINE
-; -----------------------------
-;   This routine is called to stack a hidden floating point number found in
-;   a BASIC line.  It is also called to stack a numeric variable value, and
-;   from BEEP, to stack an entry in the semi-tone table.  It is not part of the
-;   calculator suite of routines.  On entry, HL points to the number to be
-;   stacked.
+;;; @brief THE 'STACK NUMBER' SUBROUTINE
+;;;
+;;;   This routine is called to stack a hidden floating point number found in
+;;;   a BASIC line.  It is also called to stack a numeric variable value, and
+;;;   from BEEP, to stack an entry in the semi-tone table.  It is not part of the
+;;;   calculator suite of routines.  On entry, HL points to the number to be
+;;;   stacked.
+;;; @calls MOVE_FP
+;;; @calledby BEEP, S_SD_SKIP, S_LETTER
 STACK_NUM:
         LD      DE,(STKEND)      ; Load destination from STKEND system variable.
 
@@ -296,17 +305,17 @@ STACK_NUM:
 
         RET                     ; Return.
 
-; ---------------------------------
-; Move a floating point number (31)
-; ---------------------------------
-
-; This simple routine is a 5-byte LDIR instruction
-; that incorporates a memory check.
-; When used as a calculator literal it duplicates the last value on the
-; calculator stack.
-; Unary so on entry HL points to last value, DE to stkend
-
-;; duplicate
+;;; @brief Move a floating point number (31)
+;;;
+;;; This simple routine is a 5-byte LDIR instruction
+;;; that incorporates a memory check.
+;;; When used as a calculator literal it duplicates the last value on the
+;;; calculator stack.
+;;; Unary so on entry HL points to last value, DE to stkend
+;;;
+;;; ; duplicate
+;;; @calls TEST_5_SP
+;;; @calledby SFA_MATCH, STACK_NUM, GET_MEM_XX, ST_MEM_XX
 MOVE_FP:
         CALL    TEST_5_SP           ; routine TEST-5-SP test free memory
                                 ; and sets BC to 5.
@@ -314,17 +323,21 @@ MOVE_FP:
         RET                     ; return with DE addressing new STKEND
                                 ; and HL addressing new last value.
 
-; -------------------
-; Stack literals ($34)
-; -------------------
-; When a calculator subroutine needs to put a value on the calculator
-; stack that is not a regular constant this routine is called with a
-; variable number of following data bytes that convey to the routine
-; the integer or floating point form as succinctly as is possible.
+;;; @brief Stack literals ($34)
+;;;
+;;; When a calculator subroutine needs to put a value on the calculator
+;;; stack that is not a regular constant this routine is called with a
+;;; variable number of following data bytes that convey to the routine
+;;; the integer or floating point form as succinctly as is possible.
+;;; @calledby SERIES_XX
+;;; @fallthrough STK_CONST
 STK_DATA:
         LD      H,D             ; transfer STKEND
         LD      L,E             ; to HL for result.
 
+;;; @brief Entry point STK_CONST (no original comment).
+;;; @calls TEST_5_SP
+;;; @calledby SKIP_CONS, STK_CONST_XX
 STK_CONST:
         CALL    TEST_5_SP           ; routine TEST-5-SP tests that room exists
                                 ; and sets BC to $05.
@@ -389,18 +402,18 @@ STK_ZEROS:
         INC     DE              ; increase destination
         JR      STK_ZEROS       ; loop back to STK-ZEROS until done.
 
-; -------------------------------
-; THE 'SKIP CONSTANTS' SUBROUTINE
-; -------------------------------
-;   This routine traverses variable-length entries in the table of constants,
-;   stacking intermediate, unwanted constants onto a dummy calculator stack,
-;   in the first five bytes of ROM.  The destination DE normally points to the
-;   end of the calculator stack which might be in the normal place or in the
-;   system variables area during E-LINE-NO; INT-TO-FP; stk-ten.  In any case,
-;   it would be simpler all round if the routine just shoved unwanted values
-;   where it is going to stick the wanted value.  The instruction LD DE, $0000
-;   can be removed.
-
+;;; @brief THE 'SKIP CONSTANTS' SUBROUTINE
+;;;
+;;;   This routine traverses variable-length entries in the table of constants,
+;;;   stacking intermediate, unwanted constants onto a dummy calculator stack,
+;;;   in the first five bytes of ROM.  The destination DE normally points to the
+;;;   end of the calculator stack which might be in the normal place or in the
+;;;   system variables area during E-LINE-NO; INT-TO-FP; stk-ten.  In any case,
+;;;   it would be simpler all round if the routine just shoved unwanted values
+;;;   where it is going to stick the wanted value.  The instruction LD DE, $0000
+;;;   can be removed.
+;;; @calls STK_CONST
+;;; @calledby STK_CONST_XX
 SKIP_CONS:
         AND     A               ; test if initially zero.
 
@@ -423,15 +436,15 @@ SKIP_NEXT:
         DEC     A               ; decrease
         JR      SKIP_NEXT       ; loop back to SKIP-NEXT
 
-; ------------------------------
-; THE 'LOCATE MEMORY' SUBROUTINE
-; ------------------------------
-;   This routine, when supplied with a base address in HL and an index in A,
-;   will calculate the address of the A'th entry, where each entry occupies
-;   five bytes.  It is used for reading the semi-tone table and addressing
-;   floating-point numbers in the calculator's memory area.
-;   It is not possible to use this routine for the table of constants as these
-;   six values are held in compressed format.
+;;; @brief THE 'LOCATE MEMORY' SUBROUTINE
+;;;
+;;;   This routine, when supplied with a base address in HL and an index in A,
+;;;   will calculate the address of the A'th entry, where each entry occupies
+;;;   five bytes.  It is used for reading the semi-tone table and addressing
+;;;   floating-point numbers in the calculator's memory area.
+;;;   It is not possible to use this routine for the table of constants as these
+;;;   six values are held in compressed format.
+;;; @calledby BEEP, GET_MEM_XX, ST_MEM_XX
 LOC_MEM:
         LD      C,A             ; store the original number $00-$1F.
         RLCA                    ; X2 - double.
@@ -444,12 +457,12 @@ LOC_MEM:
 
         RET                     ; return.
 
-; ------------------------------
-; Get from memory area ($E0 etc.)
-; ------------------------------
-; Literals $E0 to $FF
-; A holds $00-$1F offset.
-; The calculator stack increases by 5 bytes.
+;;; @brief Get from memory area ($E0 etc.)
+;;;
+;;; Literals $E0 to $FF
+;;; A holds $00-$1F offset.
+;;; The calculator stack increases by 5 bytes.
+;;; @calls LOC_MEM, MOVE_FP
 GET_MEM_XX:
         PUSH    DE              ; save STKEND
         LD      HL,(MEM)      ; MEM is base address of the memory cells.
@@ -460,15 +473,15 @@ GET_MEM_XX:
         POP     HL              ; original STKEND is now RESULT pointer.
         RET                     ; return.
 
-; --------------------------
-; Stack a constant (A0 etc.)
-; --------------------------
-; This routine allows a one-byte instruction to stack up to 32 constants
-; held in short form in a table of constants. In fact only 5 constants are
-; required. On entry the A register holds the literal ANDed with 1F.
-; It isn't very efficient and it would have been better to hold the
-; numbers in full, five byte form and stack them in a similar manner
-; to that used for semi-tone table values.
+;;; @brief Stack a constant (A0 etc.)
+;;;
+;;; This routine allows a one-byte instruction to stack up to 32 constants
+;;; held in short form in a table of constants. In fact only 5 constants are
+;;; required. On entry the A register holds the literal ANDed with 1F.
+;;; It isn't very efficient and it would have been better to hold the
+;;; numbers in full, five byte form and stack them in a similar manner
+;;; to that used for semi-tone table values.
+;;; @calls SKIP_CONS, STK_CONST
 STK_CONST_XX:
         LD      H,D             ; save STKEND - required for result
         LD      L,E             ;
@@ -484,19 +497,19 @@ STK_CONST_XX:
         EXX                     ;
         RET                     ; return.
 
-; --------------------------------
-; Store in a memory area ($C0 etc.)
-; --------------------------------
-; Offsets $C0 to $DF
-; Although 32 memory storage locations can be addressed, only six
-; $C0 to $C5 are required by the ROM and only the thirty bytes (6*5)
-; required for these are allocated. Spectrum programmers who wish to
-; use the floating point routines from assembly language may wish to
-; alter the system variable MEM to point to 160 bytes of RAM to have
-; use the full range available.
-; A holds the derived offset $00-$1F.
-; This is a unary operation, so on entry HL points to the last value and DE
-; points to STKEND.
+;;; @brief Store in a memory area ($C0 etc.)
+;;;
+;;; Offsets $C0 to $DF
+;;; Although 32 memory storage locations can be addressed, only six
+;;; $C0 to $C5 are required by the ROM and only the thirty bytes (6*5)
+;;; required for these are allocated. Spectrum programmers who wish to
+;;; use the floating point routines from assembly language may wish to
+;;; alter the system variable MEM to point to 160 bytes of RAM to have
+;;; use the full range available.
+;;; A holds the derived offset $00-$1F.
+;;; This is a unary operation, so on entry HL points to the last value and DE
+;;; points to STKEND.
+;;; @calls LOC_MEM, MOVE_FP
 ST_MEM_XX:
         PUSH    HL              ; save the result pointer.
         EX      DE,HL           ; transfer to DE.
@@ -511,16 +524,16 @@ ST_MEM_XX:
         POP     HL              ; restore original result pointer
         RET                     ; return.
 
-; -------------------------
-; THE 'EXCHANGE' SUBROUTINE
-; -------------------------
-; (offset: $01 'exchange')
-;   This routine swaps the last two values on the calculator stack.
-;   On entry, as always with binary operations,
-;   HL=first number, DE=second number
-;   On exit, HL=result, DE=stkend.
-
-;; exchange
+;;; @brief THE 'EXCHANGE' SUBROUTINE
+;;;
+;;; (offset: $01 'exchange')
+;;;   This routine swaps the last two values on the calculator stack.
+;;;   On entry, as always with binary operations,
+;;;   HL=first number, DE=second number
+;;;   On exit, HL=result, DE=stkend.
+;;;
+;;; ; exchange
+;;; @calledby STR_NO
 EXCHANGE:
         LD      B,$05           ; there are five bytes to be swapped
 
@@ -541,18 +554,18 @@ SWAP_BYTE:
 
         RET                     ; return.
 
-; ------------------------------
-; THE 'SERIES GENERATOR' ROUTINE
-; ------------------------------
-; (offset: $86 'series-06')
-; (offset: $88 'series-08')
-; (offset: $8C 'series-0C')
-;   The Spectrum uses Chebyshev polynomials to generate approximations for
-;   SIN, ATN, LN and EXP. For calculators are concerned, Chebyshev polynomials
-;   have an advantage over other series as they can reach an approximation in just
-;   six iterations for SIN, eight for EXP and twelve for LN and ATN.
-;   Reference: "The Complete Spectrum ROM Disassembly" by Dr Ian Logan
-;   and Dr Frank O'Hara, published 1983 by Melbourne House.
+;;; @brief THE 'SERIES GENERATOR' ROUTINE
+;;;
+;;; (offset: $86 'series-06')
+;;; (offset: $88 'series-08')
+;;; (offset: $8C 'series-0C')
+;;;   The Spectrum uses Chebyshev polynomials to generate approximations for
+;;;   SIN, ATN, LN and EXP. For calculators are concerned, Chebyshev polynomials
+;;;   have an advantage over other series as they can reach an approximation in just
+;;;   six iterations for SIN, eight for EXP and twelve for LN and ATN.
+;;;   Reference: "The Complete Spectrum ROM Disassembly" by Dr Ian Logan
+;;;   and Dr Frank O'Hara, published 1983 by Melbourne House.
+;;; @calls GEN_ENT_1, STK_DATA, GEN_ENT_2
 SERIES_XX:
         LD      B,A             ; parameter $00 - $1F to B counter
         CALL    GEN_ENT_1       ; routine GEN-ENT-1 is called.
@@ -615,21 +628,22 @@ G_LOOP:
         RET                     ; return with H'L' pointing to location
                                 ; after last number in series.
 
-; ---------------------------------
-; THE 'ABSOLUTE MAGNITUDE' FUNCTION
-; ---------------------------------
-; (offset: $2A 'abs')
-;   This calculator literal finds the absolute value of the last value,
-;   integer or floating point, on calculator stack.
+;;; @brief THE 'ABSOLUTE MAGNITUDE' FUNCTION
+;;;
+;;; (offset: $2A 'abs')
+;;;   This calculator literal finds the absolute value of the last value,
+;;;   integer or floating point, on calculator stack.
 ABS_RTN:
         LD      B,$FF           ; signal abs
         JR      NEG_TEST        ; forward to NEG-TEST
 
-; ---------------------------
-; THE 'UNARY MINUS' OPERATION
-; ---------------------------
-; (offset: $1B 'negate')
-;   Unary so on entry HL points to last value, DE to STKEND.
+;;; @brief THE 'UNARY MINUS' OPERATION
+;;;
+;;; (offset: $1B 'negate')
+;;;   Unary so on entry HL points to last value, DE to STKEND.
+;;; @calls TEST_ZERO
+;;; @jumps INT_CASE
+;;; @calledby SUBTRACT
 NEGATE:
         CALL    TEST_ZERO       ; call routine TEST-ZERO and
         RET     C               ; return if so leaving zero unchanged.
@@ -657,7 +671,11 @@ NEG_TEST:
 
 ; ---
 
-; for integer numbers an entire byte denotes the sign.
+;;; @brief for integer numbers an entire byte denotes the sign
+;;;
+;;; for integer numbers an entire byte denotes the sign.
+;;; @calls INT_FETCH, INT_STORE
+;;; @jumpedfrom NEGATE
 INT_CASE:
         PUSH    DE              ; save STKEND.
 
@@ -678,13 +696,13 @@ INT_CASE:
         POP     DE              ; restore STKEND.
         RET                     ; return.
 
-; ---------------------
-; THE 'SIGNUM' FUNCTION
-; ---------------------
-; (offset: $29 'sgn')
-;   This routine replaces the last value on the calculator stack,
-;   which may be in floating point or integer form, with the integer values
-;   zero if zero, with one if positive and  with -minus one if negative.
+;;; @brief THE 'SIGNUM' FUNCTION
+;;;
+;;; (offset: $29 'sgn')
+;;;   This routine replaces the last value on the calculator stack,
+;;;   which may be in floating point or integer form, with the integer values
+;;;   zero if zero, with one if positive and  with -minus one if negative.
+;;; @calls TEST_ZERO, INT_STORE
 SGN:
         CALL    TEST_ZERO       ; call routine TEST-ZERO and
         RET     C               ; exit if so as no change is required.
@@ -703,11 +721,11 @@ SGN:
         POP     DE              ; restore STKEND.
         RET                     ; return.
 
-; -----------------
-; THE 'IN' FUNCTION
-; -----------------
-; (offset: $2C 'in')
-;   This function reads a byte from an input port.
+;;; @brief THE 'IN' FUNCTION
+;;;
+;;; (offset: $2C 'in')
+;;;   This function reads a byte from an input port.
+;;; @calls FIND_INT2
 IN_RTN:
         CALL    FIND_INT2           ; Routine FIND-INT2 puts port address in BC.
                                 ; All 16 bits are put on the address line.
@@ -717,12 +735,13 @@ IN_RTN:
         JR      IN_PK_STK           ; exit to STACK-A (via IN-PK-STK to save a byte
                                 ; of instruction code).
 
-; -------------------
-; THE 'PEEK' FUNCTION
-; -------------------
-; (offset: $2B 'peek')
-;   This function returns the contents of a memory address.
-;   The entire address space can be peeked including the ROM.
+;;; @brief THE 'PEEK' FUNCTION
+;;;
+;;; (offset: $2B 'peek')
+;;;   This function returns the contents of a memory address.
+;;;   The entire address space can be peeked including the ROM.
+;;; @calls FIND_INT2
+;;; @jumps STACK_A
 PEEK:
         CALL    FIND_INT2       ; routine FIND-INT2 puts address in BC.
         LD      A,(BC)          ; load contents into A register.
@@ -731,15 +750,16 @@ IN_PK_STK:
         JP      STACK_A           ; exit via STACK-A to put the value on the
                                 ; calculator stack.
 
-; ------------------
-; THE 'USR' FUNCTION
-; ------------------
-; (offset: $2d 'usr-no')
-;   The USR function followed by a number 0-65535 is the method by which
-;   the Spectrum invokes machine code programs. This function returns the
-;   contents of the BC register pair.
-;   Note. that STACK-BC re-initializes the IY register if a user-written
-;   program has altered it.
+;;; @brief THE 'USR' FUNCTION
+;;;
+;;; (offset: $2d 'usr-no')
+;;;   The USR function followed by a number 0-65535 is the method by which
+;;;   the Spectrum invokes machine code programs. This function returns the
+;;;   contents of the BC register pair.
+;;;   Note. that STACK-BC re-initializes the IY register if a user-written
+;;;   program has altered it.
+;;; @calls FIND_INT2, STK_FETCH, ALPHA
+;;; @jumps STACK_BC
 USR_NO:
         CALL    FIND_INT2           ; routine FIND-INT2 to fetch the
                                 ; supplied address into BC.
@@ -766,6 +786,18 @@ USR_NO:
 ;   Note. the curious double check on the range. With 26 UDGs the first check
 ;   only is necessary. With anything less the second check only is required.
 ;   It is highly likely that the first check was written by Steven Vickers.
+        IFDEF   LANG_PERSIAN
+        ASSERT  $ <= $34BC
+        IF      $ < $34BC
+        DS      $34BC-$, $FF
+        ENDIF
+        ASSERT  $ == $34BC
+RTL_GLYPH_FLAG_TABLE:
+        INCLUDE "lang/persian/flags.asm"
+        ASSERT  $ == REPORT_A
+        ASSERT  REPORT_A == $34E7
+RTL_GLYPH_FLAG_LOOKUP_BASE EQU RTL_GLYPH_FLAG_TABLE-$41
+        ELSE
 USR:
         CALL    STK_FETCH           ; routine STK-FETCH fetches the string
                                 ; parameters.
@@ -805,19 +837,21 @@ USR_RANGE:
 USR_STACK:
         JP      STACK_BC           ; jump back and exit via STACK-BC to store
 
+        ENDIF
+
 ; ---
 
 REPORT_A:
         RST     08H             ; ERROR-1
         DB          $09         ; Error Report: Invalid argument
 
-; ------------------------------
-; THE 'TEST FOR ZERO' SUBROUTINE
-; ------------------------------
-;   Test if top value on calculator stack is zero.  The carry flag is set if
-;   the last value is zero but no registers are altered.
-;   All five bytes will be zero but first four only need be tested.
-;   On entry, HL points to the exponent the first byte of the value.
+;;; @brief THE 'TEST FOR ZERO' SUBROUTINE
+;;;
+;;;   Test if top value on calculator stack is zero.  The carry flag is set if
+;;;   the last value is zero but no registers are altered.
+;;;   All five bytes will be zero but first four only need be tested.
+;;;   On entry, HL points to the exponent the first byte of the value.
+;;; @calledby STOP, PREP_M_D, NEGATE, SGN, GREATER_0, NOT_RTN, OR_RTN, NO_NO, STR_NO
 TEST_ZERO:
         PUSH    HL              ; preserve HL which is used to address.
         PUSH    BC              ; preserve BC which is used as a store.
@@ -840,13 +874,14 @@ TEST_ZERO:
         SCF                     ; set the carry flag.
         RET                     ; return with carry set if zero.
 
-; --------------------------------
-; THE 'GREATER THAN ZERO' OPERATOR
-; --------------------------------
-; (offset: $37 'greater-0' )
-;   Test if the last value on the calculator stack is greater than zero.
-;   This routine is also called directly from the end-tests of the comparison
-;   routine.
+;;; @brief THE 'GREATER THAN ZERO' OPERATOR
+;;;
+;;; (offset: $37 'greater-0' )
+;;;   Test if the last value on the calculator stack is greater than zero.
+;;;   This routine is also called directly from the end-tests of the comparison
+;;;   routine.
+;;; @calls TEST_ZERO
+;;; @calledby SECND_LOW
 GREATER_0:
         CALL    TEST_ZERO       ; routine TEST-ZERO
         RET     C               ; return if was zero as this
@@ -859,29 +894,31 @@ GREATER_0:
                                 ; and then overwrite location with 1 or 0
                                 ; as appropriate.
 
-; ------------------
-; THE 'NOT' FUNCTION
-; ------------------
-; (offset: $30 'not')
-;   This overwrites the last value with 1 if it was zero else with zero
-;   if it was any other value.
-;
-;   e.g. NOT 0 returns 1, NOT 1 returns 0, NOT -3 returns 0.
-;
-;   The subroutine is also called directly from the end-tests of the comparison
-;   operator.
+;;; @brief THE 'NOT' FUNCTION
+;;;
+;;; (offset: $30 'not')
+;;;   This overwrites the last value with 1 if it was zero else with zero
+;;;   if it was any other value.
+;;;
+;;;   e.g. NOT 0 returns 1, NOT 1 returns 0, NOT -3 returns 0.
+;;;
+;;;   The subroutine is also called directly from the end-tests of the comparison
+;;;   operator.
+;;; @calls TEST_ZERO
+;;; @jumps FP_0_1
+;;; @calledby SECND_LOW
 NOT_RTN:
         CALL    TEST_ZERO           ; routine TEST-ZERO sets carry if zero
 
         JR      FP_0_1           ; to FP-0/1 to overwrite operand with
                                 ; 1 if carry is set else to overwrite with zero.
 
-; ------------------------------
-; THE 'LESS THAN ZERO' OPERATION
-; ------------------------------
-; (offset: $36 'less-0' )
-;   Destructively test if last value on calculator stack is less than zero.
-;   Bit 7 of second byte will be set if so.
+;;; @brief THE 'LESS THAN ZERO' OPERATION
+;;;
+;;; (offset: $36 'less-0' )
+;;;   Destructively test if last value on calculator stack is less than zero.
+;;;   Bit 7 of second byte will be set if so.
+;;; @fallthrough FP_0_1
 LESS_0:
         XOR     A               ; set XOR mask to zero
                                 ; (carry will become set if sign is negative).
@@ -894,12 +931,13 @@ SIGN_TO_C:
         DEC     HL              ; address 1st byte again.
         RLCA                    ; rotate bit 7 of A to carry.
 
-; ----------------------------
-; THE 'ZERO OR ONE' SUBROUTINE
-; ----------------------------
-;   This routine places an integer value of zero or one at the addressed
-;   location of the calculator stack or MEM area.  The value one is written if
-;   carry is set on entry else zero.
+;;; @brief THE 'ZERO OR ONE' SUBROUTINE
+;;;
+;;;   This routine places an integer value of zero or one at the addressed
+;;;   location of the calculator stack or MEM area.  The value one is written if
+;;;   carry is set on entry else zero.
+;;; @calledby E_TO_FP
+;;; @jumpedfrom NOT_RTN, OR_RTN, NO_NO
 FP_0_1:
         PUSH    HL              ; save pointer to the first byte
         LD      A,$00           ; load accumulator with zero - without
@@ -918,20 +956,23 @@ FP_0_1:
         POP     HL              ; restore pointer to the first byte.
         RET                     ; return.
 
-; -----------------
-; THE 'OR' OPERATOR
-; -----------------
-; (offset: $07 'or' )
-; The Boolean OR operator. e.g. X OR Y
-; The result is zero if both values are zero else a non-zero value.
-;
-; e.g.    0 OR 0  returns 0.
-;        -3 OR 0  returns -3.
-;         0 OR -3 returns 1.
-;        -3 OR 2  returns 1.
-;
-; A binary operation.
-; On entry HL points to first operand (X) and DE to second operand (Y).
+;;; @brief THE 'OR' OPERATOR
+;;;
+;;; (offset: $07 'or' )
+;;; The Boolean OR operator. e.g. X OR Y
+;;; The result is zero if both values are zero else a non-zero value.
+;;;
+;;; @verbatim
+;;; e.g.    0 OR 0  returns 0.
+;;;        -3 OR 0  returns -3.
+;;;         0 OR -3 returns 1.
+;;;        -3 OR 2  returns 1.
+;;; @endverbatim
+;;;
+;;; A binary operation.
+;;; On entry HL points to first operand (X) and DE to second operand (Y).
+;;; @calls TEST_ZERO
+;;; @jumps FP_0_1
 OR_RTN:
         EX      DE,HL           ; make HL point to second number
         CALL    TEST_ZERO       ; routine TEST-ZERO
@@ -944,18 +985,21 @@ OR_RTN:
                                 ; with the value 1.
 
 
-; ---------------------------------
-; THE 'NUMBER AND NUMBER' OPERATION
-; ---------------------------------
-; (offset: $08 'no-&-no')
-;   The Boolean AND operator.
-;
-;   e.g.    -3 AND 2  returns -3.
-;           -3 AND 0  returns 0.
-;            0 and -2 returns 0.
-;            0 and 0  returns 0.
-;
-;   Compare with OR routine above.
+;;; @brief THE 'NUMBER AND NUMBER' OPERATION
+;;;
+;;; (offset: $08 'no-&-no')
+;;;   The Boolean AND operator.
+;;;
+;;; @verbatim
+;;;   e.g.    -3 AND 2  returns -3.
+;;;           -3 AND 0  returns 0.
+;;;            0 and -2 returns 0.
+;;;            0 and 0  returns 0.
+;;; @endverbatim
+;;;
+;;;   Compare with OR routine above.
+;;; @calls TEST_ZERO
+;;; @jumps FP_0_1
 NO_NO:
         EX      DE,HL           ; make HL address second operand.
 
@@ -970,12 +1014,13 @@ NO_NO:
         JR      FP_0_1          ; back to FP-0/1 to overwrite first operand
                                 ; with zero for return value.
 
-; ---------------------------------
-; THE 'STRING AND NUMBER' OPERATION
-; ---------------------------------
-; (offset: $10 'str-&-no')
-;   e.g. "You Win" AND score>99 will return the string if condition is true
-;   or the null string if false.
+;;; @brief THE 'STRING AND NUMBER' OPERATION
+;;;
+;;; (offset: $10 'str-&-no')
+;;;   e.g. "You Win" AND score>99 will return the string if condition is true
+;;;   or the null string if false.
+;;; @calls TEST_ZERO, EXCHANGE, SUBTRACT, STK_FETCH
+;;; @fallthrough BYTE_COMP
 STR_NO:
         EX      DE,HL           ; make HL point to the number.
         CALL    TEST_ZERO       ; routine TEST-ZERO.
@@ -1126,7 +1171,11 @@ STRINGS
 ; the lengths decreased and the branch taken back to here. If both string
 ; remainders become null at the same time, then an exact match exists.
 
-;; BYTE-COMP
+;;; @brief ; BYTE-COMP
+;;;
+;;; ; BYTE-COMP
+;;; @jumpedfrom SECND_LOW
+;;; @fallthrough SECND_LOW
 BYTE_COMP:
         LD      A,H             ; test if the second string
         OR      L               ; is the null string and hold flags.
@@ -1138,7 +1187,11 @@ BYTE_COMP:
 
         OR      C               ; test length of first string.
 
-;; SECND-LOW
+;;; @brief ; SECND-LOW
+;;;
+;;; ; SECND-LOW
+;;; @calls NOT_RTN, GREATER_0
+;;; @jumps BYTE_COMP
 SECND_LOW:
         POP     BC              ; pop the second length off stack.
         JR      Z,BOTH_NULL     ; forward to BOTH-NULL if first string is also
@@ -1225,13 +1278,14 @@ END_TESTS:
         CALL    NC,NOT_RTN      ; apply a terminal NOT if so.
         RET                     ; return.
 
-; ------------------------------------
-; THE 'STRING CONCATENATION' OPERATION
-; ------------------------------------
-; (offset: $17 'strs-add')
-;   This literal combines two strings into one e.g. LET a$ = b$ + c$
-;   The two parameters of the two strings to be combined are on the stack.
-
+;;; @brief THE 'STRING CONCATENATION' OPERATION
+;;;
+;;; (offset: $17 'strs-add')
+;;;   This literal combines two strings into one e.g. LET a$ = b$ + c$
+;;;   The two parameters of the two strings to be combined are on the stack.
+;;; @calls STK_FETCH, STK_STO
+;;; @jumps STK_PNTRS
+;;; @fallthrough STK_PNTRS
 STRS_ADD:
         CALL    STK_FETCH           ; routine STK-FETCH fetches string parameters
                                 ; and deletes calculator stack entry.
@@ -1272,17 +1326,18 @@ OTHER_STR:
                                 ; and continue into next routine which
                                 ; sets the calculator stack pointers.
 
-; -----------------------------------
-; THE 'SET STACK POINTERS' SUBROUTINE
-; -----------------------------------
-;   Register DE is set to STKEND and HL, the result pointer, is set to five
-;   locations below this.
-;   This routine is used when it is inconvenient to save these values at the
-;   time the calculator stack is manipulated due to other activity on the
-;   machine stack.
-;   This routine is also used to terminate the VAL and READ-IN  routines for
-;   the same reason and to initialize the calculator stack at the start of
-;   the CALCULATE routine.
+;;; @brief THE 'SET STACK POINTERS' SUBROUTINE
+;;;
+;;;   Register DE is set to STKEND and HL, the result pointer, is set to five
+;;;   locations below this.
+;;;   This routine is used when it is inconvenient to save these values at the
+;;;   time the calculator stack is manipulated due to other activity on the
+;;;   machine stack.
+;;;   This routine is also used to terminate the VAL and READ-IN  routines for
+;;;   the same reason and to initialize the calculator stack at the start of
+;;;   the CALCULATE routine.
+;;; @calledby CALCULATE
+;;; @jumpedfrom STRS_ADD, VAL, READ_IN
 STK_PNTRS:
         LD      HL,(STKEND)      ; fetch STKEND value from system variable.
         LD      DE,$FFFB        ; the value -5
@@ -1293,12 +1348,12 @@ STK_PNTRS:
         POP     DE              ; pop STKEND to DE.
         RET                     ; return.
 
-; -------------------
-; THE 'CHR$' FUNCTION
-; -------------------
-; (offset: $2f 'chr$')
-;   This function returns a single character string that is a result of
-;   converting a number in the range 0-255 to a string e.g. CHR$ 65 = "A".
+;;; @brief THE 'CHR$' FUNCTION
+;;;
+;;; (offset: $2f 'chr$')
+;;;   This function returns a single character string that is a result of
+;;;   converting a number in the range 0-255 to a string e.g. CHR$ 65 = "A".
+;;; @calls FP_TO_A, STK_STO
 CHRS:
         CALL    FP_TO_A           ; routine FP-TO-A puts the number in A.
 
@@ -1325,15 +1380,16 @@ REPORT_BD:
         RST     08H             ; ERROR-1
         DB          $0A         ; Error Report: Integer out of range
 
-; ----------------------------
-; THE 'VAL and VAL$' FUNCTIONS
-; ----------------------------
-; (offset: $1d 'val')
-; (offset: $18 'val$')
-;   VAL treats the characters in a string as a numeric expression.
-;   e.g. VAL "2.3" = 2.3, VAL "2+4" = 6, VAL ("2" + "4") = 24.
-;   VAL$ treats the characters in a string as a string expression.
-;   e.g. VAL$ (z$+"(2)") = a$(2) if z$ happens to be "a$".
+;;; @brief THE 'VAL and VAL$' FUNCTIONS
+;;;
+;;; (offset: $1d 'val')
+;;; (offset: $18 'val$')
+;;;   VAL treats the characters in a string as a numeric expression.
+;;;   e.g. VAL "2.3" = 2.3, VAL "2+4" = 6, VAL ("2" + "4") = 24.
+;;;   VAL$ treats the characters in a string as a string expression.
+;;;   e.g. VAL$ (z$+"(2)") = a$(2) if z$ happens to be "a$".
+;;; @calls STK_FETCH, SCANNING
+;;; @jumps REPORT_C, STK_PNTRS
 VAL:
         LD      HL,(CH_ADD)      ; fetch value of system variable CH_ADD
         PUSH    HL              ; and save on the machine stack.
@@ -1390,13 +1446,13 @@ V_RPORT_C:
                                 ; HL and DE from STKEND as it wasn't possible
                                 ; to preserve them during this routine.
 
-; -------------------
-; THE 'STR$' FUNCTION
-; -------------------
-; (offset: $2e 'str$')
-;   This function produces a string comprising the characters that would appear
-;   if the numeric argument were printed.
-;   e.g. STR$ (1/10) produces "0.1".
+;;; @brief THE 'STR$' FUNCTION
+;;;
+;;; (offset: $2e 'str$')
+;;;   This function produces a string comprising the characters that would appear
+;;;   if the numeric argument were printed.
+;;;   e.g. STR$ (1/10) produces "0.1".
+;;; @calls CHAN_OPEN, PRINT_FP, CHAN_FLAG, STK_STO
 STR:
         LD      BC,$0001        ; create an initial byte in workspace
         RST     30H             ; using BC-SPACES restart.
@@ -1429,14 +1485,15 @@ STR:
         EX      DE,HL           ; HL = last value, DE = STKEND.
         RET                     ; return.
 
-; ------------------------
-; THE 'READ-IN' SUBROUTINE
-; ------------------------
-; (offset: $1a 'read-in')
-;   This is the calculator literal used by the INKEY$ function when a '#'
-;   is encountered after the keyword.
-;   INKEY$ # does not interact correctly with the keyboard, #0 or #1, and
-;   its uses are for other channels.
+;;; @brief THE 'READ-IN' SUBROUTINE
+;;;
+;;; (offset: $1a 'read-in')
+;;;   This is the calculator literal used by the INKEY$ function when a '#'
+;;;   is encountered after the keyword.
+;;;   INKEY$ # does not interact correctly with the keyboard, #0 or #1, and
+;;;   its uses are for other channels.
+;;; @calls FIND_INT1, CHAN_OPEN, INPUT_AD, STK_STO, CHAN_FLAG
+;;; @jumps REPORT_BB, STK_PNTRS
 READ_IN:
         CALL    FIND_INT1           ; routine FIND-INT1 fetches stream to A
         CP      $10                 ; compare with 16 decimal.
@@ -1471,12 +1528,13 @@ R_I_STORE:
 
         JP      STK_PNTRS           ; jump back to STK-PNTRS
 
-; -------------------
-; THE 'CODE' FUNCTION
-; -------------------
-; (offset: $1c 'code')
-;   Returns the ASCII code of a character or first character of a string
-;   e.g. CODE "Aardvark" = 65, CODE "" = 0.
+;;; @brief THE 'CODE' FUNCTION
+;;;
+;;; (offset: $1c 'code')
+;;;   Returns the ASCII code of a character or first character of a string
+;;;   e.g. CODE "Aardvark" = 65, CODE "" = 0.
+;;; @calls STK_FETCH
+;;; @jumps STACK_A
 CODE:
         CALL    STK_FETCH           ; routine STK-FETCH to fetch and delete the
                                 ; string parameters.
@@ -1491,13 +1549,14 @@ CODE:
 STK_CODE:
         JP      STACK_A           ; jump back to STACK-A (with memory check)
 
-; ------------------
-; THE 'LEN' FUNCTION
-; ------------------
-; (offset: $1e 'len')
-;   Returns the length of a string.
-;   In Sinclair BASIC strings can be more than twenty thousand characters long
-;   so a sixteen-bit register is required to store the length
+;;; @brief THE 'LEN' FUNCTION
+;;;
+;;; (offset: $1e 'len')
+;;;   Returns the length of a string.
+;;;   In Sinclair BASIC strings can be more than twenty thousand characters long
+;;;   so a sixteen-bit register is required to store the length
+;;; @calls STK_FETCH
+;;; @jumps STACK_BC
 LEN:
         CALL    STK_FETCH           ; Routine STK-FETCH to fetch and delete the
                                 ; string parameters from the calculator stack.
@@ -1506,13 +1565,12 @@ LEN:
         JP      STACK_BC           ; Jump back to STACK-BC to save result on the
                                 ; calculator stack (with memory check).
 
-; -------------------------------------
-; THE 'DECREASE THE COUNTER' SUBROUTINE
-; -------------------------------------
-; (offset: $35 'dec-jr-nz')
-;   The calculator has an instruction that decrements a single-byte
-;   pseudo-register and makes consequential relative jumps just like
-;   the Z80's DJNZ instruction.
+;;; @brief THE 'DECREASE THE COUNTER' SUBROUTINE
+;;;
+;;; (offset: $35 'dec-jr-nz')
+;;;   The calculator has an instruction that decrements a single-byte
+;;;   pseudo-register and makes consequential relative jumps just like
+;;;   the Z80's DJNZ instruction.
 DEC_JR_NZ:
         EXX                     ; switch in set that addresses code
 
@@ -1532,12 +1590,12 @@ DEC_JR_NZ:
 ; dec (iy+$2d) - three bytes instead of six.
 
 
-; ---------------------
-; THE 'JUMP' SUBROUTINE
-; ---------------------
-; (offset: $33 'jump')
-;   This enables the calculator to perform relative jumps just like the Z80
-;   chip's JR instruction.
+;;; @brief THE 'JUMP' SUBROUTINE
+;;;
+;;; (offset: $33 'jump')
+;;;   This enables the calculator to perform relative jumps just like the Z80
+;;;   chip's JR instruction.
+;;; @jumpedfrom JUMP_TRUE
 JUMP:
         EXX                     ; switch in pointer set
 
@@ -1552,12 +1610,12 @@ JUMP_2:
         EXX                     ; switch back.
         RET                     ; return.
 
-; --------------------------
-; THE 'JUMP-TRUE' SUBROUTINE
-; --------------------------
-; (offset: $00 'jump-true')
-;   This enables the calculator to perform conditional relative jumps dependent
-;   on whether the last test gave a true result.
+;;; @brief THE 'JUMP-TRUE' SUBROUTINE
+;;;
+;;; (offset: $00 'jump-true')
+;;;   This enables the calculator to perform conditional relative jumps dependent
+;;;   on whether the last test gave a true result.
+;;; @jumps JUMP
 JUMP_TRUE:
         INC     DE              ; Collect the
         INC     DE              ; third byte
@@ -1573,12 +1631,11 @@ JUMP_TRUE:
         EXX                     ; Switch in the main set.
         RET                     ; Return.
 
-; -------------------------
-; THE 'END-CALC' SUBROUTINE
-; -------------------------
-; (offset: $38 'end-calc')
-;   The end-calc literal terminates a mini-program written in the Spectrum's
-;   internal language.
+;;; @brief THE 'END-CALC' SUBROUTINE
+;;;
+;;; (offset: $38 'end-calc')
+;;;   The end-calc literal terminates a mini-program written in the Spectrum's
+;;;   internal language.
 END_CALC:
         POP     AF              ; Drop the calculator return address RE-ENTRY
         EXX                     ; Switch to the other set.
@@ -1592,15 +1649,14 @@ END_CALC:
         RET                     ; Return.
 
 
-; ------------------------
-; THE 'MODULUS' SUBROUTINE
-; ------------------------
-; (offset: $32 'n-mod-m')
-; (n1,n2 -- r,q)
-;   Similar to FORTH's 'divide mod' /MOD
-;   On the Spectrum, this is only used internally by the RND function and could
-;   have been implemented inline.  On the ZX81, this calculator routine was also
-;   used by PRINT-FP.
+;;; @brief THE 'MODULUS' SUBROUTINE
+;;;
+;;; (offset: $32 'n-mod-m')
+;;; (n1,n2 -- r,q)
+;;;   Similar to FORTH's 'divide mod' /MOD
+;;;   On the Spectrum, this is only used internally by the RND function and could
+;;;   have been implemented inline.  On the ZX81, this calculator routine was also
+;;;   used by PRINT-FP.
 N_MOD_M:
         RST     28H                 ;; FP-CALC          17, 3.
         DB          $C0             ;;st-mem-0          17, 3.
@@ -1620,15 +1676,14 @@ N_MOD_M:
         RET                     ; return.
 
 
-; ------------------
-; THE 'INT' FUNCTION
-; ------------------
-; (offset $27: 'int' )
-; This function returns the integer of x, which is just the same as truncate
-; for positive numbers. The truncate literal truncates negative numbers
-; upwards so that -3.4 gives -3 whereas the BASIC INT function has to
-; truncate negative numbers down so that INT -3.4 is -4.
-; It is best to work through using, say, +-3.4 as examples.
+;;; @brief THE 'INT' FUNCTION
+;;;
+;;; (offset $27: 'int' )
+;;; This function returns the integer of x, which is just the same as truncate
+;;; for positive numbers. The truncate literal truncates negative numbers
+;;; upwards so that -3.4 gives -3 whereas the BASIC INT function has to
+;;; truncate negative numbers down so that INT -3.4 is -4.
+;;; It is best to work through using, say, +-3.4 as examples.
 INT:
         RST     28H                 ;; FP-CALC              x.    (= 3.4 or -3.4).
         DB          $31             ;;duplicate             x, x.
@@ -1663,13 +1718,15 @@ EXIT:
         RET                     ; return.
 
 
-; ------------------
-; THE 'EXP' FUNCTION
-; ------------------
-; (offset $26: 'exp')
-;   The exponential function EXP x is equal to e^x, where e is the mathematical
-;   name for a number approximated to 2.718281828.
-;   ERROR 6 if argument is more than about 88.
+;;; @brief THE 'EXP' FUNCTION
+;;;
+;;; (offset $26: 'exp')
+;;;   The exponential function EXP x is equal to e^x, where e is the mathematical
+;;;   name for a number approximated to 2.718281828.
+;;;   ERROR 6 if argument is more than about 88.
+;;; @calls FP_TO_A
+;;; @jumps RSLT_ZERO
+;;; @jumpedfrom TO_POWER
 EXP:
         RST     28H                 ;; FP-CALC
         DB          $3D             ;;re-stack      (not required - mult will do)
@@ -1734,7 +1791,10 @@ RESULT_OK:
 ; ---
 
 
-;; RSLT-ZERO
+;;; @brief ; RSLT-ZERO
+;;;
+;;; ; RSLT-ZERO
+;;; @jumpedfrom EXP
 RSLT_ZERO:
         RST     28H                 ;; FP-CALC
         DB          $02             ;;delete
@@ -1744,54 +1804,54 @@ RSLT_ZERO:
         RET                     ; return.
 
 
-; --------------------------------
-; THE 'NATURAL LOGARITHM' FUNCTION
-; --------------------------------
-; (offset $25: 'ln')
-;   Function to calculate the natural logarithm (to the base e ).
-;   Natural logarithms were devised in 1614 by well-traveled Scotsman John
-;   Napier who noted
-;   "Nothing doth more molest and hinder calculators than the multiplications,
-;    divisions, square and cubical extractions of great numbers".
-;
-;   Napier's logarithms enabled the above operations to be accomplished by
-;   simple addition and subtraction simplifying the navigational and
-;   astronomical calculations which beset his age.
-;   Napier's logarithms were quickly overtaken by logarithms to the base 10
-;   devised, in conjunction with Napier, by Henry Briggs a Cambridge-educated
-;   professor of Geometry at Oxford University. These simplified the layout
-;   of the tables enabling humans to easily scale calculations.
-;
-;   It is only recently with the introduction of pocket calculators and machines
-;   like the ZX Spectrum that natural logarithms are once more at the fore,
-;   although some computers retain logarithms to the base ten.
-;
-;   'Natural' logarithms are powers to the base 'e', which like 'pi' is a
-;   naturally occurring number in branches of mathematics.
-;   Like 'pi' also, 'e' is an irrational number and starts 2.718281828...
-;
-;   The tabular use of logarithms was that to multiply two numbers one looked
-;   up their two logarithms in the tables, added them together and then looked
-;   for the result in a table of antilogarithms to give the desired product.
-;
-;   The EXP function is the BASIC equivalent of a calculator's 'antiln' function
-;   and by picking any two numbers, 1.72 and 6.89 say,
-;     10 PRINT EXP ( LN 1.72 + LN 6.89 )
-;   will give just the same result as
-;     20 PRINT 1.72 * 6.89.
-;   Division is accomplished by subtracting the two logs.
-;
-;   Napier also mentioned "square and cubicle extractions".
-;   To raise a number to the power 3, find its 'ln', multiply by 3 and find the
-;   'antiln'.  e.g. PRINT EXP( LN 4 * 3 )  gives 64.
-;   Similarly to find the n'th root divide the logarithm by 'n'.
-;   The ZX81 ROM used PRINT EXP ( LN 9 / 2 ) to find the square root of the
-;   number 9. The Napieran square root function is just a special case of
-;   the 'to_power' function. A cube root or indeed any root/power would be just
-;   as simple.
-
-;   First test that the argument to LN is a positive, non-zero number.
-;   Error A if the argument is 0 or negative.
+;;; @brief THE 'NATURAL LOGARITHM' FUNCTION
+;;;
+;;; (offset $25: 'ln')
+;;;   Function to calculate the natural logarithm (to the base e ).
+;;;   Natural logarithms were devised in 1614 by well-traveled Scotsman John
+;;;   Napier who noted
+;;;   "Nothing doth more molest and hinder calculators than the multiplications,
+;;;    divisions, square and cubical extractions of great numbers".
+;;;
+;;;   Napier's logarithms enabled the above operations to be accomplished by
+;;;   simple addition and subtraction simplifying the navigational and
+;;;   astronomical calculations which beset his age.
+;;;   Napier's logarithms were quickly overtaken by logarithms to the base 10
+;;;   devised, in conjunction with Napier, by Henry Briggs a Cambridge-educated
+;;;   professor of Geometry at Oxford University. These simplified the layout
+;;;   of the tables enabling humans to easily scale calculations.
+;;;
+;;;   It is only recently with the introduction of pocket calculators and machines
+;;;   like the ZX Spectrum that natural logarithms are once more at the fore,
+;;;   although some computers retain logarithms to the base ten.
+;;;
+;;;   'Natural' logarithms are powers to the base 'e', which like 'pi' is a
+;;;   naturally occurring number in branches of mathematics.
+;;;   Like 'pi' also, 'e' is an irrational number and starts 2.718281828...
+;;;
+;;;   The tabular use of logarithms was that to multiply two numbers one looked
+;;;   up their two logarithms in the tables, added them together and then looked
+;;;   for the result in a table of antilogarithms to give the desired product.
+;;;
+;;;   The EXP function is the BASIC equivalent of a calculator's 'antiln' function
+;;;   and by picking any two numbers, 1.72 and 6.89 say,
+;;;     10 PRINT EXP ( LN 1.72 + LN 6.89 )
+;;;   will give just the same result as
+;;;     20 PRINT 1.72 * 6.89.
+;;;   Division is accomplished by subtracting the two logs.
+;;;
+;;;   Napier also mentioned "square and cubicle extractions".
+;;;   To raise a number to the power 3, find its 'ln', multiply by 3 and find the
+;;;   'antiln'.  e.g. PRINT EXP( LN 4 * 3 )  gives 64.
+;;;   Similarly to find the n'th root divide the logarithm by 'n'.
+;;;   The ZX81 ROM used PRINT EXP ( LN 9 / 2 ) to find the square root of the
+;;;   number 9. The Napieran square root function is just a special case of
+;;;   the 'to_power' function. A cube root or indeed any root/power would be just
+;;;   as simple.
+;;;
+;;;   First test that the argument to LN is a positive, non-zero number.
+;;;   Error A if the argument is 0 or negative.
+;;; @calls STACK_A
 LN:
         RST     28H                 ;; FP-CALC
         DB          $3D             ;;re-stack
@@ -1911,42 +1971,41 @@ GRE_8:
 ; 4) Functions arcsin, arccosine and arctan enable one to calculate an unknown
 ;    angle when the length of two of the sides is known.
 
-; --------------------------------
-; THE 'REDUCE ARGUMENT' SUBROUTINE
-; --------------------------------
-; (offset $39: 'get-argt')
-;
-; This routine performs two functions on the angle, in radians, that forms
-; the argument to the sine and cosine functions.
-; First it ensures that the angle 'wraps round'. That if a ship turns through
-; an angle of, say, 3*PI radians (540 degrees) then the net effect is to turn
-; through an angle of PI radians (180 degrees).
-; Secondly it converts the angle in radians to a fraction of a right angle,
-; depending within which quadrant the angle lies, with the periodicity
-; resembling that of the desired sine value.
-; The result lies in the range -1 to +1.
-;
-;                     90 deg.
-;
-;                     (pi/2)
-;              II       +1        I
-;                       |
-;        sin+      |\   |   /|    sin+
-;        cos-      | \  |  / |    cos+
-;        tan-      |  \ | /  |    tan+
-;                  |   \|/)  |
-; 180 deg. (pi) 0 -|----+----|-- 0  (0)   0 degrees
-;                  |   /|\   |
-;        sin-      |  / | \  |    sin-
-;        cos-      | /  |  \ |    cos+
-;        tan+      |/   |   \|    tan-
-;                       |
-;              III      -1       IV
-;                     (3pi/2)
-;
-;                     270 deg.
-;
-
+;;; @brief THE 'REDUCE ARGUMENT' SUBROUTINE
+;;;
+;;; (offset $39: 'get-argt')
+;;;
+;;; This routine performs two functions on the angle, in radians, that forms
+;;; the argument to the sine and cosine functions.
+;;; First it ensures that the angle 'wraps round'. That if a ship turns through
+;;; an angle of, say, 3*PI radians (540 degrees) then the net effect is to turn
+;;; through an angle of PI radians (180 degrees).
+;;; Secondly it converts the angle in radians to a fraction of a right angle,
+;;; depending within which quadrant the angle lies, with the periodicity
+;;; resembling that of the desired sine value.
+;;; The result lies in the range -1 to +1.
+;;;
+;;;                     90 deg.
+;;;
+;;; @verbatim
+;;;                     (pi/2)
+;;;              II       +1        I
+;;;                       |
+;;;        sin+      |\   |   /|    sin+
+;;;        cos-      | \  |  / |    cos+
+;;;        tan-      |  \ | /  |    tan+
+;;;                  |   \|/)  |
+;;; 180 deg. (pi) 0 -|----+----|-- 0  (0)   0 degrees
+;;;                  |   /|\   |
+;;;        sin-      |  / | \  |    sin-
+;;;        cos-      | /  |  \ |    cos+
+;;;        tan+      |/   |   \|    tan-
+;;;                       |
+;;;              III      -1       IV
+;;;                     (3pi/2)
+;;;
+;;;                     270 deg.
+;;; @endverbatim
 GET_ARGT:
         RST     28H                 ;; FP-CALC      X.
         DB          $3D             ;;re-stack      (not rquired done by mult)
@@ -1993,8 +2052,10 @@ GET_ARGT:
 
 ; ---
 
-; the branch was here with quadrants II (0 to 1) and III (1 to 0).
-; Y will hold -2 to -1 if this is quadrant III.
+;;; @brief the branch was here with quadrants II (0 to 1) and III (1 to 0)
+;;;
+;;; the branch was here with quadrants II (0 to 1) and III (1 to 0).
+;;; Y will hold -2 to -1 if this is quadrant III.
 ZPLUS:
         DB          $A1             ;;stk-one         Y, Z, 1.
         DB          $03             ;;subtract        Y, Z-1.       Q3 = 0 to -1
@@ -2014,32 +2075,32 @@ YNEG:
         RET                     ; return.
 
 
-; ---------------------
-; THE 'COSINE' FUNCTION
-; ---------------------
-; (offset $20: 'cos')
-; Cosines are calculated as the sine of the opposite angle rectifying the
-; sign depending on the quadrant rules.
-;
-;
-;           /|
-;        h /y|
-;         /  |o
-;        /x  |
-;       /----|
-;         a
-;
-; The cosine of angle x is the adjacent side (a) divided by the hypotenuse 1.
-; However if we examine angle y then a/h is the sine of that angle.
-; Since angle x plus angle y equals a right-angle, we can find angle y by
-; subtracting angle x from pi/2.
-; However it's just as easy to reduce the argument first and subtract the
-; reduced argument from the value 1 (a reduced right-angle).
-; It's even easier to subtract 1 from the angle and rectify the sign.
-; In fact, after reducing the argument, the absolute value of the argument
-; is used and rectified using the test result stored in mem-0 by 'get-argt'
-; for that purpose.
-;
+;;; @brief THE 'COSINE' FUNCTION
+;;;
+;;; (offset $20: 'cos')
+;;; Cosines are calculated as the sine of the opposite angle rectifying the
+;;; sign depending on the quadrant rules.
+;;;
+;;;
+;;; @verbatim
+;;;           /|
+;;;        h /y|
+;;;         /  |o
+;;;        /x  |
+;;;       /----|
+;;;         a
+;;; @endverbatim
+;;;
+;;; The cosine of angle x is the adjacent side (a) divided by the hypotenuse 1.
+;;; However if we examine angle y then a/h is the sine of that angle.
+;;; Since angle x plus angle y equals a right-angle, we can find angle y by
+;;; subtracting angle x from pi/2.
+;;; However it's just as easy to reduce the argument first and subtract the
+;;; reduced argument from the value 1 (a reduced right-angle).
+;;; It's even easier to subtract 1 from the angle and rectify the sign.
+;;; In fact, after reducing the argument, the absolute value of the argument
+;;; is used and rectified using the test result stored in mem-0 by 'get-argt'
+;;; for that purpose.
 COS:
         RST     28H             ;; FP-CALC              angle in radians.
         DB          $39         ;;get-argt              X     reduce -1 to +1
@@ -2059,25 +2120,26 @@ COS:
         DB          $03             ;;fwd to C_ENT, C-ENT
                                 ;; with quadrants I and IV.
 
-; -------------------
-; THE 'SINE' FUNCTION
-; -------------------
-; (offset $1F: 'sin')
-; This is a fundamental transcendental function from which others such as cos
-; and tan are directly, or indirectly, derived.
-; It uses the series generator to produce Chebyshev polynomials.
-;
-;
-;           /|
-;        1 / |
-;         /  |x
-;        /a  |
-;       /----|
-;         y
-;
-; The 'get-argt' function is designed to modify the angle and its sign
-; in line with the desired sine value and afterwards it can launch straight
-; into common code.
+;;; @brief THE 'SINE' FUNCTION
+;;;
+;;; (offset $1F: 'sin')
+;;; This is a fundamental transcendental function from which others such as cos
+;;; and tan are directly, or indirectly, derived.
+;;; It uses the series generator to produce Chebyshev polynomials.
+;;;
+;;;
+;;; @verbatim
+;;;           /|
+;;;        1 / |
+;;;         /  |x
+;;;        /a  |
+;;;       /----|
+;;;         y
+;;; @endverbatim
+;;;
+;;; The 'get-argt' function is designed to modify the angle and its sign
+;;; in line with the desired sine value and afterwards it can launch straight
+;;; into common code.
 SIN:
         RST     28H             ;; FP-CALC      angle in radians
         DB          $39         ;;get-argt      reduce - sign now correct.
@@ -2109,29 +2171,30 @@ C_ENT:
 
         RET                     ; return.
 
-; ----------------------
-; THE 'TANGENT' FUNCTION
-; ----------------------
-; (offset $21: 'tan')
-;
-; Evaluates tangent x as    sin(x) / cos(x).
-;
-;
-;           /|
-;        h / |
-;         /  |o
-;        /x  |
-;       /----|
-;         a
-;
-; the tangent of angle x is the ratio of the length of the opposite side
-; divided by the length of the adjacent side. As the opposite length can
-; be calculates using sin(x) and the adjacent length using cos(x) then
-; the tangent can be defined in terms of the previous two functions.
-
-; Error 6 if the argument, in radians, is too close to one like pi/2
-; which has an infinite tangent. e.g. PRINT TAN (PI/2)  evaluates as 1/0.
-; Similarly PRINT TAN (3*PI/2), TAN (5*PI/2) etc.
+;;; @brief THE 'TANGENT' FUNCTION
+;;;
+;;; (offset $21: 'tan')
+;;;
+;;; Evaluates tangent x as    sin(x) / cos(x).
+;;;
+;;;
+;;; @verbatim
+;;;           /|
+;;;        h / |
+;;;         /  |o
+;;;        /x  |
+;;;       /----|
+;;;         a
+;;; @endverbatim
+;;;
+;;; the tangent of angle x is the ratio of the length of the opposite side
+;;; divided by the length of the adjacent side. As the opposite length can
+;;; be calculates using sin(x) and the adjacent length using cos(x) then
+;;; the tangent can be defined in terms of the previous two functions.
+;;;
+;;; Error 6 if the argument, in radians, is too close to one like pi/2
+;;; which has an infinite tangent. e.g. PRINT TAN (PI/2)  evaluates as 1/0.
+;;; Similarly PRINT TAN (3*PI/2), TAN (5*PI/2) etc.
 TAN:
         RST     28H                 ;; FP-CALC          x.
         DB          $31             ;;duplicate         x, x.
@@ -2143,14 +2206,14 @@ TAN:
 
         RET                     ; return.
 
-; ---------------------
-; THE 'ARCTAN' FUNCTION
-; ---------------------
-; (Offset $24: 'atn')
-; the inverse tangent function with the result in radians.
-; This is a fundamental transcendental function from which others such as asn
-; and acs are directly, or indirectly, derived.
-; It uses the series generator to produce Chebyshev polynomials.
+;;; @brief THE 'ARCTAN' FUNCTION
+;;;
+;;; (Offset $24: 'atn')
+;;; the inverse tangent function with the result in radians.
+;;; This is a fundamental transcendental function from which others such as asn
+;;; and acs are directly, or indirectly, derived.
+;;; It uses the series generator to produce Chebyshev polynomials.
+;;; @calls RE_STACK
 ATN:
         CALL    RE_STACK        ; routine re-stack
         LD      A,(HL)          ; fetch exponent byte.
@@ -2218,55 +2281,58 @@ CASES:
         RET                     ; return.
 
 
-; ---------------------
-; THE 'ARCSIN' FUNCTION
-; ---------------------
-; (Offset $22: 'asn')
-;   The inverse sine function with result in radians.
-;   Derived from arctan function above.
-;   Error A unless the argument is between -1 and +1 inclusive.
-;   Uses an adaptation of the formula asn(x) = atn(x/sqr(1-x*x))
-;
-;
-;                 /|
-;                / |
-;              1/  |x
-;              /a  |
-;             /----|
-;               y
-;
-;   e.g. We know the opposite side (x) and hypotenuse (1)
-;   and we wish to find angle a in radians.
-;   We can derive length y by Pythagoras and then use ATN instead.
-;   Since y*y + x*x = 1*1 (Pythagoras Theorem) then
-;   y=sqr(1-x*x)                         - no need to multiply 1 by itself.
-;   So, asn(a) = atn(x/y)
-;   or more fully,
-;   asn(a) = atn(x/sqr(1-x*x))
-
-;   Close but no cigar.
-
-;   While PRINT ATN (x/SQR (1-x*x)) gives the same results as PRINT ASN x,
-;   it leads to division by zero when x is 1 or -1.
-;   To overcome this, 1 is added to y giving half the required angle and the
-;   result is then doubled.
-;   That is, PRINT ATN (x/(SQR (1-x*x) +1)) *2
-;
-;   GEOMETRIC PROOF.
-;
-;
-;               . /|
-;            .  c/ |
-;         .     /1 |x
-;      . c   b /a  |
-;    ---------/----|
-;      1      y
-;
-;   By creating an isosceles triangle with two equal sides of 1, angles c and
-;   c are also equal. If b+c+c = 180 degrees and b+a = 180 degrees then c=a/2.
-;
-;   A value higher than 1 gives the required error as attempting to find  the
-;   square root of a negative number generates an error in Sinclair BASIC.
+;;; @brief THE 'ARCSIN' FUNCTION
+;;;
+;;; (Offset $22: 'asn')
+;;;   The inverse sine function with result in radians.
+;;;   Derived from arctan function above.
+;;;   Error A unless the argument is between -1 and +1 inclusive.
+;;;   Uses an adaptation of the formula asn(x) = atn(x/sqr(1-x*x))
+;;;
+;;;
+;;; @verbatim
+;;;                 /|
+;;;                / |
+;;;              1/  |x
+;;;              /a  |
+;;;             /----|
+;;;               y
+;;; @endverbatim
+;;;
+;;;   e.g. We know the opposite side (x) and hypotenuse (1)
+;;;   and we wish to find angle a in radians.
+;;;   We can derive length y by Pythagoras and then use ATN instead.
+;;;   Since y*y + x*x = 1*1 (Pythagoras Theorem) then
+;;;   y=sqr(1-x*x)                         - no need to multiply 1 by itself.
+;;;   So, asn(a) = atn(x/y)
+;;;   or more fully,
+;;;   asn(a) = atn(x/sqr(1-x*x))
+;;;
+;;;   Close but no cigar.
+;;;
+;;;   While PRINT ATN (x/SQR (1-x*x)) gives the same results as PRINT ASN x,
+;;;   it leads to division by zero when x is 1 or -1.
+;;;   To overcome this, 1 is added to y giving half the required angle and the
+;;;   result is then doubled.
+;;;   That is, PRINT ATN (x/(SQR (1-x*x) +1)) *2
+;;;
+;;;   GEOMETRIC PROOF.
+;;;
+;;;
+;;; @verbatim
+;;;               . /|
+;;;            .  c/ |
+;;;         .     /1 |x
+;;;      . c   b /a  |
+;;;    ---------/----|
+;;;      1      y
+;;; @endverbatim
+;;;
+;;;   By creating an isosceles triangle with two equal sides of 1, angles c and
+;;;   c are also equal. If b+c+c = 180 degrees and b+a = 180 degrees then c=a/2.
+;;;
+;;;   A value higher than 1 gives the required error as attempting to find  the
+;;;   square root of a negative number generates an error in Sinclair BASIC.
 ASN:
         RST     28H                 ;; FP-CALC      x.
         DB          $31             ;;duplicate     x, x.
@@ -2287,33 +2353,33 @@ ASN:
         RET                     ; return.
 
 
-; ---------------------
-; THE 'ARCCOS' FUNCTION
-; ---------------------
-; (Offset $23: 'acs')
-; the inverse cosine function with the result in radians.
-; Error A unless the argument is between -1 and +1.
-; Result in range 0 to pi.
-; Derived from asn above which is in turn derived from the preceding atn.
-; It could have been derived directly from atn using acs(x) = atn(sqr(1-x*x)/x).
-; However, as sine and cosine are horizontal translations of each other,
-; uses acs(x) = pi/2 - asn(x)
-
-; e.g. the arccosine of a known x value will give the required angle b in
-; radians.
-; We know, from above, how to calculate the angle a using asn(x).
-; Since the three angles of any triangle add up to 180 degrees, or pi radians,
-; and the largest angle in this case is a right-angle (pi/2 radians), then
-; we can calculate angle b as pi/2 (both angles) minus asn(x) (angle a).
-;
-;
-;           /|
-;        1 /b|
-;         /  |x
-;        /a  |
-;       /----|
-;         y
-;
+;;; @brief THE 'ARCCOS' FUNCTION
+;;;
+;;; (Offset $23: 'acs')
+;;; the inverse cosine function with the result in radians.
+;;; Error A unless the argument is between -1 and +1.
+;;; Result in range 0 to pi.
+;;; Derived from asn above which is in turn derived from the preceding atn.
+;;; It could have been derived directly from atn using acs(x) = atn(sqr(1-x*x)/x).
+;;; However, as sine and cosine are horizontal translations of each other,
+;;; uses acs(x) = pi/2 - asn(x)
+;;;
+;;; e.g. the arccosine of a known x value will give the required angle b in
+;;; radians.
+;;; We know, from above, how to calculate the angle a using asn(x).
+;;; Since the three angles of any triangle add up to 180 degrees, or pi radians,
+;;; and the largest angle in this case is a right-angle (pi/2 radians), then
+;;; we can calculate angle b as pi/2 (both angles) minus asn(x) (angle a).
+;;;
+;;;
+;;; @verbatim
+;;;           /|
+;;;        1 /b|
+;;;         /  |x
+;;;        /a  |
+;;;       /----|
+;;;         y
+;;; @endverbatim
 ACS:
         RST     28H                 ;; FP-CALC      x.
         DB          $22             ;;asn           asn(x).
@@ -2325,16 +2391,15 @@ ACS:
         RET                     ; return.
 
 
-; --------------------------
-; THE 'SQUARE ROOT' FUNCTION
-; --------------------------
-; (Offset $28: 'sqr')
-; This routine is remarkable for its brevity - 7 bytes.
-; It wasn't written here but in the ZX81 where the programmers had to squeeze
-; a bulky operating system into an 8K ROM. It simply calculates
-; the square root by stacking the value .5 and continuing into the 'to-power'
-; routine. With more space available the much faster Newton-Raphson method
-; could have been used as on the Jupiter Ace.
+;;; @brief THE 'SQUARE ROOT' FUNCTION
+;;;
+;;; (Offset $28: 'sqr')
+;;; This routine is remarkable for its brevity - 7 bytes.
+;;; It wasn't written here but in the ZX81 where the programmers had to squeeze
+;;; a bulky operating system into an 8K ROM. It simply calculates
+;;; the square root by stacking the value .5 and continuing into the 'to-power'
+;;; routine. With more space available the much faster Newton-Raphson method
+;;; could have been used as on the Jupiter Ace.
 SQR:
         RST     28H                 ;; FP-CALC
         DB          $31             ;;duplicate
@@ -2346,16 +2411,15 @@ SQR:
         DB          $38             ;;end-calc
 
 
-; ------------------------------
-; THE 'EXPONENTIATION' OPERATION
-; ------------------------------
-; (Offset $06: 'to-power')
-; This raises the first number X to the power of the second number Y.
-; As with the ZX80,
-; 0 ^ 0 = 1.
-; 0 ^ +n = 0.
-; 0 ^ -n = arithmetic overflow.
-;
+;;; @brief THE 'EXPONENTIATION' OPERATION
+;;;
+;;; (Offset $06: 'to-power')
+;;; This raises the first number X to the power of the second number Y.
+;;; As with the ZX80,
+;;; 0 ^ 0 = 1.
+;;; 0 ^ +n = 0.
+;;; 0 ^ -n = arithmetic overflow.
+;;; @jumps EXP
 TO_POWER:
         RST     28H                 ;; FP-CALC              X, Y.
         DB          $01             ;;exchange              Y, X.
@@ -2374,8 +2438,10 @@ TO_POWER:
 
 ; ---
 
-;   these routines form the three simple results when the number is zero.
-;   begin by deleting the known zero to leave Y the power factor.
+;;; @brief these routines form the three simple results when the number is zero
+;;;
+;;;   these routines form the three simple results when the number is zero.
+;;;   begin by deleting the known zero to leave Y the power factor.
 XIS0:
         DB          $02             ;;delete                Y.
         DB          $31             ;;duplicate             Y, Y.

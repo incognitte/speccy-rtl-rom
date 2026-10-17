@@ -1,49 +1,58 @@
-# ZX Spectrum ROM Disassembly - Autoram Arab Ram
+# Speccy RTL ROM
 
-This repository contains the disassemblies and source code reconstruction for the **Autoram Arab Ram** ROM, a specialized Arabic language modification developed for the Sinclair ZX Spectrum.
+Right-to-left ROM images for the Sinclair ZX Spectrum 48K, built from annotated Z80 assembly source.
 
----
+- **Arabic**: a reverse-engineered, labelled source tree of the ArabRAM Arabic ROM.
+- **Persian**: a Persian-language ROM built on the same right-to-left engine, with Persian letters, keywords, error reports and digits.
 
-## Overview
+Both ROMs are 16384 bytes and are produced from the same source tree.
 
-The **Arab Ram** ROM is a regional localization of the classic Sinclair ZX Spectrum operating system. Unlike the officially commissioned Egyptian Arabic ROMs (developed by Dr. Nabil Nazmi / Sinclair Egypt), the **Arab Ram** module was created by **Autoram Computer** (*Ramez M. al-Halaby & Co.*) based in Jeddah, Saudi Arabia.
+## Branches
 
-Autoram was widely known in the region for producing hardware and software add-ons to adapt early home computers—such as the ZX81 and ZX Spectrum—to support the Arabic language.
+| Branch | Content |
+|---|---|
+| `rtl` | Builds both the Persian and the Arabic ROM (this branch). |
+| `arabrom` | The original reverse-engineered Arabic ROM source only. |
 
-### Key Details
-* **Brand/Developer:** Autoram Computer (Ramez M. al-Halaby & Co.)
-* **Country of Origin:** Saudi Arabia (Jeddah)
-* **First Released:** c. 1984 / 1986
-* **Target Hardware:** Sinclair ZX Spectrum (compatible with modified systems such as the ZX Spectrum +2 with a language ROM switch)
-* **Scope:** Translates and adapts the standard 48K Sinclair BASIC ROM routines for Arabic support. *(Note: Like many regional variants, it functions primarily within the 48K mode).*
+## Requirements
 
----
+- Linux or macOS with `make`, `git` and a C++ compiler (`g++` or `clang++`)
+- Internet access on the first build
 
-## Copyright & Localization String
+You do not need to install an assembler. If `sjasmplus` is not found in your `PATH`, the Makefile downloads and builds it automatically into `.sjasmplus/`.
 
-Upon boot or initialization, the localized Arabic copyright header reads:
-> **عرب 🌴 رام**
->
-> **© اوتورام كمبيوتر**
->
-> *Meaning: Arab Ram © Autoram Computer*
+## Build
 
----
+```
+make persian
+make arabic
+```
 
+Output:
 
-## Repository Structure
+| Command | ROM image |
+|---|---|
+| `make persian` | `build/48k_PERSIAN.ROM` |
+| `make arabic` | `build/48k_ARABIC.ROM` |
 
-* `rom/` - Original binary dumps of the Arab Ram ROM.
-* `src/` - Assembled and commented source code (Z80 assembly format compatible with modern assemblers like `sjasmplus`).
-* `disasm_notes.md` - Technical notes, character set layouts, and historical documentation references.
+Other targets:
 
----
+```
+make clean       # remove build/
+make distclean   # also remove the downloaded assembler
+```
 
-## Building the Disassembly
+## Running
 
-To assemble the source code and verify byte-for-byte compatibility with the original ROM:
+Load the resulting `.ROM` file as the 48K ROM in any ZX Spectrum emulator that allows a custom ROM, or burn it to a 16K EPROM for real hardware.
 
-1. Install [`sjasmplus`](https://github.com/z80-de/sjasmplus) Z80 assembler.
-2. Run the build script or compile directly:
-   ```bash
-   make
+## Source layout
+
+| Path | Content |
+|---|---|
+| `main.asm` | Assembly entry point; includes everything in `src/` |
+| `src/` | The ROM source, split into numbered files |
+| `lang/arabic/` | Arabic text, glyph and keyboard data |
+| `lang/persian/` | Persian text, glyph and keyboard data |
+
+The source files are commented; start with `main.asm` and the files in `src/`.

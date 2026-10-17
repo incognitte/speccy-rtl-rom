@@ -1,18 +1,23 @@
+;;; @file 09_arithmetic_routines.asm
+;;; @brief Part 9. ARITHMETIC ROUTINES
+
 ;*********************************
 ;** Part 9. ARITHMETIC ROUTINES **
 ;*********************************
 
-; --------------------------
-; E-format to floating point
-; --------------------------
-; This subroutine is used by the PRINT-FP routine and the decimal to FP
-; routines to stack a number expressed in exponent format.
-; Note. Though not used by the ROM as such, it has also been set up as
-; a unary calculator literal but this will not work as the accumulator
-; is not available from within the calculator.
-
-; on entry there is a value x on the calculator stack and an exponent of ten
-; in A.    The required value is x + 10 ^ A
+;;; @brief E-format to floating point
+;;;
+;;; This subroutine is used by the PRINT-FP routine and the decimal to FP
+;;; routines to stack a number expressed in exponent format.
+;;; Note. Though not used by the ROM as such, it has also been set up as
+;;; a unary calculator literal but this will not work as the accumulator
+;;; is not available from within the calculator.
+;;;
+;;; on entry there is a value x on the calculator stack and an exponent of ten
+;;; in A.    The required value is x + 10 ^ A
+;;; @calls FP_0_1
+;;; @calledby PF_SMALL, PF_LARGE
+;;; @jumpedfrom E_FP_JUMP
 E_TO_FP:
         RLCA                    ; this will set the          x.
         RRCA                    ; carry if bit 7 is set
@@ -98,17 +103,17 @@ E_END:
 
 
 
-; -------------
-; Fetch integer
-; -------------
-; This routine is called by the mathematical routines - FP-TO-BC, PRINT-FP,
-; mult, re-stack and negate to fetch an integer from address HL.
-; HL points to the stack or a location in MEM and no deletion occurs.
-; If the number is negative then a similar process to that used in INT-STORE
-; is used to restore the twos complement number to normal in DE and a sign
-; in C.
-
-;; INT-FETCH
+;;; @brief Fetch integer
+;;;
+;;; This routine is called by the mathematical routines - FP-TO-BC, PRINT-FP,
+;;; mult, re-stack and negate to fetch an integer from address HL.
+;;; HL points to the stack or a location in MEM and no deletion occurs.
+;;; If the number is negative then a similar process to that used in INT-STORE
+;;; is used to restore the twos complement number to normal in DE and a sign
+;;; in C.
+;;;
+;;; ; INT-FETCH
+;;; @calledby FP_TO_BC, PF_LOOP, MULTIPLY, RE_STACK, INT_CASE
 INT_FETCH:
         INC     HL              ; skip zero indicator.
         LD      C,(HL)          ; fetch sign to C
@@ -124,24 +129,22 @@ INT_FETCH:
         LD      D,A             ; place in D
         RET                     ; return
 
-; ------------------------
-; Store a positive integer
-; ------------------------
-; This entry point is not used in this ROM but would
-; store any integer as positive.
-
+;;; @brief Store a positive integer
+;;;
+;;; This entry point is not used in this ROM but would
+;;; store any integer as positive.
+;;; @fallthrough INT_STORE
 P_INT_STO:
         LD      C,$00           ; make sign byte positive and continue
 
-; -------------
-; Store integer
-; -------------
-; this routine stores an integer in DE at address HL.
-; It is called from mult, truncate, negate and sgn.
-; The sign byte $00 +ve or $FF -ve is in C.
-; If negative, the number is stored in 2's complement form so that it is
-; ready to be added.
-
+;;; @brief Store integer
+;;;
+;;; this routine stores an integer in DE at address HL.
+;;; It is called from mult, truncate, negate and sgn.
+;;; The sign byte $00 +ve or $FF -ve is in C.
+;;; If negative, the number is stored in 2's complement form so that it is
+;;; ready to be added.
+;;; @calledby MULT_RSLT, T_STORE, INT_CASE, SGN
 INT_STORE:
         PUSH    HL              ; preserve HL
 
@@ -171,11 +174,12 @@ INT_STORE:
         RET                     ; return.
 
 
-; -----------------------------
-; Floating point to BC register
-; -----------------------------
-; This routine gets a floating point number e.g. 127.4 from the calculator
-; stack to the BC register.
+;;; @brief Floating point to BC register
+;;;
+;;; This routine gets a floating point number e.g. 127.4 from the calculator
+;;; stack to the BC register.
+;;; @calls INT_FETCH
+;;; @calledby FIND_INT2, S_RND, FP_TO_A
 FP_TO_BC:
         RST     28H             ;; FP-CALC            set HL to
         DB          $38             ;;end-calc            point to last value.
@@ -223,13 +227,14 @@ FP_DELETE:
         RET                     ; return
                                 ; if carry is set then the number was too big.
 
-; ------------
-; LOG(2^A)
-; ------------
-; This routine is used when printing floating point numbers to calculate
-; the number of digits before the decimal point.
-
-; first convert a one-byte signed integer to its five byte form.
+;;; @brief LOG(2^A)
+;;;
+;;; This routine is used when printing floating point numbers to calculate
+;;; the number of digits before the decimal point.
+;;;
+;;; first convert a one-byte signed integer to its five byte form.
+;;; @calls STK_STORE
+;;; @calledby PF_SMALL, PF_LARGE
 LOG_2_A:
         LD      D,A             ; store a copy of A in D.
         RLA                     ; test sign bit of A.
@@ -256,14 +261,15 @@ LOG_2_A:
 
         DB          $38             ;;end-calc
 
-; -------------------
-; Floating point to A
-; -------------------
-; this routine collects a floating point number from the stack into the
-; accumulator returning carry set if not in range 0 - 255.
-; Not all the calling routines raise an error with overflow so no attempt
-; is made to produce an error report here.
-
+;;; @brief Floating point to A
+;;;
+;;; this routine collects a floating point number from the stack into the
+;;; accumulator returning carry set if not in range 0 - 255.
+;;; Not all the calling routines raise an error with overflow so no attempt
+;;; is made to produce an error report here.
+;;; @calls FP_TO_BC
+;;; @jumps FP_A_END
+;;; @calledby TWO_PARAM, FIND_INT1, STK_TO_A, CD_PRMS1, ST_E_PART, PF_SMALL, CHRS, EXP
 FP_TO_A:
         CALL    FP_TO_BC           ; routine FP-TO-BC returns with C in A also.
         RET     C               ; return with carry set if > 65535, overflow
@@ -281,19 +287,22 @@ FP_TO_A:
 
 ; ---
 
-;; FP-A-END
+;;; @brief ; FP-A-END
+;;;
+;;; ; FP-A-END
+;;; @jumpedfrom FP_TO_A
 FP_A_END:
         POP     AF              ; restore value and success flag and
         RET                     ; return.
 
 
-; -----------------------------
-; Print a floating point number
-; -----------------------------
-; Not a trivial task.
-; Begin by considering whether to print a leading sign for negative numbers.
-
-;; PRINT-FP
+;;; @brief Print a floating point number
+;;;
+;;; Not a trivial task.
+;;; Begin by considering whether to print a leading sign for negative numbers.
+;;;
+;;; ; PRINT-FP
+;;; @calledby STR
 PRINT_FP:
         RST     28H             ;; FP-CALC
         DB          $31             ;;duplicate
@@ -319,7 +328,10 @@ PRINT_FP:
         RET                     ; return.                 ->
 ; ---
 
-;; PF-NEGTVE
+;;; @brief ; PF-NEGTVE
+;;;
+;;; ; PF-NEGTVE
+;;; @fallthrough PF_POSTVE
 PF_NEGTVE:
         DB          $2A             ;;abs
         DB          $38             ;;end-calc
@@ -332,7 +344,10 @@ PF_NEGTVE:
 
         RST     28H             ;; FP-CALC
 
-;; PF-POSTVE
+;;; @brief ; PF-POSTVE
+;;;
+;;; ; PF-POSTVE
+;;; @fallthrough PF_LOOP
 PF_POSTVE:
         DB          $A0             ;;stk-zero     x,0.     begin by
         DB          $C3             ;;st-mem-3     x,0.     clearing a temporary
@@ -347,7 +362,13 @@ PF_POSTVE:
 
 ; now enter a loop?
 
-;; PF-LOOP
+;;; @brief ; PF-LOOP
+;;;
+;;; ; PF-LOOP
+;;; @calls INT_FETCH
+;;; @jumps PF_LARGE, PF_SAVE, PF_SMALL
+;;; @jumpedfrom PF_LARGE
+;;; @fallthrough PF_SAVE
 PF_LOOP:
         RST     28H             ;; FP-CALC
         DB          $31             ;;duplicate    x,x.
@@ -392,7 +413,11 @@ PF_LOOP:
         LD      D,E             ; transfer E to D
         LD      B,$08           ; and reduce the bit counter to 8.
 
-;; PF-SAVE
+;;; @brief ; PF-SAVE
+;;;
+;;; ; PF-SAVE
+;;; @jumps PF_BITS
+;;; @jumpedfrom PF_LOOP
 PF_SAVE:
         PUSH    DE              ; save the part before decimal point.
         EXX                     ;
@@ -411,7 +436,12 @@ PF_SAVE:
 ; credit Tony Stratton, 1982.
 ; A DEFB 02 delete is required immediately on using the calculator.
 
-;; PF-SMALL
+;;; @brief ; PF-SMALL
+;;;
+;;; ; PF-SMALL
+;;; @calls LOG_2_A, E_TO_FP, FP_TO_A
+;;; @jumps PF_FRACTN
+;;; @jumpedfrom PF_LOOP
 PF_SMALL:
         RST     28H             ;; FP-CALC       int x = 0.
 L2E25:
@@ -466,7 +496,12 @@ L2E25:
 ; the branch was here with a large positive integer > 65535 e.g. 123456789
 ; the accumulator holds the exponent.
 
-;; PF-LARGE
+;;; @brief ; PF-LARGE
+;;;
+;;; ; PF-LARGE
+;;; @calls LOG_2_A, E_TO_FP
+;;; @jumps PF_MEDIUM, PF_LOOP
+;;; @jumpedfrom PF_LOOP
 PF_LARGE:
         SUB     $80             ; make exponent positive
         CP      $1C             ; compare to 28
@@ -485,7 +520,12 @@ PF_LARGE:
 
 ; ----------------------------
 
-;; PF-MEDIUM
+;;; @brief ; PF-MEDIUM
+;;;
+;;; ; PF-MEDIUM
+;;; @calls FETCH_TWO
+;;; @jumpedfrom PF_LARGE
+;;; @fallthrough PF_BITS
 PF_MEDIUM:
         EX      DE,HL           ;
         CALL    FETCH_TWO           ; routine FETCH-TWO
@@ -500,7 +540,11 @@ PF_MEDIUM:
 ; and integer in D'E', 6 nibbles will accommodate 065535 but routine does
 ; 32-bit numbers as well from above
 
-;; PF-BITS
+;;; @brief ; PF-BITS
+;;;
+;;; ; PF-BITS
+;;; @jumpedfrom PF_SAVE
+;;; @fallthrough PF_BYTES
 PF_BITS:
         SLA     E               ;  C<xxxxxxxx<0
         RL      D               ;  C<xxxxxxxx<C
@@ -512,7 +556,10 @@ PF_BITS:
         LD      HL,$5CAA        ; set HL to mem-4-5th last byte of buffer
         LD      C,$05           ; set byte count to 5 -  10 nibbles
 
-;; PF-BYTES
+;;; @brief ; PF-BYTES
+;;;
+;;; ; PF-BYTES
+;;; @fallthrough PF_DIGITS
 PF_BYTES:
         LD      A,(HL)          ; fetch 0 or prev value
         ADC     A,A             ; shift left add in carry    C<xxxxxxxx<C
@@ -554,7 +601,11 @@ PF_BYTES:
         LD      C,$FF           ; set a flag to indicate when a significant
                                 ; digit has been encountered.
 
-;; PF-DIGITS
+;;; @brief ; PF-DIGITS
+;;;
+;;; ; PF-DIGITS
+;;; @jumps PF_INSERT, PF_TEST_2
+;;; @fallthrough PF_INSERT
 PF_DIGITS:
         RLD                     ; pick up leftmost nibble from (HL)
                                 ;    A           (HL)
@@ -572,7 +623,11 @@ PF_DIGITS:
 ; but if the zero is a significant digit e.g. 10 then include in digit totals.
 ; the path for non-zero digits rejoins here.
 
-;; PF-INSERT
+;;; @brief ; PF-INSERT
+;;;
+;;; ; PF-INSERT
+;;; @jumpedfrom PF_DIGITS
+;;; @fallthrough PF_TEST_2
 PF_INSERT:
         LD      (DE),A          ; insert digit at destination
         INC     DE              ; increase the destination pointer
@@ -582,7 +637,12 @@ PF_INSERT:
                                 ; subsequent zeros are significant and not
                                 ; leading.
 
-;; PF-TEST-2
+;;; @brief ; PF-TEST-2
+;;;
+;;; ; PF-TEST-2
+;;; @jumps PF_ALL_9
+;;; @jumpedfrom PF_DIGITS
+;;; @fallthrough PF_ALL_9
 PF_TEST_2:
         BIT     0,B             ; test if the nibble count is even
         JR      Z,PF_ALL_9         ; skip to PF-ALL-9 if so to deal with the
@@ -590,7 +650,11 @@ PF_TEST_2:
 
         INC     HL              ; point to next source byte if not
 
-;; PF-ALL-9
+;;; @brief ; PF-ALL-9
+;;;
+;;; ; PF-ALL-9
+;;; @jumps PF_MORE, PF_ROUND
+;;; @jumpedfrom PF_TEST_2
 PF_ALL_9:
         DJNZ    PF_DIGITS           ; decrement the nibble count, back to PF-DIGITS
                                 ; if all nine not done.
@@ -615,14 +679,22 @@ PF_ALL_9:
 
 ; now delete int x from calculator stack and fetch fractional part.
 
-;; PF-MORE
+;;; @brief ; PF-MORE
+;;;
+;;; ; PF-MORE
+;;; @jumpedfrom PF_ALL_9
 PF_MORE:
         RST     28H             ;; FP-CALC        int x.
         DB          $02             ;;delete          .
         DB          $E2             ;;get-mem-2       x - int x = f.
         DB          $38             ;;end-calc        f.
 
-;; PF-FRACTN
+;;; @brief ; PF-FRACTN
+;;;
+;;; ; PF-FRACTN
+;;; @calls FETCH_TWO, SHIFT_FP
+;;; @jumpedfrom PF_SMALL
+;;; @fallthrough PF_FRN_LP
 PF_FRACTN:
         EX      DE,HL           ;
         CALL    FETCH_TWO           ; routine FETCH-TWO
@@ -634,7 +706,11 @@ PF_FRACTN:
         EXX                     ;
         CALL    SHIFT_FP           ; routine SHIFT-FP
 
-;; PF-FRN-LP
+;;; @brief ; PF-FRN-LP
+;;;
+;;; ; PF-FRN-LP
+;;; @jumps PF_FR_DGT, PF_ROUND
+;;; @jumpedfrom PF_FR_EXX
 PF_FRN_LP:
         LD      A,(IY+$71)      ; MEM-5-1st
         CP      $08             ;
@@ -647,11 +723,19 @@ PF_FRN_LP:
 
 ; ---
 
-;; PF-FR-DGT
+;;; @brief ; PF-FR-DGT
+;;;
+;;; ; PF-FR-DGT
+;;; @jumpedfrom PF_FRN_LP
+;;; @fallthrough PF_FR_EXX
 PF_FR_DGT:
         LD      BC,$0200        ;
 
-;; PF-FR-EXX
+;;; @brief ; PF-FR-EXX
+;;;
+;;; ; PF-FR-EXX
+;;; @calls CA_10_A_C
+;;; @jumps PF_FRN_LP
 PF_FR_EXX:
         LD      A,E             ;
         CALL    CA_10_A_C           ; routine CA-10*A+C
@@ -680,7 +764,11 @@ PF_FR_EXX:
 ;      100000001 is printed as 1E+8
 ;      100000009 is printed as 1.0000001E+8
 
-;; PF-ROUND
+;;; @brief ; PF-ROUND
+;;;
+;;; ; PF-ROUND
+;;; @jumpedfrom PF_ALL_9, PF_FRN_LP
+;;; @fallthrough PF_RND_LP
 PF_ROUND:
         PUSH    AF              ; save A and flags
         LD      HL,$5CA1        ; address MEM-3 start of digits
@@ -690,7 +778,11 @@ PF_ROUND:
         LD      B,C             ; No. of digits to B counter
         POP     AF              ; restore A and carry flag from comparison.
 
-;; PF-RND-LP
+;;; @brief ; PF-RND-LP
+;;;
+;;; ; PF-RND-LP
+;;; @jumps PF_R_BACK, PF_COUNT
+;;; @fallthrough PF_R_BACK
 PF_RND_LP:
         DEC     HL              ; address digit at rounding position.
         LD      A,(HL)          ; fetch it
@@ -703,7 +795,11 @@ PF_RND_LP:
         CCF                     ; complement carry flag so that set if ten.
         JR      NC,PF_COUNT        ; forward to PF-COUNT with 1 - 9.
 
-;; PF-R-BACK
+;;; @brief ; PF-R-BACK
+;;;
+;;; ; PF-R-BACK
+;;; @jumpedfrom PF_RND_LP
+;;; @fallthrough PF_COUNT
 PF_R_BACK:
         DJNZ    PF_RND_LP           ; loop back to PF-RND-LP
 
@@ -717,7 +813,12 @@ PF_R_BACK:
         INC     (IY+$72)        ; make MEM-5-2nd hold 1.
                                 ; and proceed to initialize total digits to 1.
 
-;; PF-COUNT
+;;; @brief ; PF-COUNT
+;;;
+;;; ; PF-COUNT
+;;; @jumps PF_NOT_E, PF_E_FRMT
+;;; @jumpedfrom PF_RND_LP
+;;; @fallthrough PF_NOT_E
 PF_COUNT:
         LD      (IY+$71),B      ; MEM-5-1st
 
@@ -745,13 +846,22 @@ PF_COUNT:
         CP      $FC             ;
         JR      C,PF_E_FRMT         ; to PF-E-FRMT
 
-;; PF-NOT-E
+;;; @brief ; PF-NOT-E
+;;;
+;;; ; PF-NOT-E
+;;; @calls OUT_CODE
+;;; @jumpedfrom PF_COUNT
+;;; @fallthrough PF_E_SBRN
 PF_NOT_E:
         AND     A               ; test for zero leading digits as in .123
 
         CALL    Z,OUT_CODE         ; routine OUT-CODE prints a zero e.g. 0.123
 
-;; PF-E-SBRN
+;;; @brief ; PF-E-SBRN
+;;;
+;;; ; PF-E-SBRN
+;;; @jumps PF_OUT_LP, PF_DC_OUT
+;;; @calledby PF_E_FRMT
 PF_E_SBRN:
         XOR     A               ;
         SUB     B               ;
@@ -762,7 +872,12 @@ PF_E_SBRN:
 
 ; ---
 
-;; PF-OUT-LP
+;;; @brief ; PF-OUT-LP
+;;;
+;;; ; PF-OUT-LP
+;;; @jumps PF_OUT_DT
+;;; @jumpedfrom PF_E_SBRN, PF_DEC_0S
+;;; @fallthrough PF_OUT_DT
 PF_OUT_LP:
         LD      A,C             ; fetch total digit count
         AND     A               ; test for zero
@@ -772,13 +887,22 @@ PF_OUT_LP:
         INC     HL              ; address next digit
         DEC     C               ; decrease total digit counter
 
-;; PF-OUT-DT
+;;; @brief ; PF-OUT-DT
+;;;
+;;; ; PF-OUT-DT
+;;; @calls OUT_CODE
+;;; @jumpedfrom PF_OUT_LP
+;;; @fallthrough PF_DC_OUT
 PF_OUT_DT:
         CALL    OUT_CODE           ; routine OUT-CODE outputs it.
         DJNZ    PF_OUT_LP           ; loop back to PF-OUT-LP until B leading
                                 ; digits output.
 
-;; PF-DC-OUT
+;;; @brief ; PF-DC-OUT
+;;;
+;;; ; PF-DC-OUT
+;;; @jumpedfrom PF_E_SBRN
+;;; @fallthrough PF_DEC_0S
 PF_DC_OUT:
         LD      A,C             ; fetch total digits and
         AND     A               ; test if also zero
@@ -789,7 +913,10 @@ PF_DC_OUT:
         INC     B               ; increment B
         LD      A,$2E           ; prepare the character '.'
 
-;; PF-DEC-0S
+;;; @brief ; PF-DEC-0S
+;;;
+;;; ; PF-DEC-0S
+;;; @jumps PF_OUT_LP
 PF_DEC_0S:
         RST     10H             ; PRINT-A outputs the character '.' or '0'
 
@@ -804,7 +931,12 @@ PF_DEC_0S:
 
 ; the branch was here for E-format printing e.g. 123456789 => 1.2345679e+8
 
-;; PF-E-FRMT
+;;; @brief ; PF-E-FRMT
+;;;
+;;; ; PF-E-FRMT
+;;; @calls PF_E_SBRN
+;;; @jumps PF_E_POS, PF_E_SIGN
+;;; @jumpedfrom PF_COUNT
 PF_E_FRMT:
         LD      D,B             ; counter to D
         DEC     D               ; decrement
@@ -827,24 +959,32 @@ PF_E_FRMT:
 
 ; ---
 
-;; PF-E-POS
+;;; @brief ; PF-E-POS
+;;;
+;;; ; PF-E-POS
+;;; @jumpedfrom PF_E_FRMT
+;;; @fallthrough PF_E_SIGN
 PF_E_POS:
         LD      A,$2B           ; prepare character '+'
 
-;; PF-E-SIGN
+;;; @brief ; PF-E-SIGN
+;;;
+;;; ; PF-E-SIGN
+;;; @jumps OUT_NUM_1
+;;; @jumpedfrom PF_E_FRMT
 PF_E_SIGN:
         RST     10H             ; PRINT-A outputs the sign
 
         LD      B,$00           ; make the high byte zero.
         JP      OUT_NUM_1           ; exit via OUT-NUM-1 to print exponent in BC
 
-; ------------------------------
-; Handle printing floating point
-; ------------------------------
-; This subroutine is called twice from above when printing floating-point
-; numbers. It returns 10*A +C in registers C and A
-
-;; CA-10*A+C
+;;; @brief Handle printing floating point
+;;;
+;;; This subroutine is called twice from above when printing floating-point
+;;; numbers. It returns 10*A +C in registers C and A
+;;;
+;;; ; CA-10*A+C
+;;; @calledby PF_FR_EXX
 CA_10_A_C:
         PUSH    DE              ; preserve DE.
         LD      L,A             ; transfer A to L
@@ -862,15 +1002,16 @@ CA_10_A_C:
         POP     DE              ; restore DE
         RET                     ; return with result.
 
-; --------------
-; Prepare to add
-; --------------
-; This routine is called twice by addition to prepare the two numbers. The
-; exponent is picked up in A and the location made zero. Then the sign bit
-; is tested before being set to the implied state. Negative numbers are twos
-; complemented.
-
-;; PREP-ADD
+;;; @brief Prepare to add
+;;;
+;;; This routine is called twice by addition to prepare the two numbers. The
+;;; exponent is picked up in A and the location made zero. Then the sign bit
+;;; is tested before being set to the implied state. Negative numbers are twos
+;;; complemented.
+;;;
+;;; ; PREP-ADD
+;;; @calledby FULL_ADDN
+;;; @fallthrough NEG_BYTE
 PREP_ADD:
         LD      A,(HL)          ; pick up exponent
         LD      (HL),$00        ; make location zero
@@ -890,7 +1031,9 @@ PREP_ADD:
         LD      C,A             ; store exponent in C
         SCF                     ; set carry flag
 
-;; NEG-BYTE
+;;; @brief ; NEG-BYTE
+;;;
+;;; ; NEG-BYTE
 NEG_BYTE:
         DEC     HL              ; work from LSB to MSB
         LD      A,(HL)          ; fetch byte
@@ -903,16 +1046,16 @@ NEG_BYTE:
         POP     BC              ; restore original BC
         RET                     ; return
 
-; -----------------
-; Fetch two numbers
-; -----------------
-; This routine is called twice when printing floating point numbers and also
-; to fetch two numbers by the addition, multiply and division routines.
-; HL addresses the first number, DE addresses the second number.
-; For arithmetic only, A holds the sign of the result which is stored in
-; the second location.
-
-;; FETCH-TWO
+;;; @brief Fetch two numbers
+;;;
+;;; This routine is called twice when printing floating point numbers and also
+;;; to fetch two numbers by the addition, multiply and division routines.
+;;; HL addresses the first number, DE addresses the second number.
+;;; For arithmetic only, A holds the sign of the result which is stored in
+;;; the second location.
+;;;
+;;; ; FETCH-TWO
+;;; @calledby PF_MEDIUM, PF_FRACTN, SHIFT_LEN, MULT_LONG, DIVISION
 FETCH_TWO:
         PUSH    HL              ; save pointer to first number, result if math.
         PUSH    AF              ; save result sign.
@@ -955,13 +1098,12 @@ FETCH_TWO:
         POP     HL              ; and pointer to possible result.
         RET                     ; return.
 
-; ---------------------------------
-; Shift floating point number right
-; ---------------------------------
-;
-;
-
-;; SHIFT-FP
+;;; @brief Shift floating point number right
+;;;
+;;; ; SHIFT-FP
+;;; @jumps ADDEND_0
+;;; @calledby PF_FRACTN, SHIFT_LEN
+;;; @fallthrough ONE_SHIFT
 SHIFT_FP:
         AND     A               ;
         RET     Z               ;
@@ -972,7 +1114,11 @@ SHIFT_FP:
         PUSH    BC              ;
         LD      B,A             ;
 
-;; ONE-SHIFT
+;;; @brief ; ONE-SHIFT
+;;;
+;;; ; ONE-SHIFT
+;;; @calls ADD_BACK
+;;; @fallthrough ADDEND_0
 ONE_SHIFT:
         EXX                     ;
         SRA     L               ;
@@ -989,12 +1135,19 @@ ONE_SHIFT:
         CALL    ADD_BACK           ; routine ADD-BACK
         RET     NZ              ;
 
-;; ADDEND-0
+;;; @brief ; ADDEND-0
+;;;
+;;; ; ADDEND-0
+;;; @jumpedfrom SHIFT_FP
+;;; @fallthrough ZEROS_4_5
 ADDEND_0:
         EXX                     ;
         XOR     A               ;
 
-;; ZEROS-4/5
+;;; @brief ; ZEROS-4/5
+;;;
+;;; ; ZEROS-4/5
+;;; @calledby SKIP_ZERO
 ZEROS_4_5:
         LD      L,$00           ;
         LD      D,A             ;
@@ -1003,13 +1156,12 @@ ZEROS_4_5:
         LD      DE,$0000        ;
         RET                     ;
 
-; ------------------
-; Add back any carry
-; ------------------
-;
-;
-
-;; ADD-BACK
+;;; @brief Add back any carry
+;;;
+;;; ; ADD-BACK
+;;; @jumps ALL_ADDED
+;;; @calledby ONE_SHIFT, NORML_NOW
+;;; @fallthrough ALL_ADDED
 ADD_BACK:
         INC     E               ;
         RET     NZ              ;
@@ -1023,18 +1175,23 @@ ADD_BACK:
 
         INC     D               ;
 
-;; ALL-ADDED
+;;; @brief ; ALL-ADDED
+;;;
+;;; ; ALL-ADDED
+;;; @jumpedfrom ADD_BACK
 ALL_ADDED:
         EXX                     ;
         RET                     ;
 
-; -----------------------
-; Handle subtraction (03)
-; -----------------------
-; Subtraction is done by switching the sign byte/bit of the second number
-; which may be integer of floating point and continuing into addition.
-
-;; subtract
+;;; @brief Handle subtraction (03)
+;;;
+;;; Subtraction is done by switching the sign byte/bit of the second number
+;;; which may be integer of floating point and continuing into addition.
+;;;
+;;; ; subtract
+;;; @calls NEGATE
+;;; @calledby STR_NO
+;;; @fallthrough ADDITION
 SUBTRACT:
         EX      DE,HL           ; address second number with HL
 
@@ -1043,13 +1200,13 @@ SUBTRACT:
         EX      DE,HL           ; address first number again
                                 ; and continue.
 
-; --------------------
-; Handle addition (0F)
-; --------------------
-; HL points to first number, DE to second.
-; If they are both integers, then go for the easy route.
-
-;; addition
+;;; @brief Handle addition (0F)
+;;;
+;;; HL points to first number, DE to second.
+;;; If they are both integers, then go for the easy route.
+;;;
+;;; ; addition
+;;; @jumps FULL_ADDN, ADDN_OFLW
 ADDITION:
         LD      A,(DE)          ; fetch first byte of second
         OR      (HL)            ; combine with first byte of first
@@ -1113,12 +1270,22 @@ ADDITION:
 
 ; ---
 
-;; ADDN-OFLW
+;;; @brief ; ADDN-OFLW
+;;;
+;;; ; ADDN-OFLW
+;;; @jumpedfrom ADDITION
+;;; @fallthrough FULL_ADDN
 ADDN_OFLW:
         DEC     HL              ;
         POP     DE              ;
 
-;; FULL-ADDN
+;;; @brief ; FULL-ADDN
+;;;
+;;; ; FULL-ADDN
+;;; @calls RE_ST_TWO, PREP_ADD
+;;; @jumps SHIFT_LEN
+;;; @jumpedfrom ADDITION
+;;; @fallthrough SHIFT_LEN
 FULL_ADDN:
         CALL    RE_ST_TWO           ; routine RE-ST-TWO
         EXX                     ;
@@ -1138,7 +1305,13 @@ FULL_ADDN:
         LD      B,C             ;
         EX      DE,HL           ;
 
-;; SHIFT-LEN
+;;; @brief ; SHIFT-LEN
+;;;
+;;; ; SHIFT-LEN
+;;; @calls FETCH_TWO, SHIFT_FP
+;;; @jumps TEST_NEG, ADD_REP_6
+;;; @jumpedfrom FULL_ADDN
+;;; @fallthrough TEST_NEG
 SHIFT_LEN:
         PUSH    AF              ;
         SUB     B               ;
@@ -1171,7 +1344,12 @@ SHIFT_LEN:
         INC     (HL)            ;
         JR      Z,ADD_REP_6         ; to ADD-REP-6
 
-;; TEST-NEG
+;;; @brief ; TEST-NEG
+;;;
+;;; ; TEST-NEG
+;;; @jumps GO_NC_MLT, END_COMPL
+;;; @jumpedfrom SHIFT_LEN
+;;; @fallthrough ADD_REP_6
 TEST_NEG:
         EXX                     ;
         LD      A,L             ;
@@ -1204,33 +1382,47 @@ TEST_NEG:
         EXX                     ;
         INC     (HL)            ;
 
-;; ADD-REP-6
+;;; @brief ; ADD-REP-6
+;;;
+;;; ; ADD-REP-6
+;;; @jumps REPORT_6
+;;; @jumpedfrom SHIFT_LEN
+;;; @fallthrough END_COMPL
 ADD_REP_6:
         JP      Z,REPORT_6         ; to REPORT-6
 
         EXX                     ;
 
-;; END-COMPL
+;;; @brief ; END-COMPL
+;;;
+;;; ; END-COMPL
+;;; @jumpedfrom TEST_NEG
+;;; @fallthrough GO_NC_MLT
 END_COMPL:
         LD      D,A             ;
         EXX                     ;
 
-;; GO-NC-MLT
+;;; @brief ; GO-NC-MLT
+;;;
+;;; ; GO-NC-MLT
+;;; @jumps TEST_NORM
+;;; @jumpedfrom TEST_NEG
 GO_NC_MLT:
         XOR     A               ;
         JP      TEST_NORM           ; to TEST-NORM
 
-; -----------------------------
-; Used in 16 bit multiplication
-; -----------------------------
-; This routine is used, in the first instance, by the multiply calculator
-; literal to perform an integer multiplication in preference to
-; 32-bit multiplication to which it will resort if this overflows.
-;
-; It is also used by STK-VAR to calculate array subscripts and by DIM to
-; calculate the space required for multi-dimensional arrays.
-
-;; HL-HL*DE
+;;; @brief Used in 16 bit multiplication
+;;;
+;;; This routine is used, in the first instance, by the multiply calculator
+;;; literal to perform an integer multiplication in preference to
+;;; 32-bit multiplication to which it will resort if this overflows.
+;;;
+;;; It is also used by STK-VAR to calculate array subscripts and by DIM to
+;;; calculate the space required for multi-dimensional arrays.
+;;;
+;;; ; HL-HL*DE
+;;; @calledby GET_HL_DE, MULTIPLY
+;;; @fallthrough HL_LOOP
 HL_HL_DE:
         PUSH    BC              ; preserve BC throughout
         LD      B,$10           ; set B to 16
@@ -1240,7 +1432,11 @@ HL_HL_DE:
 
 ; now enter a loop.
 
-;; HL-LOOP
+;;; @brief ; HL-LOOP
+;;;
+;;; ; HL-LOOP
+;;; @jumps HL_END, HL_AGAIN
+;;; @fallthrough HL_AGAIN
 HL_LOOP:
         ADD     HL,HL           ; double result
         JR      C,HL_END         ; to HL-END if overflow
@@ -1252,27 +1448,35 @@ HL_LOOP:
         ADD     HL,DE           ; add in DE
         JR      C,HL_END         ; to HL-END if overflow
 
-;; HL-AGAIN
+;;; @brief ; HL-AGAIN
+;;;
+;;; ; HL-AGAIN
+;;; @jumpedfrom HL_LOOP
+;;; @fallthrough HL_END
 HL_AGAIN:
         DJNZ    HL_LOOP           ; back to HL-LOOP for all 16 bits
 
-;; HL-END
+;;; @brief ; HL-END
+;;;
+;;; ; HL-END
+;;; @jumpedfrom HL_LOOP
 HL_END:
         POP     BC              ; restore preserved BC
         RET                     ; return with carry reset if successful
                                 ; and result in HL.
 
-; ----------------------------------------------
-; THE 'PREPARE TO MULTIPLY OR DIVIDE' SUBROUTINE
-; ----------------------------------------------
-;   This routine is called in succession from multiply and divide to prepare
-;   two mantissas by setting the leftmost bit that is used for the sign.
-;   On the first call A holds zero and picks up the sign bit. On the second
-;   call the two bits are XORed to form the result sign - minus * minus giving
-;   plus etc. If either number is zero then this is flagged.
-;   HL addresses the exponent.
-
-;; PREP-M/D
+;;; @brief THE 'PREPARE TO MULTIPLY OR DIVIDE' SUBROUTINE
+;;;
+;;;   This routine is called in succession from multiply and divide to prepare
+;;;   two mantissas by setting the leftmost bit that is used for the sign.
+;;;   On the first call A holds zero and picks up the sign bit. On the second
+;;;   call the two bits are XORed to form the result sign - minus * minus giving
+;;;   plus etc. If either number is zero then this is flagged.
+;;;   HL addresses the exponent.
+;;;
+;;; ; PREP-M/D
+;;; @calls TEST_ZERO
+;;; @calledby MULT_LONG, DIVISION
 PREP_M_D:
         CALL    TEST_ZERO           ; routine TEST-ZERO  preserves accumulator.
         RET     C               ; return carry set if zero
@@ -1283,17 +1487,21 @@ PREP_M_D:
         DEC     HL              ; point to exponent
         RET                     ; return with carry reset
 
-; ----------------------
-; THE 'MULTIPLY' ROUTINE
-; ----------------------
-; (offset: $04 'multiply')
-;
-;
-;   "He said go forth and something about mathematics, I wasn't really
-;    listening" - overheard conversation between two unicorns.
-;    [ The Odd Streak ].
-
-;; multiply
+;;; @brief THE 'MULTIPLY' ROUTINE
+;;;
+;;; (offset: $04 'multiply')
+;;;
+;;;
+;;;   "He said go forth and something about mathematics, I wasn't really
+;;; @verbatim
+;;;    listening" - overheard conversation between two unicorns.
+;;;    [ The Odd Streak ].
+;;; @endverbatim
+;;;
+;;; ; multiply
+;;; @calls INT_FETCH, HL_HL_DE
+;;; @jumps MULT_LONG, MULT_OFLW, MULT_RSLT
+;;; @fallthrough MULT_RSLT
 MULTIPLY:
         LD      A,(DE)          ;
         OR      (HL)            ;
@@ -1322,7 +1530,11 @@ MULTIPLY:
 
         LD      C,A             ;
 
-;; MULT-RSLT
+;;; @brief ; MULT-RSLT
+;;;
+;;; ; MULT-RSLT
+;;; @calls INT_STORE
+;;; @jumpedfrom MULTIPLY
 MULT_RSLT:
         CALL    INT_STORE           ; routine INT-STORE
         POP      DE             ;
@@ -1330,11 +1542,20 @@ MULT_RSLT:
 
 ; ---
 
-;; MULT-OFLW
+;;; @brief ; MULT-OFLW
+;;;
+;;; ; MULT-OFLW
+;;; @jumpedfrom MULTIPLY
+;;; @fallthrough MULT_LONG
 MULT_OFLW:
         POP     DE              ;
 
-;; MULT-LONG
+;;; @brief ; MULT-LONG
+;;;
+;;; ; MULT-LONG
+;;; @calls RE_ST_TWO, PREP_M_D, FETCH_TWO
+;;; @jumps ZERO_RSLT, STRT_MLT
+;;; @jumpedfrom MULTIPLY
 MULT_LONG:
         CALL    RE_ST_TWO           ; routine RE-ST-TWO
         XOR     A               ;
@@ -1364,7 +1585,11 @@ MULT_LONG:
 
 ; ---
 
-;; MLT-LOOP
+;;; @brief ; MLT-LOOP
+;;;
+;;; ; MLT-LOOP
+;;; @jumps NO_ADD
+;;; @fallthrough NO_ADD
 MLT_LOOP:
         JR      NC,NO_ADD        ; to NO-ADD
 
@@ -1373,7 +1598,11 @@ MLT_LOOP:
         ADC     HL,DE           ;
         EXX                     ;
 
-;; NO-ADD
+;;; @brief ; NO-ADD
+;;;
+;;; ; NO-ADD
+;;; @jumpedfrom MLT_LOOP
+;;; @fallthrough STRT_MLT
 NO_ADD:
         EXX                     ;
         RR      H               ;
@@ -1382,7 +1611,12 @@ NO_ADD:
         RR      H               ;
         RR      L               ;
 
-;; STRT-MLT
+;;; @brief ; STRT-MLT
+;;;
+;;; ; STRT-MLT
+;;; @jumps MAKE_EXPT
+;;; @jumpedfrom MULT_LONG
+;;; @fallthrough MAKE_EXPT
 STRT_MLT:
         EXX                     ;
         RR      B               ;
@@ -1404,12 +1638,21 @@ STRT_MLT:
 
         AND     A               ;
 
-;; MAKE-EXPT
+;;; @brief ; MAKE-EXPT
+;;;
+;;; ; MAKE-EXPT
+;;; @jumpedfrom STRT_MLT
+;;; @fallthrough DIVN_EXPT
 MAKE_EXPT:
         DEC     A               ;
         CCF                     ; Complement Carry Flag
 
-;; DIVN-EXPT
+;;; @brief ; DIVN-EXPT
+;;;
+;;; ; DIVN-EXPT
+;;; @jumps OFLW1_CLR, REPORT_6
+;;; @jumpedfrom COUNT_ONE
+;;; @fallthrough OFLW1_CLR
 DIVN_EXPT:
         RLA                     ;
         CCF                     ; Complement Carry Flag
@@ -1420,7 +1663,12 @@ DIVN_EXPT:
 
         AND     A               ;
 
-;; OFLW1-CLR
+;;; @brief ; OFLW1-CLR
+;;;
+;;; ; OFLW1-CLR
+;;; @jumps OFLW2_CLR, REPORT_6
+;;; @jumpedfrom DIVN_EXPT
+;;; @fallthrough OFLW2_CLR
 OFLW1_CLR:
         INC     A               ;
         JR      NZ,OFLW2_CLR        ; to OFLW2-CLR
@@ -1432,30 +1680,53 @@ OFLW1_CLR:
         EXX                     ;
         JR      NZ,REPORT_6        ; to REPORT-6
 
-;; OFLW2-CLR
+;;; @brief ; OFLW2-CLR
+;;;
+;;; ; OFLW2-CLR
+;;; @jumpedfrom OFLW1_CLR
+;;; @fallthrough TEST_NORM
 OFLW2_CLR:
         LD      (HL),A          ;
         EXX                     ;
         LD      A,B             ;
         EXX                     ;
 
-;; TEST-NORM
+;;; @brief ; TEST-NORM
+;;;
+;;; ; TEST-NORM
+;;; @jumps NORMALISE
+;;; @jumpedfrom GO_NC_MLT
+;;; @fallthrough NEAR_ZERO
 TEST_NORM:
         JR      NC,NORMALISE        ; to NORMALISE
 
         LD      A,(HL)          ;
         AND     A               ;
 
-;; NEAR-ZERO
+;;; @brief ; NEAR-ZERO
+;;;
+;;; ; NEAR-ZERO
+;;; @jumps SKIP_ZERO
+;;; @jumpedfrom SHIFT_ONE
+;;; @fallthrough ZERO_RSLT
 NEAR_ZERO:
         LD      A,$80           ;
         JR      Z,SKIP_ZERO         ; to SKIP-ZERO
 
-;; ZERO-RSLT
+;;; @brief ; ZERO-RSLT
+;;;
+;;; ; ZERO-RSLT
+;;; @jumpedfrom MULT_LONG, SHIFT_ONE
+;;; @fallthrough SKIP_ZERO
 ZERO_RSLT:
         XOR     A               ;
 
-;; SKIP-ZERO
+;;; @brief ; SKIP-ZERO
+;;;
+;;; ; SKIP-ZERO
+;;; @calls ZEROS_4_5
+;;; @jumps OFLOW_CLR
+;;; @jumpedfrom NEAR_ZERO
 SKIP_ZERO:
         EXX                     ;
         AND     D               ;
@@ -1471,11 +1742,18 @@ SKIP_ZERO:
 
 ; ---
 
-;; NORMALISE
+;;; @brief ; NORMALISE
+;;;
+;;; ; NORMALISE
+;;; @jumpedfrom TEST_NORM
+;;; @fallthrough SHIFT_ONE
 NORMALISE:
         LD      B,$20           ;
 
-;; SHIFT-ONE
+;;; @brief ; SHIFT-ONE
+;;;
+;;; ; SHIFT-ONE
+;;; @jumps NORML_NOW, NEAR_ZERO, ZERO_RSLT
 SHIFT_ONE:
         EXX                     ;
         BIT     7,D             ;
@@ -1498,7 +1776,13 @@ SHIFT_ONE:
 
 ; ---
 
-;; NORML-NOW
+;;; @brief ; NORML-NOW
+;;;
+;;; ; NORML-NOW
+;;; @calls ADD_BACK
+;;; @jumps OFLOW_CLR, REPORT_6
+;;; @jumpedfrom SHIFT_ONE
+;;; @fallthrough OFLOW_CLR
 NORML_NOW:
         RLA                     ;
         JR      NC,OFLOW_CLR        ; to OFLOW-CLR
@@ -1512,7 +1796,10 @@ NORML_NOW:
         INC     (HL)            ;
         JR      Z,REPORT_6         ; to REPORT-6
 
-;; OFLOW-CLR
+;;; @brief ; OFLOW-CLR
+;;;
+;;; ; OFLOW-CLR
+;;; @jumpedfrom SKIP_ZERO, NORML_NOW
 OFLOW_CLR:
         PUSH    HL              ;
         INC     HL              ;
@@ -1540,20 +1827,24 @@ OFLOW_CLR:
 
 ; ---
 
-;; REPORT-6
+;;; @brief ; REPORT-6
+;;;
+;;; ; REPORT-6
+;;; @jumpedfrom BIN_DIGIT, ST_E_PART, ADD_REP_6, DIVN_EXPT, OFLW1_CLR, NORML_NOW, DIVISION
 REPORT_6:
         RST     08H             ; ERROR-1
         DB          $05             ; Error Report: Number too big
 
-; ----------------------
-; THE 'DIVISION' ROUTINE
-; ----------------------
-; (offset: $05 'division')
-;
-;   "He who can properly define and divide is to be considered a god"
-;   - Plato,  429 - 347 B.C.
-
-;; division
+;;; @brief THE 'DIVISION' ROUTINE
+;;;
+;;; (offset: $05 'division')
+;;;
+;;;   "He who can properly define and divide is to be considered a god"
+;;;   - Plato,  429 - 347 B.C.
+;;;
+;;; ; division
+;;; @calls RE_ST_TWO, PREP_M_D, FETCH_TWO
+;;; @jumps REPORT_6, DIV_START
 DIVISION:
         CALL    RE_ST_TWO           ; routine RE-ST-TWO
         EX      DE,HL           ;
@@ -1584,7 +1875,11 @@ DIVISION:
 
 ; ---
 
-;; DIV-LOOP
+;;; @brief ; DIV-LOOP
+;;;
+;;; ; DIV-LOOP
+;;; @jumpedfrom COUNT_ONE
+;;; @fallthrough DIV_34TH
 DIV_LOOP:
         RLA                     ;
         RL      C               ;
@@ -1593,7 +1888,11 @@ DIV_LOOP:
         RL      B               ;
         EXX                     ;
 
-;; div-34th
+;;; @brief ; div-34th
+;;;
+;;; ; div-34th
+;;; @jumps SUBN_ONLY
+;;; @fallthrough DIV_START
 DIV_34TH:
         ADD     HL,HL           ;
         EXX                     ;
@@ -1601,7 +1900,11 @@ DIV_34TH:
         EXX                     ;
         JR      C,SUBN_ONLY         ; to SUBN-ONLY
 
-;; DIV-START
+;;; @brief ; DIV-START
+;;;
+;;; ; DIV-START
+;;; @jumps NO_RSTORE, COUNT_ONE
+;;; @jumpedfrom DIVISION, COUNT_ONE
 DIV_START:
         SBC     HL,DE           ;
         EXX                     ;
@@ -1618,7 +1921,11 @@ DIV_START:
 
 ; ---
 
-;; SUBN-ONLY
+;;; @brief ; SUBN-ONLY
+;;;
+;;; ; SUBN-ONLY
+;;; @jumpedfrom DIV_34TH
+;;; @fallthrough NO_RSTORE
 SUBN_ONLY:
         AND     A               ;
         SBC     HL,DE           ;
@@ -1626,11 +1933,19 @@ SUBN_ONLY:
         SBC     HL,DE           ;
         EXX                     ;
 
-;; NO-RSTORE
+;;; @brief ; NO-RSTORE
+;;;
+;;; ; NO-RSTORE
+;;; @jumpedfrom DIV_START
+;;; @fallthrough COUNT_ONE
 NO_RSTORE:
         SCF                     ; Set Carry Flag
 
-;; COUNT-ONE
+;;; @brief ; COUNT-ONE
+;;;
+;;; ; COUNT-ONE
+;;; @jumps DIV_LOOP, DIV_START, DIVN_EXPT
+;;; @jumpedfrom DIV_START
 COUNT_ONE:
         INC     B               ;
         JP      M,DIV_LOOP         ; to DIV-LOOP
@@ -1659,13 +1974,10 @@ COUNT_ONE:
         SUB     C               ;
         JP      DIVN_EXPT           ; jump back to DIVN-EXPT
 
-; ------------------------------------
-; Integer truncation towards zero ($3A)
-; ------------------------------------
-;
-;
-
-;; truncate
+;;; @brief Integer truncation towards zero ($3A)
+;;;
+;;; ; truncate
+;;; @jumps T_GR_ZERO, NIL_BYTES
 TRUNCATE:
         LD      A,(HL)          ;
         AND     A               ;
@@ -1680,7 +1992,12 @@ TRUNCATE:
 
 ; ---
 
-;; T-GR-ZERO
+;;; @brief ; T-GR-ZERO
+;;;
+;;; ; T-GR-ZERO
+;;; @jumps T_SMALL, T_FIRST
+;;; @jumpedfrom TRUNCATE
+;;; @fallthrough T_FIRST
 T_GR_ZERO:
         CP      $91             ;
         JR      NZ,T_SMALL        ; to T-SMALL
@@ -1698,7 +2015,11 @@ T_GR_ZERO:
         LD      A,$80           ;
         XOR     (HL)            ;
 
-;; T-FIRST
+;;; @brief ; T-FIRST
+;;;
+;;; ; T-FIRST
+;;; @jumps T_EXPNENT, NIL_BYTES
+;;; @jumpedfrom T_GR_ZERO
 T_FIRST:
         DEC     HL              ;
         JR      NZ,T_EXPNENT        ; to T-EXPNENT
@@ -1712,7 +2033,12 @@ T_FIRST:
 
 ; ---
 
-;; T-SMALL
+;;; @brief ; T-SMALL
+;;;
+;;; ; T-SMALL
+;;; @jumps X_LARGE, T_NUMERIC
+;;; @jumpedfrom T_GR_ZERO
+;;; @fallthrough T_NUMERIC
 T_SMALL:
         JR      NC,X_LARGE        ; to X-LARGE
 
@@ -1731,7 +2057,12 @@ T_SMALL:
 
         DEC     C               ;
 
-;; T-NUMERIC
+;;; @brief ; T-NUMERIC
+;;;
+;;; ; T-NUMERIC
+;;; @jumps T_TEST
+;;; @jumpedfrom T_SMALL
+;;; @fallthrough T_TEST
 T_NUMERIC:
         SET     7,D             ;
         LD      B,$08           ;
@@ -1743,19 +2074,31 @@ T_NUMERIC:
         LD      D,$00           ;
         SUB     B               ;
 
-;; T-TEST
+;;; @brief ; T-TEST
+;;;
+;;; ; T-TEST
+;;; @jumps T_STORE
+;;; @jumpedfrom T_NUMERIC
+;;; @fallthrough T_SHIFT
 T_TEST:
         JR      Z,T_STORE         ; to T-STORE
 
         LD      B,A             ;
 
-;; T-SHIFT
+;;; @brief ; T-SHIFT
+;;;
+;;; ; T-SHIFT
+;;; @fallthrough T_STORE
 T_SHIFT:
         SRL     D               ;
         RR      E               ;
         DJNZ    T_SHIFT           ; to T-SHIFT
 
-;; T-STORE
+;;; @brief ; T-STORE
+;;;
+;;; ; T-STORE
+;;; @calls INT_STORE
+;;; @jumpedfrom T_TEST
 T_STORE:
         CALL    INT_STORE           ; routine INT-STORE
         POP     DE              ;
@@ -1763,18 +2106,31 @@ T_STORE:
 
 ; ---
 
-;; T-EXPNENT
+;;; @brief ; T-EXPNENT
+;;;
+;;; ; T-EXPNENT
+;;; @jumpedfrom T_FIRST
+;;; @fallthrough X_LARGE
 T_EXPNENT:
         LD      A,(HL)          ;
 
-;; X-LARGE
+;;; @brief ; X-LARGE
+;;;
+;;; ; X-LARGE
+;;; @jumpedfrom T_SMALL
+;;; @fallthrough NIL_BYTES
 X_LARGE:
         SUB     $A0             ;
         RET     P               ;
 
         NEG                     ; Negate
 
-;; NIL-BYTES
+;;; @brief ; NIL-BYTES
+;;;
+;;; ; NIL-BYTES
+;;; @jumps BITS_ZERO
+;;; @jumpedfrom TRUNCATE, T_FIRST
+;;; @fallthrough BYTE_ZERO
 NIL_BYTES:
         PUSH    DE              ;
         EX      DE,HL           ;
@@ -1785,13 +2141,21 @@ NIL_BYTES:
         SRL     B               ;
         JR      Z,BITS_ZERO         ; to BITS-ZERO
 
-;; BYTE-ZERO
+;;; @brief ; BYTE-ZERO
+;;;
+;;; ; BYTE-ZERO
+;;; @fallthrough BITS_ZERO
 BYTE_ZERO:
         LD      (HL),$00        ;
         DEC     HL              ;
         DJNZ    BYTE_ZERO           ; to BYTE-ZERO
 
-;; BITS-ZERO
+;;; @brief ; BITS-ZERO
+;;;
+;;; ; BITS-ZERO
+;;; @jumps IX_END
+;;; @jumpedfrom NIL_BYTES
+;;; @fallthrough LESS_MASK
 BITS_ZERO:
         AND     $07             ;
         JR      Z,IX_END         ; to IX-END
@@ -1799,7 +2163,10 @@ BITS_ZERO:
         LD      B,A             ;
         LD      A,$FF           ;
 
-;; LESS-MASK
+;;; @brief ; LESS-MASK
+;;;
+;;; ; LESS-MASK
+;;; @fallthrough IX_END
 LESS_MASK:
         SLA     A               ;
         DJNZ    LESS_MASK           ; to LESS-MASK
@@ -1807,7 +2174,10 @@ LESS_MASK:
         AND     (HL)            ;
         LD      (HL),A          ;
 
-;; IX-END
+;;; @brief ; IX-END
+;;;
+;;; ; IX-END
+;;; @jumpedfrom BITS_ZERO
 IX_END:
         EX      DE,HL           ;
         POP     DE              ;
@@ -1869,29 +2239,38 @@ IX_END:
 ;
 ; 10000001 00000000 00000000
 
-; ----------------------------------------------
-; THE 'RE-STACK TWO "SMALL" INTEGERS' SUBROUTINE
-; ----------------------------------------------
-;   This routine is called to re-stack two numbers in full floating point form
-;   e.g. from mult when integer multiplication has overflowed.
-
-;; RE-ST-TWO
+;;; @brief THE 'RE-STACK TWO "SMALL" INTEGERS' SUBROUTINE
+;;;
+;;;   This routine is called to re-stack two numbers in full floating point form
+;;;   e.g. from mult when integer multiplication has overflowed.
+;;;
+;;; ; RE-ST-TWO
+;;; @calls RESTK_SUB
+;;; @calledby FULL_ADDN, MULT_LONG, DIVISION
+;;; @fallthrough RESTK_SUB
 RE_ST_TWO:
         CALL    RESTK_SUB           ; routine RESTK-SUB  below and continue
                                 ; into the routine to do the other one.
 
-;; RESTK-SUB
+;;; @brief ; RESTK-SUB
+;;;
+;;; ; RESTK-SUB
+;;; @calledby RE_ST_TWO
+;;; @fallthrough RE_STACK
 RESTK_SUB:
         EX      DE,HL           ; swap pointers
 
-; ---------------------------------------------
-; THE 'RE-STACK ONE "SMALL" INTEGER' SUBROUTINE
-; ---------------------------------------------
-; (offset: $3D 're-stack')
-;   This routine re-stacks an integer, usually on the calculator stack, in full
-;   floating point form.  HL points to first byte.
-
-;; re-stack
+;;; @brief THE 'RE-STACK ONE "SMALL" INTEGER' SUBROUTINE
+;;;
+;;; (offset: $3D 're-stack')
+;;;   This routine re-stacks an integer, usually on the calculator stack, in full
+;;;   floating point form.  HL points to first byte.
+;;;
+;;; ; re-stack
+;;; @calls INT_FETCH
+;;; @jumps RS_NRMLSE, RS_STORE
+;;; @calledby ATN
+;;; @fallthrough RS_NRMLSE
 RE_STACK:
         LD      A,(HL)          ; Fetch Exponent byte to A
         AND     A               ; test it
@@ -1930,11 +2309,18 @@ RE_STACK:
         LD      B,$89           ; reduce the initial exponent by eight.
 
 
-;; RS-NRMLSE
+;;; @brief ; RS-NRMLSE
+;;;
+;;; ; RS-NRMLSE
+;;; @jumpedfrom RE_STACK
+;;; @fallthrough RSTK_LOOP
 RS_NRMLSE:
         EX      DE,HL           ; integer to HL, addr of 4th byte to DE.
 
-;; RSTK-LOOP
+;;; @brief ; RSTK-LOOP
+;;;
+;;; ; RSTK-LOOP
+;;; @fallthrough RS_STORE
 RSTK_LOOP:
         DEC     B               ; decrease exponent
         ADD     HL,HL           ; shift DE left
@@ -1949,7 +2335,10 @@ RSTK_LOOP:
 
         EX      DE,HL           ; address 4th byte, normalized int to DE
 
-;; RS-STORE
+;;; @brief ; RS-STORE
+;;;
+;;; ; RS-STORE
+;;; @jumpedfrom RE_STACK
 RS_STORE:
         DEC     HL              ; address 3rd byte
         LD      (HL),E          ; place E

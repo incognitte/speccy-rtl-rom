@@ -1,31 +1,23 @@
-\
-# ArabRAM ROM reassembly — build with sjasmplus
-# https://github.com/z00m128/sjasmplus
-#
-# Usage:
-#   make              # build ArabRAM_regenerated.ROM
-#   make verify       # build, then byte-compare against rom/ArabRam.rom
-#   make clean        # remove build output
+SJ_TAG := v1.24.0
+SJ     := $(shell command -v sjasmplus 2>/dev/null || echo .sjasmplus/sjasmplus)
 
-SJASMPLUS ?= tools/sjasmplus
-SRC        = ArabRAM.asm
-SRC_FILES  = $(SRC) $(wildcard src/*.asm)
-OUT        = ArabRAM_regenerated.ROM
-REFERENCE  = rom/ArabRam.rom
+.PHONY: arabic persian clean distclean
 
-.PHONY: all verify clean sjasmplus-check
+arabic: $(SJ)
+	mkdir -p build
+	$(SJ) --raw=build/48k_ARABIC.ROM main.asm
 
-all: $(OUT)
+persian: $(SJ)
+	mkdir -p build
+	$(SJ) -DLANG_PERSIAN --raw=build/48k_PERSIAN.ROM main.asm
 
-$(OUT): $(SRC_FILES)
-	$(SJASMPLUS) $(SRC) --raw=$(OUT)
-
-verify: $(OUT)
-	@cmp $(OUT) $(REFERENCE) && echo "OK: $(OUT) is byte-identical to $(REFERENCE)"
-
-sjasmplus-check:
-	@which $(SJASMPLUS) > /dev/null 2>&1 && echo "sjasmplus found: $$(which $(SJASMPLUS))" || \
-	  (echo "sjasmplus not found on PATH. See README.md 'Getting sjasmplus' section." && exit 1)
+.sjasmplus/sjasmplus:
+	git clone --depth 1 --branch $(SJ_TAG) https://github.com/z00m128/sjasmplus .sjasmplus-src
+	$(MAKE) -C .sjasmplus-src USE_LUA=0
+	mkdir -p .sjasmplus
+	cp .sjasmplus-src/sjasmplus .sjasmplus/
 
 clean:
-	rm -f $(OUT)
+	rm -rf build
+distclean: clean
+	rm -rf .sjasmplus .sjasmplus-src

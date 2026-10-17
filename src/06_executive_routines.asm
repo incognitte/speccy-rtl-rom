@@ -1,3 +1,6 @@
+;;; @file 06_executive_routines.asm
+;;; @brief Part 6. EXECUTIVE ROUTINES
+
 ; *********************************
 ; ** Part 6. EXECUTIVE ROUTINES  **
 ; *********************************
@@ -30,18 +33,18 @@
 ;  WORKSP                  STKBOT  STKEND   sp               RAMTOP UDG  P_RAMT
 ;
 
-; -----------------
-; THE 'NEW' COMMAND
-; -----------------
-;   The NEW command is about to set all RAM below RAMTOP to zero and then
-;   re-initialize the system.  All RAM above RAMTOP should, and will be,
-;   preserved.
-;   There is nowhere to store values in RAM or on the stack which becomes
-;   inoperable. Similarly PUSH and CALL instructions cannot be used to store
-;   values or section common code. The alternate register set is the only place
-;   available to store 3 persistent 16-bit system variables.
-
-;; NEW
+;;; @brief THE 'NEW' COMMAND
+;;;
+;;;   The NEW command is about to set all RAM below RAMTOP to zero and then
+;;;   re-initialize the system.  All RAM above RAMTOP should, and will be,
+;;;   preserved.
+;;;   There is nowhere to store values in RAM or on the stack which becomes
+;;;   inoperable. Similarly PUSH and CALL instructions cannot be used to store
+;;;   values or section common code. The alternate register set is the only place
+;;;   available to store 3 persistent 16-bit system variables.
+;;;
+;;; ; NEW
+;;; @fallthrough START_NEW
 NEW:
         DI                      ; Disable Interrupts - machine stack will be
                                 ; cleared.
@@ -53,15 +56,16 @@ NEW:
         LD      HL,(UDG)      ; Fetch UDG    differs on 16K/48K machines.
         EXX                     ; Switch back to main set and continue into...
 
-; ----------------------
-; THE 'START-NEW' BRANCH
-; ----------------------
-;   This branch is taken from above and from RST 00h.
-;   The common code tests RAM and sets it to zero re-initializing all the
-;   non-zero system variables and channel information.  The A register flags
-;   if coming from START or NEW.
-
-;; START-NEW
+;;; @brief THE 'START-NEW' BRANCH
+;;;
+;;;   This branch is taken from above and from RST 00h.
+;;;   The common code tests RAM and sets it to zero re-initializing all the
+;;;   non-zero system variables and channel information.  The A register flags
+;;;   if coming from START or NEW.
+;;;
+;;; ; START-NEW
+;;; @jumpedfrom START
+;;; @fallthrough RAM_CHECK
 START_NEW:
         LD      B,A             ; Save the flag to control later branching.
 
@@ -80,28 +84,35 @@ START_NEW:
         NOP                     ;
         NOP                     ;
 
-; -----------------------
-; THE 'RAM CHECK' SECTION
-; -----------------------
-;   Typically, a Spectrum will have 16K or 48K of RAM and this code will test
-;   it all till it finds an unpopulated location or, less likely, a faulty
-;   location.  Usually it stops when it reaches the top $FFFF, or in the case
-;   of NEW the supplied top value.  The entire screen turns black with
-;   sometimes red stripes on black paper just visible.
-
-;; ram-check
+;;; @brief THE 'RAM CHECK' SECTION
+;;;
+;;;   Typically, a Spectrum will have 16K or 48K of RAM and this code will test
+;;;   it all till it finds an unpopulated location or, less likely, a faulty
+;;;   location.  Usually it stops when it reaches the top $FFFF, or in the case
+;;;   of NEW the supplied top value.  The entire screen turns black with
+;;;   sometimes red stripes on black paper just visible.
+;;;
+;;; ; ram-check
+;;; @fallthrough RAM_FILL
 RAM_CHECK:
         LD      H,D             ; Transfer the top value to the HL register
         LD      L,E             ; pair.
 
-;; RAM-FILL
+;;; @brief ; RAM-FILL
+;;;
+;;; ; RAM-FILL
+;;; @fallthrough RAM_READ
 RAM_FILL:
         LD      (HL),$02        ; Load memory with $02 - red ink on black paper.
         DEC     HL              ; Decrement memory address.
         CP      H               ; Have we reached ROM - $3F ?
         JR      NZ,RAM_FILL     ; Back to RAM-FILL if not.
 
-;; RAM-READ
+;;; @brief ; RAM-READ
+;;;
+;;; ; RAM-READ
+;;; @jumps RAM_DONE
+;;; @fallthrough RAM_DONE
 RAM_READ:
         AND     A               ; Clear carry - prepare to subtract.
         SBC     HL,DE           ; subtract and add back setting
@@ -116,7 +127,12 @@ RAM_READ:
         DEC     (HL)            ; decrement to zero.
         JR      Z,RAM_READ      ; back to RAM-READ if zero flag was set.
 
-;; RAM-DONE
+;;; @brief ; RAM-DONE
+;;;
+;;; ; RAM-DONE
+;;; @jumps RAM_SET
+;;; @jumpedfrom RAM_READ
+;;; @fallthrough RAM_SET
 RAM_DONE:
         DEC     HL              ; step back to last valid location.
         EXX                     ; regardless of state, set up possibly
@@ -147,7 +163,11 @@ RAM_DONE:
 
 ;   The NEW command path rejoins here.
 
-;; RAM-SET
+;;; @brief ; RAM-SET
+;;;
+;;; ; RAM-SET
+;;; @jumpedfrom RAM_DONE
+;;; @fallthrough NMI_VECT
 RAM_SET:
         LD      (RAMTOP),HL      ; set system variable RAMTOP to HL.
 
@@ -157,7 +177,10 @@ RAM_SET:
 ;   any NMI Handler would perform the tasks from here to the EI instruction
 ;   below.
 
-;; NMI_VECT
+;;; @brief ; NMI_VECT
+;;;
+;;; ; NMI_VECT
+;;; @calls CLEAR_PRB, CLS, RTL_PRINT_EXTRA_MSG, PO_MSG
 NMI_VECT:
         LD      HL,L3D00-$100   ; a strange place to set the pointer to the
         LD      (CHARS),HL      ; character set, CHARS - as no printing yet.
@@ -251,7 +274,7 @@ NMI_VECT:
                                 ; two lines
         ;
         ; ---- ARABIC BOOT SPLASH (replaces the English "(c) 1982 Sinclair Research Ltd") ----
-        ; Step 1: ARAB_PRINT_EXTRA_MSG ($3CF6, file 11) = CALL CLS; XOR A; LD DE,$09DF; JP PO_MSG.
+        ; Step 1: RTL_PRINT_EXTRA_MSG ($3CF6, file 11) = CALL CLS; XOR A; LD DE,$09DF; JP PO_MSG.
         ;   It clears the screen and prints the Arabic TITLE LOGO, the message stored in the
         ;   cassette message table (file 04, message at $09E0).  Like every message printed
         ;   straight after CLS it goes to the LOWER-SCREEN channel starting on the bottom line;
@@ -264,24 +287,26 @@ NMI_VECT:
         ;   (key codes "YQH | QGe"; text prints right to left).
         ; Step 2: the copyright line below is printed at the bottom row (row 23, columns 7-23):
         ;         (c) اوتورام كمبيوتر                    =  "(c) AutoRAM Computer"
-        ;   (key codes $7F " GhJhQGe ceHihJQ"; stored at $01ED in file 01, ARAB_BOOT_COPYRIGHT_MSG).
+        ;   (key codes $7F " GhJhQGe ceHihJQ"; stored at $01ED in file 01, LANG_BOOT_COPYRIGHT_MSG).
         ;   DE=$01EC is the inverted last byte of the COPY token in the token table, used as the
         ;   step-over byte that PO-MSG skips (message number 0 starts at the next byte).
-        CALL    ARAB_PRINT_EXTRA_MSG    ; clear screen and print the Arabic title logo (see above)
+        IFDEF   LANG_PERSIAN
+        CALL    CLS
+        ELSE
+        CALL    RTL_PRINT_EXTRA_MSG    ; clear screen and print the Arabic title logo (see above)
+        ENDIF
         XOR     A                       ; message number 0 ...
-        LD      DE,ARAB_BOOT_COPYRIGHT_MSG-1 ; ... starting after the step-over byte just before the Arabic copyright line
+        LD      DE,LANG_BOOT_COPYRIGHT_MSG-1 ; ... starting after the step-over byte just before the Arabic copyright line
         CALL    PO_MSG                  ; prints "(c) اوتورام كمبيوتر" at the bottom of the display
         SET     5,(IY+$02)      ; update TV_FLAG  - signal lower screen will
                                 ; require clearing.
 
         JR      MAIN_1           ; forward to MAIN-1
 
-; -------------------------
-; THE 'MAIN EXECUTION LOOP'
-; -------------------------
-;
-;
-
+;;; @brief THE 'MAIN EXECUTION LOOP'
+;;; @calls AUTO_LIST, SET_MIN, CHAN_OPEN, EDITOR, LINE_SCAN, REMOVE_FP, E_LINE_NO, CL_ALL, CLS_LOWER, LINE_RUN, +5 more
+;;; @jumps MAIN_ADD
+;;; @jumpedfrom MAIN_ADD2
 MAIN_EXEC:
         LD      (IY+$31),$02    ; set DF_SZ lower screen display file size to
                                 ; two lines.
@@ -421,7 +446,7 @@ MAIN_G:
         ;     Report codes 0-9 print as digits.  Codes 10-27 print as the letter whose key code is
         ;     code+$3E ($3A+14 = 'H'): 10=H ب, 11=I ة, 12=J ت, 13=K ث, 14=L ج, 15=M ح, 16=N خ,
         ;     17=O د, 18=P ذ, 19=Q ر, 20=R ز, 21=S س, 22=T ش, 23=U ص, 24=V ض, 25=W ط, 26=X ظ, 27=Y ع.
-        ;   Then: space, the Arabic message from ARAB_MSG_TABLE_AR ($3923, file 11), space, and
+        ;   Then: space, the Arabic message from LANG_MSG_TABLE ($3923, file 11), space, and
         ;   the line number and ':' statement number as before.
         CALL    L1391                   ; Arabic ON + clear context bits (see L1391 below)
         LD      B,A                     ; B = A
@@ -437,7 +462,7 @@ L1341:
         LD      A,$20                   ; A = $20
         RST     $10                     ; restart at $10
         LD      A,B                     ; A = B
-        LD      DE,ARAB_MSG_TABLE_AR    ; DE = Arabic report message table
+        LD      DE,LANG_MSG_TABLE    ; DE = Arabic report message table
 X1349:
         CALL    PO_MSG                  ; call PO_MSG
         LD      A,$20                   ; A = $20
@@ -499,60 +524,74 @@ MAIN_9:
         JP      MAIN_2           ; jump back to MAIN-2.
 
 
-; ------------------------------------------------------------
-; Canned report messages - REMOVED / REPLACED IN THE ARABIC ROM
-; ------------------------------------------------------------
-; In the standard ROM this area ($1391-$1555) held the error report text
-; table (the "rpt-mesgs", "OK", "NEXT without FOR" ...), the ', ' separator
-; and the copyright line " 1982 Sinclair Research Lt"+'d'.  The Arabic ROM
-; has moved all of that elsewhere:
-;     report messages  ->  ARAB_MSG_TABLE_AR at $3923 (file 11), 28 Arabic messages
-;     copyright line   ->  ARAB_BOOT_COPYRIGHT_MSG at $01ED (file 01):
-;                          "(c) اوتورام كمبيوتر" = "(c) AutoRAM Computer"
-;     boot title logo  ->  message at $09E0 (file 04): "عرب | رام" = "ARAB | RAM"
-; The freed ~460 bytes ($1391 up to ARAB_GLYPH_SUBSTITUTE at $145D) were
-; reused for the small routines below, which were moved or added so that
-; numbers display correctly in a right-to-left screen:
-;     L1391 / L1395   reset the Arabic mode / join-context flags
-;     L139E-L13F7     number scanner: copies the digits of a typed number
-;                     in reverse into a buffer before DEC_TO_FP reads them
-;     L13FC-L1424     line-number scanner for E_LINE_NO (digits are
-;                     read units first)
-;     L1426 / L1434   one decimal digit (replaces OUT-SP-NO)
-;     L1436           prints a 4-digit number UNITS FIRST (replaces OUT-NUM-3)
-;                     so that right-to-left printing shows the most
-;                     significant digit on the LEFT, as for normal numerals.
-; Numbers are therefore held in "units first" text order inside the
-; edit line while they are scanned or printed.
-
-; ------------------------------------------------------------
-; L1391 / L1395 - "Arabic ON and reset joining context"
-;   L1391: RES 4,(IY+1)  - clear the "Latin / substitution off" flag, so Arabic
-;                          glyph substitution is active (same as CHR$ 4).
-;   L1395: RES 2,(IY+2); RES 1,(IY+2) - clear TV_FLAG bits 2 and 1, the
-;                          "does not join next" and "previous letter joined"
-;                          context bits (see file 11), so the next letter starts
-;                          a fresh word.  Used by CHR$ 4, by the report printer
-;                          (MAIN-5), by TEMPS (ARAB_TEMPS_HOOK in file 01) and
-;                          by the one-shot form override at $154C.
-; ------------------------------------------------------------
+;;; @brief Canned report messages - REMOVED / REPLACED IN THE ARABIC ROM
+;;;
+;;; In the standard ROM this area ($1391-$1555) held the error report text
+;;; table (the "rpt-mesgs", "OK", "NEXT without FOR" ...), the ', ' separator
+;;; and the copyright line " 1982 Sinclair Research Lt"+'d'.  The Arabic ROM
+;;; has moved all of that elsewhere:
+;;; @verbatim
+;;;     report messages  ->  LANG_MSG_TABLE at $3923 (file 11), 28 Arabic messages
+;;;     copyright line   ->  LANG_BOOT_COPYRIGHT_MSG at $01ED (file 01):
+;;;                          "(c) اوتورام كمبيوتر" = "(c) AutoRAM Computer"
+;;;     boot title logo  ->  message at $09E0 (file 04): "عرب | رام" = "ARAB | RAM"
+;;; @endverbatim
+;;; The freed ~460 bytes ($1391 up to RTL_GLYPH_SUBSTITUTE at $145D) were
+;;; reused for the small routines below, which were moved or added so that
+;;; numbers display correctly in a right-to-left screen:
+;;; @verbatim
+;;;     L1391 / L1395   reset the Arabic mode / join-context flags
+;;;     L139E-L13F7     number scanner: copies the digits of a typed number
+;;;                     in reverse into a buffer before DEC_TO_FP reads them
+;;;     L13FC-L1424     line-number scanner for E_LINE_NO (digits are
+;;;                     read units first)
+;;;     L1426 / L1434   one decimal digit (replaces OUT-SP-NO)
+;;;     L1436           prints a 4-digit number UNITS FIRST (replaces OUT-NUM-3)
+;;;                     so that right-to-left printing shows the most
+;;;                     significant digit on the LEFT, as for normal numerals.
+;;; @endverbatim
+;;; Numbers are therefore held in "units first" text order inside the
+;;; edit line while they are scanned or printed.
+;;;
+;;; L1391 / L1395 - "Arabic ON and reset joining context"
+;;;   L1391: RES 4,(IY+1)  - clear the "Latin / substitution off" flag, so Arabic
+;;;                          glyph substitution is active (same as CHR$ 4).
+;;;   L1395: RES 2,(IY+2); RES 1,(IY+2) - clear TV_FLAG bits 2 and 1, the
+;;; @verbatim
+;;;                          "does not join next" and "previous letter joined"
+;;;                          context bits (see file 11), so the next letter starts
+;;;                          a fresh word.  Used by CHR$ 4, by the report printer
+;;;                          (MAIN-5), by TEMPS (RTL_TEMPS_HOOK in file 01) and
+;;;                          by the one-shot form override at $154C.
+;;; @endverbatim
+;;; @address $1391
+;;; @calledby RTL_TEMPS_HOOK, MAIN_EXEC
+;;; @jumpedfrom RTL_NEW_CTRL_HANDLER
+;;; @fallthrough L1395
 L1391:
         RES     4,(IY+1)                ; clear bit 4 of (IY+1)
+;;; @brief Entry point L1395 (no original comment).
+;;; @address $1395
+;;; @calledby L1543
 L1395:
         RES     2,(IY+2)                ; clear bit 2 of (IY+2)
         RES     1,(IY+2)                ; clear bit 1 of (IY+2)
         RET                             ; return
-; ------------------------------------------------------------
-; L139E - scan a number typed in the edit line (called from S_DECIMAL, file 08,
-;   while a BASIC line is being syntax-checked)
-;   The digit characters are copied, going BACKWARDS from $5CAF, into a small
-;   buffer (L13E2: DEC DE; LD (DE),A; ... loop while NUMERIC), handling the BIN
-;   token ($C4: L13EB), a decimal point ($2E) and the exponent marker $5D (the
-;   ']' key, shown as an 'E' glyph).  Finally CH_ADD is pointed at the buffer
-;   (TEMP_PTR2) and DEC_TO_FP converts the reversed text, so the number is read
-;   with the LAST digit stored in the line as its most significant one.
-;   This is the counterpart of L1436 which prints numbers units-first.
-; ------------------------------------------------------------
+;;; @brief L139E - scan a number typed in the edit line (called from S_DECIMAL, file 08, while a BASIC line is being syntax-checked
+;;;
+;;; L139E - scan a number typed in the edit line (called from S_DECIMAL, file 08,
+;;;   while a BASIC line is being syntax-checked)
+;;;   The digit characters are copied, going BACKWARDS from $5CAF, into a small
+;;;   buffer (L13E2: DEC DE; LD (DE),A; ... loop while NUMERIC), handling the BIN
+;;;   token ($C4: L13EB), a decimal point ($2E) and the exponent marker $5D (the
+;;;   ']' key, shown as an 'E' glyph).  Finally CH_ADD is pointed at the buffer
+;;;   (TEMP_PTR2) and DEC_TO_FP converts the reversed text, so the number is read
+;;;   with the LAST digit stored in the line as its most significant one.
+;;;   This is the counterpart of L1436 which prints numbers units-first.
+;;; @address $139E
+;;; @calls L13E2, TEMP_PTR2, DEC_TO_FP
+;;; @jumps TEMP_PTR2
+;;; @calledby S_DECIMAL
 L139E:
         LD      DE,$5CAF                ; DE = $5CAF
         LD      A,E                     ; A = E
@@ -595,6 +634,10 @@ L13D6:
         CALL    DEC_TO_FP               ; call DEC_TO_FP
         POP     HL                      ; pop HL off the stack
         JP      TEMP_PTR2               ; jump to TEMP_PTR2
+;;; @brief Entry point L13E2 (no original comment).
+;;; @address $13E2
+;;; @calls NUMERIC
+;;; @calledby L139E
 L13E2:
         DEC     DE                      ; DE = DE - 1
         LD      (DE),A                  ; (DE) = A
@@ -615,13 +658,16 @@ L13F7:
         LD      A,$C4                   ; A = $C4
         LD      (DE),A                  ; (DE) = A
         JR      L13D6                   ; jump to L13D6
-; ------------------------------------------------------------
-; L13FC - scan a LINE NUMBER from the edit line (called by E_LINE_NO)
-;   Returns HL = line number, carry set if the first character is not a digit.
-;   The first digit read is the UNITS digit, each following digit has ten times the
-;   weight of the one before (DE holds the weight: 1, 10, 100 ...), the reverse of
-;   the original left-to-right scanner.  Overflow (carry) ends the scan.
-; ------------------------------------------------------------
+;;; @brief L13FC - scan a LINE NUMBER from the edit line (called by E_LINE_NO) Returns HL = line number, carry set if the first cha
+;;;
+;;; L13FC - scan a LINE NUMBER from the edit line (called by E_LINE_NO)
+;;;   Returns HL = line number, carry set if the first character is not a digit.
+;;;   The first digit read is the UNITS digit, each following digit has ten times the
+;;;   weight of the one before (DE holds the weight: 1, 10, 100 ...), the reverse of
+;;;   the original left-to-right scanner.  Overflow (carry) ends the scan.
+;;; @address $13FC
+;;; @calls NUMERIC
+;;; @calledby E_LINE_NO
 L13FC:
         LD      HL,0                    ; HL = 0
         LD      DE,1                    ; DE = 1
@@ -655,12 +701,14 @@ L141D:
 L1424:
         POP     HL                      ; pop HL off the stack
         RET                             ; return
-; ------------------------------------------------------------
-; L1426 / L1434 - one decimal digit of a number (replaces OUT-SP-NO)
-;   HL = value, BC = negative power of ten (e.g. $FC18 = -1000).  Counts how many
-;   times BC can be subtracted.  Returns A = '0'+count, or - when the count is zero -
-;   A = E, the "leading zero" marker ($FF = print nothing, $20 = print a space).
-; ------------------------------------------------------------
+;;; @brief L1426 / L1434 - one decimal digit of a number (replaces OUT-SP-NO) HL = value, BC = negative power of ten (e.g
+;;;
+;;; L1426 / L1434 - one decimal digit of a number (replaces OUT-SP-NO)
+;;;   HL = value, BC = negative power of ten (e.g. $FC18 = -1000).  Counts how many
+;;;   times BC can be subtracted.  Returns A = '0'+count, or - when the count is zero -
+;;;   A = E, the "leading zero" marker ($FF = print nothing, $20 = print a space).
+;;; @address $1426
+;;; @calledby L1436
 L1426:
         XOR     A                       ; A = 0
 L1427:
@@ -676,17 +724,20 @@ L1427:
 L1434:
         LD      A,E                     ; A = E
         RET                             ; return
-; ------------------------------------------------------------
-; L1436 - print a 16-bit number in HL, UNITS FIRST (replaces OUT-NUM-3;
-;   entered through L1A30 'JP L1436')
-;   E = $FF: no leading zeros (BASIC listing statement numbers), E = $20: leading
-;   spaces (right-aligns line numbers).  The thousands, hundreds and tens digits are
-;   worked out and pushed, then the UNITS digit is printed first, followed by tens,
-;   hundreds and thousands (a $FF marker prints nothing).  Because the screen
-;   prints right to left this puts the most significant digit on the left, so
-;   Arabic-Indic numerals read normally.  Ends with JP $1A45 (the original
-;   OUT-NUM-4 exit that restores DE and HL and returns).
-; ------------------------------------------------------------
+;;; @brief L1436 - print a 16-bit number in HL, UNITS FIRST (replaces OUT-NUM-3; entered through L1A30 'JP L1436') E = $FF
+;;;
+;;; L1436 - print a 16-bit number in HL, UNITS FIRST (replaces OUT-NUM-3;
+;;;   entered through L1A30 'JP L1436')
+;;;   E = $FF: no leading zeros (BASIC listing statement numbers), E = $20: leading
+;;;   spaces (right-aligns line numbers).  The thousands, hundreds and tens digits are
+;;;   worked out and pushed, then the UNITS digit is printed first, followed by tens,
+;;;   hundreds and thousands (a $FF marker prints nothing).  Because the screen
+;;;   prints right to left this puts the most significant digit on the left, so
+;;;   Arabic-Indic numerals read normally.  Ends with JP $1A45 (the original
+;;;   OUT-NUM-4 exit that restores DE and HL and returns).
+;;; @address $1436
+;;; @calls L1426, OUT_CODE, PRINT_A_2
+;;; @jumpedfrom L1A30
 L1436:
         LD      BC,$FC18                ; BC = $FC18
         CALL    L1426                   ; call L1426
@@ -708,16 +759,19 @@ L1450:
         POP     BC                      ; pop BC off the stack
         DJNZ    L1450                   ; B = B - 1; loop to L1450 while B != 0
         JP      L1A45                   ; jump to the register restore + RET of OUT-NUM-4
-ARAB_GLYPH_SUBSTITUTE:
+;;; @brief Entry point RTL_GLYPH_SUBSTITUTE (no original comment).
+;;; @calls RTL_GLYPH_GUARD, L0363
+;;; @calledby PO_CHAR
+RTL_GLYPH_SUBSTITUTE:
         LD      BC,(CHARS)              ; fetch CHARS as usual (unaffected characters keep the normal font)
         BIT     4,(IY+1)                ; test bit 4 of (IY+1)
         RET     NZ                      ; return if not zero
-        CALL    ARAB_GLYPH_GUARD        ; call ARAB_GLYPH_GUARD
+        CALL    RTL_GLYPH_GUARD        ; call RTL_GLYPH_GUARD
         RET     NC                      ; return if no carry
         CP      $6C                     ; compare A with $6C
         RET     NC                      ; return if no carry
         EX      DE,HL                   ; swap DE and HL
-        LD      HL,ARAB_GLYPH_FLAG_LOOKUP_BASE ; HL = character-flag lookup base
+        LD      HL,RTL_GLYPH_FLAG_LOOKUP_BASE ; HL = character-flag lookup base
         LD      C,A                     ; C = A
         LD      B,0                     ; B = 0
         ADD     HL,BC                   ; HL = HL + BC
@@ -728,22 +782,22 @@ ARAB_GLYPH_SUBSTITUTE:
         BIT     1,C                     ; test bit 1 of C
         JR      Z,L1488                 ; if zero, jump to L1488
         BIT     4,B                     ; test bit 4 of B
-        LD      HL,ARAB_GLYPH_TABLE_1   ; HL = first glyph-substitution table
+        LD      HL,LANG_GLYPH_TABLE_1   ; HL = first glyph-substitution table
         JR      Z,L14A0                 ; if zero, jump to L14A0
 L1488:
         EX      DE,HL                   ; swap DE and HL
-        LD      BC,ARAB_ISOLATED_FONT-8*$41 ; BC = isolated font base (glyph = BC + 8*code, codes start at $41)
+        LD      BC,LANG_ISOLATED_FONT-8*$41 ; BC = isolated font base (glyph = BC + 8*code, codes start at $41)
         JR      L14AE                   ; jump to L14AE
 L148E:
         BIT     1,C                     ; test bit 1 of C
         JR      Z,L1499                 ; if zero, jump to L1499
         BIT     5,B                     ; test bit 5 of B
-        LD      HL,ARAB_GLYPH_TABLE_2   ; HL = second glyph-substitution table
+        LD      HL,LANG_GLYPH_TABLE_2   ; HL = second glyph-substitution table
         JR      Z,L14A0                 ; if zero, jump to L14A0
 L1499:
         BIT     6,B                     ; test bit 6 of B
         JR      NZ,L1488                ; if not zero, jump to L1488
-        LD      HL,ARAB_GLYPH_TABLE_3   ; HL = third glyph-substitution table
+        LD      HL,LANG_GLYPH_TABLE_3   ; HL = third glyph-substitution table
 L14A0:
         LD      BC,9                    ; BC = 9
 L14A3:
@@ -776,18 +830,19 @@ L14BF:
         RET     C                       ; return if carry
         CP      $7B                     ; compare A with $7B
         RET     NC                      ; return if no carry
-        LD      HL,ARAB_KEY_LOOKUP_TABLE - $41 ; base for ASCII-indexed key lookup
+        LD      HL,LANG_KEY_LOOKUP_TABLE - $41 ; base for ASCII-indexed key lookup
         LD      E,A                     ; E = A
         JP      K_LOOK_UP               ; jump to K_LOOK_UP
-ARAB_KEY_LOOKUP_TABLE:
-        DB          $44, $3F, $3F, $41, $5D, $6B, $43, $49 ; ASCII 'A'-'H' lookup entries
-        DB          $3F, $3F, $42, $3F, $3F, $52, $3F, $3F ; ASCII 'I'-'P' lookup entries
-        DB          $3F, $3F, $46, $3F, $3F, $45, $4B, $6A ; ASCII 'Q'-'X' lookup entries
-        DB          $3F, $3F, $3F, $3F, $3F, $3F, $3F, $3F ; ASCII 'Y'-'`' lookup entries
-        DB          $54, $68, $48, $69, $62, $64, $47, $4A ; ASCII 'a'-'h' lookup entries
-        DB          $4E, $66, $65, $63, $4F, $50, $4D, $4C ; ASCII 'i'-'p' lookup entries
-        DB          $56, $61, $53, $5A, $67, $51, $55, $57 ; ASCII 'q'-'x' lookup entries
-        DB          $59, $58                               ; ASCII 'y'-'z' lookup entries
+LANG_KEY_LOOKUP_TABLE:
+        IFDEF   LANG_PERSIAN
+        INCLUDE "lang/persian/key_lookup.asm"
+        ELSE
+        INCLUDE "lang/arabic/key_lookup.asm"
+        ENDIF
+;;; @brief Entry point L1510 (no original comment).
+;;; @address $1510
+;;; @calls ALPHA
+;;; @calledby RTL_PO_MSG_HOOK, RTL_PO_MSG_LAST, RTL_PR_STRING_HOOK
 L1510:
         PUSH    HL                      ; push HL onto the stack
         CALL    ALPHA                   ; call ALPHA
@@ -797,7 +852,7 @@ L1510:
         PUSH    BC                      ; push BC onto the stack
         LD      C,A                     ; C = A
         LD      B,0                     ; B = 0
-        LD      HL,ARAB_GLYPH_FLAG_LOOKUP_BASE ; HL = character-flag lookup base
+        LD      HL,RTL_GLYPH_FLAG_LOOKUP_BASE ; HL = character-flag lookup base
         ADD     HL,BC                   ; HL = HL + BC
         BIT     7,(HL)                  ; test bit 7 of (HL)
         POP     BC                      ; pop BC off the stack
@@ -819,6 +874,11 @@ L1539:
         SET     7,(IY+2)                ; set bit 7 of (IY+2)
         POP     HL                      ; pop HL off the stack
         RET                             ; return
+;;; @brief Entry point L1543 (no original comment).
+;;; @address $1543
+;;; @calls NUMERIC, L1395, RTL_INSTALL_PRINT_HOOK
+;;; @jumps L387B
+;;; @calledby S_SCRN_S
 L1543:
         CALL    NUMERIC                 ; call NUMERIC
         RET     NC                      ; return if no carry
@@ -826,37 +886,40 @@ L1543:
         RET     Z                       ; return if zero
         SCF                             ; set the carry flag
         RET                             ; return
-ARAB_FORM_OVERRIDE_OUT:
+RTL_FORM_OVERRIDE_OUT:
         CALL    L1395                   ; call L1395
-        CALL    ARAB_INSTALL_PRINT_HOOK ; call ARAB_INSTALL_PRINT_HOOK
+        CALL    RTL_INSTALL_PRINT_HOOK ; call RTL_INSTALL_PRINT_HOOK
         JP      L387B                   ; jump to L387B
 
 
-; -------------
-; REPORT-G
-; -------------
-; Note ERR_SP points here during line entry which allows the
-; normal 'Out of Memory' report to be augmented to the more
-; precise 'No Room for line' report.
-
-;; REPORT-G
-; No Room for line
+;;; @brief REPORT-G
+;;;
+;;; Note ERR_SP points here during line entry which allows the
+;;; normal 'Out of Memory' report to be augmented to the more
+;;; precise 'No Room for line' report.
+;;;
+;;; ; REPORT-G
+;;; No Room for line
+;;; @address $1555
 L1555:
         LD      A,$10           ; i.e. 'G' -$30 -$07
         LD      BC,$0000        ; this seems unnecessary.
         JP      MAIN_G          ; jump back to MAIN-G
 
-; -----------------------------
-; Handle addition of BASIC line
-; -----------------------------
-; Note this is not a subroutine but a branch of the main execution loop.
-; System variable ERR_SP still points to editing error handler.
-; A new line is added to the BASIC program at the appropriate place.
-; An existing line with same number is deleted first.
-; Entering an existing line number deletes that line.
-; Entering a non-existent line allows the subsequent line to be edited next.
-
-;; MAIN-ADD
+;;; @brief Handle addition of BASIC line
+;;;
+;;; Note this is not a subroutine but a branch of the main execution loop.
+;;; System variable ERR_SP still points to editing error handler.
+;;; A new line is added to the BASIC program at the appropriate place.
+;;; An existing line with same number is deleted first.
+;;; Entering an existing line number deletes that line.
+;;; Entering a non-existent line allows the subsequent line to be edited next.
+;;;
+;;; ; MAIN-ADD
+;;; @calls LINE_ADDR, NEXT_ONE, RECLAIM_2
+;;; @jumps MAIN_ADD1
+;;; @jumpedfrom MAIN_EXEC
+;;; @fallthrough MAIN_ADD1
 MAIN_ADD:
         LD      (E_PPC),BC      ; set E_PPC to extracted line number.
         LD      HL,(CH_ADD)      ; fetch CH_ADD - points to location after the
@@ -881,7 +944,13 @@ MAIN_ADD:
         CALL    NEXT_ONE           ; routine NEXT-ONE finds the existing line.
         CALL    RECLAIM_2          ; routine RECLAIM-2 reclaims it.
 
-;; MAIN-ADD1
+;;; @brief ; MAIN-ADD1
+;;;
+;;; ; MAIN-ADD1
+;;; @calls MAKE_ROOM
+;;; @jumps MAIN_ADD2
+;;; @jumpedfrom MAIN_ADD
+;;; @fallthrough MAIN_ADD2
 MAIN_ADD1:
         POP     BC              ; retrieve the length of the new line.
         LD      A,C             ; and test if carriage return only
@@ -925,57 +994,61 @@ MAIN_ADD1:
         DEC     HL              ;
         LD      (HL),D          ; then high byte range $0 - $27 (1-9999).
 
-;; MAIN-ADD2
+;;; @brief ; MAIN-ADD2
+;;;
+;;; ; MAIN-ADD2
+;;; @jumps MAIN_EXEC
+;;; @jumpedfrom MAIN_ADD1
 MAIN_ADD2:
         POP     AF              ; drop the address of Report G
         JP      MAIN_EXEC       ; and back to MAIN-EXEC producing a listing
                                 ; and to reset ERR_SP in EDITOR.
 
 
-; ---------------------------------
-; THE 'INITIAL CHANNEL' INFORMATION
-; ---------------------------------
-;   This initial channel information is copied from ROM to RAM, during
-;   initialization.  It's new location is after the system variables and is
-;   addressed by the system variable CHANS which means that it can slide up and
-;   down in memory.  The table is never searched, by this ROM, and the last
-;   character, which could be anything other than a comma, provides a
-;   convenient resting place for DATADD.
-
-;; init-chan
+;;; @brief THE 'INITIAL CHANNEL' INFORMATION
+;;;
+;;;   This initial channel information is copied from ROM to RAM, during
+;;;   initialization.  It's new location is after the system variables and is
+;;;   addressed by the system variable CHANS which means that it can slide up and
+;;;   down in memory.  The table is never searched, by this ROM, and the last
+;;;   character, which could be anything other than a comma, provides a
+;;;   convenient resting place for DATADD.
+;;;
+;;; ; init-chan
 INIT_CHAN:
-        DW    ARAB_PO_FETCH_EXT  ; PRINT-OUT
+        DW    RTL_PO_FETCH_EXT  ; PRINT-OUT
         DW    KEY_INPUT          ; KEY-INPUT
         DB          $4B          ; 'K'
-        DW    ARAB_PO_FETCH_EXT  ; PRINT-OUT
+        DW    RTL_PO_FETCH_EXT  ; PRINT-OUT
         DW    REPORT_J           ; REPORT-J
         DB          $53          ; 'S'
         DW    ADD_CHAR           ; ADD-CHAR
         DW    REPORT_J           ; REPORT-J
         DB          $52          ; 'R'
-        DW    ARAB_PO_FETCH_EXT  ; PRINT-OUT
+        DW    RTL_PO_FETCH_EXT  ; PRINT-OUT
         DW    REPORT_J           ; REPORT-J
         DB          $50          ; 'P'
 
         DB          $80             ; End Marker
 
-;; REPORT-J
+;;; @brief ; REPORT-J
+;;;
+;;; ; REPORT-J
 REPORT_J:
         RST     08H             ; ERROR-1
         DB          $12         ; Error Report: Invalid I/O device
 
 
-; -------------------------
-; THE 'INITIAL STREAM' DATA
-; -------------------------
-;   This is the initial stream data for the seven streams $FD - $03 that is
-;   copied from ROM to the STRMS system variables area during initialization.
-;   There are reserved locations there for another 12 streams.  Each location
-;   contains an offset to the second byte of a channel.  The first byte of a
-;   channel can't be used as that would result in an offset of zero for some
-;   and zero is used to denote that a stream is closed.
-
-;; init-strm
+;;; @brief THE 'INITIAL STREAM' DATA
+;;;
+;;;   This is the initial stream data for the seven streams $FD - $03 that is
+;;;   copied from ROM to the STRMS system variables area during initialization.
+;;;   There are reserved locations there for another 12 streams.  Each location
+;;;   contains an offset to the second byte of a channel.  The first byte of a
+;;;   channel can't be used as that would result in an offset of zero for some
+;;;   and zero is used to denote that a stream is closed.
+;;;
+;;; ; init-strm
 INIT_STRM:
         DB          $01, $00        ; stream $FD offset to channel 'K'
         DB          $06, $00        ; stream $FE offset to channel 'S'
@@ -986,12 +1059,12 @@ INIT_STRM:
         DB          $06, $00        ; stream $02 offset to channel 'S'
         DB          $10, $00        ; stream $03 offset to channel 'P'
 
-; ------------------------------
-; THE 'INPUT CONTROL' SUBROUTINE
-; ------------------------------
-;
-
-;; WAIT-KEY
+;;; @brief THE 'INPUT CONTROL' SUBROUTINE
+;;;
+;;; ; WAIT-KEY
+;;; @jumps WAIT_KEY1
+;;; @calledby SA_CONTRL, PO_SCR, L0F38, ED_CONTR, ED_IGNORE, RTL_ED_KEY_EXT
+;;; @fallthrough WAIT_KEY1
 WAIT_KEY:
         BIT     5,(IY+$02)      ; test TV_FLAG - clear lower screen ?
         JR      NZ,WAIT_KEY1    ; forward to WAIT-KEY1 if so.
@@ -999,7 +1072,12 @@ WAIT_KEY:
         SET     3,(IY+$02)      ; update TV_FLAG - signal reprint the edit
                                 ; line to the lower screen.
 
-;; WAIT-KEY1
+;;; @brief ; WAIT-KEY1
+;;;
+;;; ; WAIT-KEY1
+;;; @calls INPUT_AD
+;;; @jumpedfrom WAIT_KEY
+;;; @fallthrough REPORT_8
 WAIT_KEY1:
         CALL    INPUT_AD           ; routine INPUT-AD is called.
 
@@ -1011,18 +1089,21 @@ WAIT_KEY1:
 ;   Note. When inputting from the keyboard all characters are returned with
 ;   above conditions so this path is never taken.
 
-;; REPORT-8
+;;; @brief ; REPORT-8
+;;;
+;;; ; REPORT-8
 REPORT_8:
         RST     08H             ; ERROR-1
         DB          $07         ; Error Report: End of file
 
-; ---------------------------
-; THE 'INPUT ADDRESS' ROUTINE
-; ---------------------------
-;   This routine fetches the address of the input stream from the current
-;   channel area using the system variable CURCHL.
-
-;; INPUT-AD
+;;; @brief THE 'INPUT ADDRESS' ROUTINE
+;;;
+;;;   This routine fetches the address of the input stream from the current
+;;;   channel area using the system variable CURCHL.
+;;;
+;;; ; INPUT-AD
+;;; @jumps CALL_SUB
+;;; @calledby WAIT_KEY1, READ_IN
 INPUT_AD:
         EXX                     ; switch in alternate set.
         PUSH    HL              ; save HL register
@@ -1031,27 +1112,31 @@ INPUT_AD:
         INC     HL              ; to point to low byte of input routine.
         JR      CALL_SUB        ; forward to CALL-SUB.
 
-; -------------------------
-; THE 'CODE OUTPUT' ROUTINE
-; -------------------------
-;   This routine is called on five occasions to print the ASCII equivalent of
-;   a value 0-9.
-
-;; OUT-CODE
+;;; @brief THE 'CODE OUTPUT' ROUTINE
+;;;
+;;;   This routine is called on five occasions to print the ASCII equivalent of
+;;;   a value 0-9.
+;;;
+;;; ; OUT-CODE
+;;; @calledby L1436, OUT_NUM_4, PF_NOT_E, PF_OUT_DT
+;;; @jumpedfrom OUT_SP_1
+;;; @fallthrough PRINT_A_2
 OUT_CODE:
         LD      E,$30           ; add 48 decimal to give the ASCII character
         ADD     A,E             ; '0' to '9' and continue into the main output
                                 ; routine.
 
-; -------------------------
-; THE 'MAIN OUTPUT' ROUTINE
-; -------------------------
-;   PRINT-A-2 is a continuation of the RST 10 restart that prints any character.
-;   The routine prints to the current channel and the printing of control codes
-;   may alter that channel to divert subsequent RST 10 instructions to temporary
-;   routines. The normal channel is $09F4.
-
-;; PRINT-A-2
+;;; @brief THE 'MAIN OUTPUT' ROUTINE
+;;;
+;;;   PRINT-A-2 is a continuation of the RST 10 restart that prints any character.
+;;;   The routine prints to the current channel and the printing of control codes
+;;;   may alter that channel to divert subsequent RST 10 instructions to temporary
+;;;   routines. The normal channel is $09F4.
+;;;
+;;; ; PRINT-A-2
+;;; @calledby L1436
+;;; @jumpedfrom PRINT_A
+;;; @fallthrough CALL_SUB
 PRINT_A_2:
         EXX                     ; switch in alternate set
         PUSH    HL              ; save HL register
@@ -1059,7 +1144,11 @@ PRINT_A_2:
 
 ; input-ad rejoins here also.
 
-;; CALL-SUB
+;;; @brief ; CALL-SUB
+;;;
+;;; ; CALL-SUB
+;;; @calls CALL_JUMP
+;;; @jumpedfrom INPUT_AD
 CALL_SUB:
         LD      E,(HL)          ; put the low byte in E.
         INC     HL              ; advance address.
@@ -1072,17 +1161,20 @@ CALL_SUB:
         EXX                     ; switch back to the main set and
         RET                     ; return.
 
-; --------------------------
-; THE 'OPEN CHANNEL' ROUTINE
-; --------------------------
-;   This subroutine is used by the ROM to open a channel 'K', 'S', 'R' or 'P'.
-;   This is either for its own use or in response to a user's request, for
-;   example, when '#' is encountered with output - PRINT, LIST etc.
-;   or with input - INPUT, INKEY$ etc.
-;   It is entered with a system stream $FD - $FF, or a user stream $00 - $0F
-;   in the accumulator.
-
-;; CHAN-OPEN
+;;; @brief THE 'OPEN CHANNEL' ROUTINE
+;;;
+;;;   This subroutine is used by the ROM to open a channel 'K', 'S', 'R' or 'P'.
+;;;   This is either for its own use or in response to a user's request, for
+;;;   example, when '#' is encountered with output - PRINT, LIST etc.
+;;;   or with input - INPUT, INKEY$ etc.
+;;;   It is entered with a system stream $FD - $FF, or a user stream $00 - $0F
+;;;   in the accumulator.
+;;;
+;;; ; CHAN-OPEN
+;;; @jumps CHAN_OP_1
+;;; @calledby REPORT_FA, SA_CONTRL, PO_SCR, CL_CHAN, CL_ALL, ED_EDIT, MAIN_EXEC, LIST_1, PRINT_1, STR_ALTER, +3 more
+;;; @jumpedfrom ED_LIST
+;;; @fallthrough REPORT_OA
 CHAN_OPEN:
         ADD     A,A             ; double the stream ($FF will become $FE etc.)
         ADD     A,$16           ; add the offset to stream 0 from KSTATE_0
@@ -1095,7 +1187,10 @@ CHAN_OPEN:
         OR      E               ; zero if closed.
         JR      NZ,CHAN_OP_1    ; forward to CHAN-OP-1 if open.
 
-;; REPORT-Oa
+;;; @brief ; REPORT-Oa
+;;;
+;;; ; REPORT-Oa
+;;; @jumpedfrom STR_ALTER
 REPORT_OA:
         RST     08H             ; ERROR-1
         DB          $17         ; Error Report: Invalid stream
@@ -1103,7 +1198,11 @@ REPORT_OA:
 ; continue here if stream was open. Note that the offset is from CHANS
 ; to the second byte of the channel.
 
-;; CHAN-OP-1
+;;; @brief ; CHAN-OP-1
+;;;
+;;; ; CHAN-OP-1
+;;; @jumpedfrom CHAN_OPEN
+;;; @fallthrough CHAN_FLAG
 CHAN_OP_1:
         DEC     DE              ; reduce offset so it points to the channel.
         LD      HL,(CHANS)      ; fetch CHANS the location of the base of
@@ -1111,13 +1210,15 @@ CHAN_OP_1:
         ADD     HL,DE           ; and add the offset to address the channel.
                                 ; and continue to set flags.
 
-; -----------------
-; Set channel flags
-; -----------------
-; This subroutine is used from ED-EDIT, str$ and read-in to reset the
-; current channel when it has been temporarily altered.
-
-;; CHAN-FLAG
+;;; @brief Set channel flags
+;;;
+;;; This subroutine is used from ED-EDIT, str$ and read-in to reset the
+;;; current channel when it has been temporarily altered.
+;;;
+;;; ; CHAN-FLAG
+;;; @calls INDEXER
+;;; @calledby ED_EDIT, STR, READ_IN
+;;; @fallthrough CALL_JUMP
 CHAN_FLAG:
         LD      (CURCHL),HL      ; set CURCHL system variable to the
                                 ; address in HL
@@ -1140,21 +1241,23 @@ CHAN_FLAG:
         ADD     HL,DE           ; add offset to location of offset to form
                                 ; address of routine
 
-;; CALL-JUMP
+;;; @brief ; CALL-JUMP
+;;;
+;;; ; CALL-JUMP
+;;; @calledby CALL_SUB
 CALL_JUMP:
         JP      (HL)            ; jump to the routine
 
 ; Footnote. calling any location that holds JP (HL) is the equivalent to
 ; a pseudo Z80 instruction CALL (HL). The ROM uses the instruction above.
 
-; --------------------------
-; Channel code look-up table
-; --------------------------
-; This table is used by the routine above to find one of the three
-; flag setting routines below it.
-; A zero end-marker is required as channel 'R' is not present.
-
-;; chn-cd-lu
+;;; @brief Channel code look-up table
+;;;
+;;; This table is used by the routine above to find one of the three
+;;; flag setting routines below it.
+;;; A zero end-marker is required as channel 'R' is not present.
+;;;
+;;; ; chn-cd-lu
 CHN_CD_LU:
         DB          'K', CHAN_K-$-1  ; offset $06 to CHAN-K
         DB          'S', CHAN_S-$-1  ; offset $12 to CHAN-S
@@ -1162,64 +1265,69 @@ CHN_CD_LU:
 
         DB          $00             ; end marker.
 
-; --------------
-; Channel K flag
-; --------------
-; routine to set flags for lower screen/keyboard channel.
-
-;; CHAN-K
+;;; @brief Channel K flag
+;;;
+;;; routine to set flags for lower screen/keyboard channel.
+;;;
+;;; ; CHAN-K
+;;; @jumps CHAN_S_1
 CHAN_K:
         SET     0,(IY+$02)      ; update TV_FLAG  - signal lower screen in use
         RES     5,(IY+$01)      ; update FLAGS    - signal no new key
         SET     4,(IY+$30)      ; update FLAGS2   - signal K channel in use
         JR      CHAN_S_1        ; forward to CHAN-S-1 for indirect exit
 
-; --------------
-; Channel S flag
-; --------------
-; routine to set flags for upper screen channel.
-
-;; CHAN-S
+;;; @brief Channel S flag
+;;;
+;;; routine to set flags for upper screen channel.
+;;;
+;;; ; CHAN-S
+;;; @fallthrough CHAN_S_1
 CHAN_S:
         RES     0,(IY+$02)      ; TV_FLAG  - signal main screen in use
 
-;; CHAN-S-1
+;;; @brief ; CHAN-S-1
+;;;
+;;; ; CHAN-S-1
+;;; @jumps TEMPS
+;;; @jumpedfrom CHAN_K
 CHAN_S_1:
         RES     1,(IY+$01)      ; update FLAGS  - signal printer not in use
         JP      TEMPS           ; jump back to TEMPS and exit via that
                                 ; routine after setting temporary attributes.
-; --------------
-; Channel P flag
-; --------------
-; This routine sets a flag so that subsequent print related commands
-; print to printer or update the relevant system variables.
-; This status remains in force until reset by the routine above.
-
-;; CHAN-P
+;;; @brief Channel P flag
+;;;
+;;; This routine sets a flag so that subsequent print related commands
+;;; print to printer or update the relevant system variables.
+;;; This status remains in force until reset by the routine above.
+;;;
+;;; ; CHAN-P
 CHAN_P:
         SET     1,(IY+$01)      ; update FLAGS  - signal printer in use
         RET                     ; return
 
-; --------------------------
-; THE 'ONE SPACE' SUBROUTINE
-; --------------------------
-; This routine is called once only to create a single space
-; in workspace by ADD-CHAR.
-
-;; ONE-SPACE
+;;; @brief THE 'ONE SPACE' SUBROUTINE
+;;;
+;;; This routine is called once only to create a single space
+;;; in workspace by ADD-CHAR.
+;;;
+;;; ; ONE-SPACE
+;;; @calledby L0F38, ADD_CHAR
+;;; @fallthrough MAKE_ROOM
 ONE_SPACE:
         LD      BC,$0001        ; create space for a single character.
 
-; ---------
-; Make Room
-; ---------
-; This entry point is used to create BC spaces in various areas such as
-; program area, variables area, workspace etc..
-; The entire free RAM is available to each BASIC statement.
-; On entry, HL addresses where the first location is to be created.
-; Afterwards, HL will point to the location before this.
-
-;; MAKE-ROOM
+;;; @brief Make Room
+;;;
+;;; This entry point is used to create BC spaces in various areas such as
+;;; program area, variables area, workspace etc..
+;;; The entire free RAM is available to each BASIC statement.
+;;; On entry, HL addresses where the first location is to be created.
+;;; Afterwards, HL will point to the location before this.
+;;;
+;;; ; MAKE-ROOM
+;;; @calls TEST_ROOM, POINTERS
+;;; @calledby LD_CONTRL, ME_ENTER, ED_CONTR, MAIN_ADD1, RESERVE, F_REORDER, DEF_FN_5, S_DECIMAL, L_SPACES, L_STRING, +1 more
 MAKE_ROOM:
         PUSH    HL              ; save the address pointer.
         CALL    TEST_ROOM       ; routine TEST-ROOM checks if room
@@ -1237,25 +1345,31 @@ MAKE_ROOM:
                                 ; HL points to location before new area,
                                 ; and DE to last of new locations.
 
-; -----------------------------------------------
-; Adjust pointers before making or reclaiming room
-; -----------------------------------------------
-; This routine is called by MAKE-ROOM to adjust upwards and by RECLAIM to
-; adjust downwards the pointers within dynamic memory.
-; The fourteen pointers to dynamic memory, starting with VARS and ending
-; with STKEND, are updated adding BC if they are higher than the position
-; in HL.
-; The system variables are in no particular order except that STKEND, the first
-; free location after dynamic memory must be the last encountered.
-
-;; POINTERS
+;;; @brief Adjust pointers before making or reclaiming room
+;;;
+;;; This routine is called by MAKE-ROOM to adjust upwards and by RECLAIM to
+;;; adjust downwards the pointers within dynamic memory.
+;;; The fourteen pointers to dynamic memory, starting with VARS and ending
+;;; with STKEND, are updated adding BC if they are higher than the position
+;;; in HL.
+;;; The system variables are in no particular order except that STKEND, the first
+;;; free location after dynamic memory must be the last encountered.
+;;;
+;;; ; POINTERS
+;;; @calledby MAKE_ROOM, RECLAIM_2
+;;; @fallthrough PTR_NEXT
 POINTERS:
         PUSH    AF              ; preserve accumulator.
         PUSH    HL              ; put pos pointer on stack.
         LD      HL,VARS        ; address VARS the first of the
         LD      A,$0E           ; fourteen variables to consider.
 
-;; PTR-NEXT
+;;; @brief ; PTR-NEXT
+;;;
+;;; ; PTR-NEXT
+;;; @jumps PTR_DONE
+;;; @jumpedfrom PTR_DONE
+;;; @fallthrough PTR_DONE
 PTR_NEXT:
         LD      E,(HL)          ; fetch the low byte of the system variable.
         INC     HL              ; advance address.
@@ -1278,7 +1392,11 @@ PTR_NEXT:
         INC     HL              ; advance to high byte
         POP     DE              ; restore old system variable address.
 
-;; PTR-DONE
+;;; @brief ; PTR-DONE
+;;;
+;;; ; PTR-DONE
+;;; @jumps PTR_NEXT
+;;; @jumpedfrom PTR_NEXT
 PTR_DONE:
         INC     HL              ; address next system variable.
         DEC     A               ; decrease counter.
@@ -1300,29 +1418,36 @@ PTR_DONE:
 
 
 
-; -------------------
-; Collect line number
-; -------------------
-; This routine extracts a line number, at an address that has previously
-; been found using LINE-ADDR, and it is entered at LINE-NO. If it encounters
-; the program 'end-marker' then the previous line is used and if that
-; should also be unacceptable then zero is used as it must be a direct
-; command. The program end-marker is the variables end-marker $80, or
-; if variables exist, then the first character of any variable name.
-
-;; LINE-ZERO
+;;; @brief Collect line number
+;;;
+;;; This routine extracts a line number, at an address that has previously
+;;; been found using LINE-ADDR, and it is entered at LINE-NO. If it encounters
+;;; the program 'end-marker' then the previous line is used and if that
+;;; should also be unacceptable then zero is used as it must be a direct
+;;; command. The program end-marker is the variables end-marker $80, or
+;;; if variables exist, then the first character of any variable name.
+;;;
+;;; ; LINE-ZERO
 LINE_ZERO:
         DB          $00, $00        ; dummy line number used for direct commands
 
 
-;; LINE-NO-A
+;;; @brief ; LINE-NO-A
+;;;
+;;; ; LINE-NO-A
+;;; @jumpedfrom LINE_NO
+;;; @fallthrough LINE_NO
 LINE_NO_A:
         EX      DE,HL           ; fetch the previous line to HL and set
         LD      DE,LINE_ZERO    ; DE to LINE-ZERO should HL also fail.
 
 ; -> The Entry Point.
 
-;; LINE-NO
+;;; @brief ; LINE-NO
+;;;
+;;; ; LINE-NO
+;;; @jumps LINE_NO_A
+;;; @calledby ED_EDIT, ED_UP, LN_FETCH
 LINE_NO:
         LD      A,(HL)          ; fetch the high byte - max $2F
         AND     $C0             ; mask off the invalid bits.
@@ -1333,12 +1458,13 @@ LINE_NO:
         LD      E,(HL)          ; pick up the low byte.
         RET                     ; return from here.
 
-; -------------------
-; Handle reserve room
-; -------------------
-; This is a continuation of the restart BC-SPACES
-
-;; RESERVE
+;;; @brief Handle reserve room
+;;;
+;;; This is a continuation of the restart BC-SPACES
+;;;
+;;; ; RESERVE
+;;; @calls MAKE_ROOM
+;;; @jumpedfrom BC_SPACES
 RESERVE:
         LD      HL,(STKBOT)      ; STKBOT first location of calculator stack
         DEC     HL              ; make one less than new location
@@ -1353,20 +1479,21 @@ RESERVE:
         INC     HL              ; HL now location after new space
         RET                     ; return.
 
-; ---------------------------
-; Clear various editing areas
-; ---------------------------
-; This routine sets the editing area, workspace and calculator stack
-; to their minimum configurations as at initialization and indeed this
-; routine could have been relied on to perform that task.
-; This routine uses HL only and returns with that register holding
-; WORKSP/STKBOT/STKEND though no use is made of this. The routines also
-; reset MEM to its usual place in the systems variable area should it
-; have been relocated to a FOR-NEXT variable. The main entry point
-; SET-MIN is called at the start of the MAIN-EXEC loop and prior to
-; displaying an error.
-
-;; SET-MIN
+;;; @brief Clear various editing areas
+;;;
+;;; This routine sets the editing area, workspace and calculator stack
+;;; to their minimum configurations as at initialization and indeed this
+;;; routine could have been relied on to perform that task.
+;;; This routine uses HL only and returns with that register holding
+;;; WORKSP/STKBOT/STKEND though no use is made of this. The routines also
+;;; reset MEM to its usual place in the systems variable area should it
+;;; have been relocated to a FOR-NEXT variable. The main entry point
+;;; SET-MIN is called at the start of the MAIN-EXEC loop and prior to
+;;; displaying an error.
+;;;
+;;; ; SET-MIN
+;;; @calledby MAIN_EXEC
+;;; @fallthrough SET_WORK
 SET_MIN:
         LD      HL,(E_LINE)      ; fetch E_LINE
         LD      (HL),$0D        ; insert carriage return
@@ -1379,7 +1506,11 @@ SET_MIN:
 ; This entry point is used prior to input and prior to the execution,
 ; or parsing, of each statement.
 
-;; SET-WORK
+;;; @brief ; SET-WORK
+;;;
+;;; ; SET-WORK
+;;; @calledby STMT_L_1, IN_PROMPT
+;;; @fallthrough SET_STK
 SET_WORK:
         LD      HL,(WORKSP)      ; fetch WORKSP value
         LD      (STKBOT),HL      ; and place in STKBOT
@@ -1387,7 +1518,10 @@ SET_WORK:
 ; This entry point is used to move the stack back to its normal place
 ; after temporary relocation during line entry and also from ERROR-3
 
-;; SET-STK
+;;; @brief ; SET-STK
+;;;
+;;; ; SET-STK
+;;; @jumpedfrom ERROR_3, E_L_1
 SET_STK:
         LD      HL,(STKBOT)      ; fetch STKBOT value
         LD      (STKEND),HL      ; and place in STKEND.
@@ -1398,38 +1532,43 @@ SET_STK:
         POP     HL              ; saved value not required.
         RET                     ; return.
 
-; ------------------
-; Reclaim edit-line?
-; ------------------
-; This seems to be legacy code from the ZX80/ZX81 as it is
-; not used in this ROM.
-; That task, in fact, is performed here by the dual-area routine CLEAR-SP.
-; This routine is designed to deal with something that is known to be in the
-; edit buffer and not workspace.
-; On entry, HL must point to the end of the something to be deleted.
-
-;; REC-EDIT
+;;; @brief Reclaim edit-line?
+;;;
+;;; This seems to be legacy code from the ZX80/ZX81 as it is
+;;; not used in this ROM.
+;;; That task, in fact, is performed here by the dual-area routine CLEAR-SP.
+;;; This routine is designed to deal with something that is known to be in the
+;;; edit buffer and not workspace.
+;;; On entry, HL must point to the end of the something to be deleted.
+;;;
+;;; ; REC-EDIT
+;;; @jumps RECLAIM_1
 REC_EDIT:
         LD      DE,(E_LINE)      ; fetch start of edit line from E_LINE.
         JP      RECLAIM_1       ; jump forward to RECLAIM-1.
 
-; --------------------------
-; The Table INDEXING routine
-; --------------------------
-; This routine is used to search two-byte hash tables for a character
-; held in C, returning the address of the following offset byte.
-; if it is known that the character is in the table e.g. for priorities,
-; then the table requires no zero end-marker. If this is not known at the
-; outset then a zero end-marker is required and carry is set to signal
-; success.
-
-;; INDEXER-1
+;;; @brief The Table INDEXING routine
+;;;
+;;; This routine is used to search two-byte hash tables for a character
+;;; held in C, returning the address of the following offset byte.
+;;; if it is known that the character is in the table e.g. for priorities,
+;;; then the table requires no zero end-marker. If this is not known at the
+;;; outset then a zero end-marker is required and carry is set to signal
+;;; success.
+;;;
+;;; ; INDEXER-1
+;;; @jumpedfrom INDEXER
+;;; @fallthrough INDEXER
 INDEXER_1:
         INC     HL              ; address the next pair of values.
 
 ; -> The Entry Point.
 
-;; INDEXER
+;;; @brief ; INDEXER
+;;;
+;;; ; INDEXER
+;;; @jumps INDEXER_1
+;;; @calledby CHAN_FLAG, ROM_TRAP, OPEN_3, S_LOOP_1, S_OPERTR
 INDEXER:
         LD      A,(HL)          ; fetch the first byte of pair
         AND     A               ; is it the end-marker ?
@@ -1463,14 +1602,16 @@ INDEXER:
 ; Early demonstrations of the Spectrum showed a single microdrive being
 ; controlled by the main ROM.
 
-; ---------------------
-; THE 'CLOSE #' COMMAND
-; ---------------------
-;   This command allows streams to be closed after use.
-;   Any temporary memory areas used by the stream would be reclaimed and
-;   finally flags set or reset if necessary.
-
-;; CLOSE
+;;; @brief THE 'CLOSE #' COMMAND
+;;;
+;;;   This command allows streams to be closed after use.
+;;;   Any temporary memory areas used by the stream would be reclaimed and
+;;;   finally flags set or reset if necessary.
+;;;
+;;; ; CLOSE
+;;; @calls STR_DATA, CLOSE_2
+;;; @jumps CLOSE_1
+;;; @fallthrough CLOSE_1
 CLOSE:
         CALL    STR_DATA           ; routine STR-DATA fetches parameter
                                 ; from calculator stack and gets the
@@ -1509,7 +1650,10 @@ CLOSE:
 ;   streams 0 - 2 can't be closed as they are shared by the operating system.
 ;   -> for streams 4 - 15 then blank the entry.
 
-;; CLOSE-1
+;;; @brief ; CLOSE-1
+;;;
+;;; ; CLOSE-1
+;;; @jumpedfrom CLOSE
 CLOSE_1:
         EX      DE,HL           ; address of stream to HL.
         LD      (HL),C          ; place zero (or low byte).
@@ -1517,19 +1661,20 @@ CLOSE_1:
         LD      (HL),B          ; place zero (or high byte).
         RET                     ; return.
 
-; ------------------------
-; THE 'CLOSE-2' SUBROUTINE
-; ------------------------
-;   There is not much point in coming here.
-;   The purpose was once to find the offset to a special closing routine,
-;   in this ROM and within 256 bytes of the close stream look up table that
-;   would reclaim any buffers associated with a stream. At least one has been
-;   removed.
-;   Any attempt to CLOSE streams $00 to $04, without first opening the stream,
-;   will lead to either a system restart or the production of a strange report.
-;   credit: Martin Wren-Hilton 1982.
-
-;; CLOSE-2
+;;; @brief THE 'CLOSE-2' SUBROUTINE
+;;;
+;;;   There is not much point in coming here.
+;;;   The purpose was once to find the offset to a special closing routine,
+;;;   in this ROM and within 256 bytes of the close stream look up table that
+;;;   would reclaim any buffers associated with a stream. At least one has been
+;;;   removed.
+;;;   Any attempt to CLOSE streams $00 to $04, without first opening the stream,
+;;;   will lead to either a system restart or the production of a strange report.
+;;;   credit: Martin Wren-Hilton 1982.
+;;;
+;;; ; CLOSE-2
+;;; @calledby CLOSE
+;;; @fallthrough ROM_TRAP
 CLOSE_2:
         PUSH    HL              ; * save address of stream data pointer
                                 ; in STRMS on the machine stack.
@@ -1542,7 +1687,10 @@ CLOSE_2:
 ;    Note. When the Sinclair Interface1 is fitted then an instruction fetch
 ;    on the next address pages this ROM out and the shadow ROM in.
 
-;; ROM_TRAP
+;;; @brief ; ROM_TRAP
+;;;
+;;; ; ROM_TRAP
+;;; @calls INDEXER
 ROM_TRAP:
         INC     HL              ; to address channel's letter
         LD      C,(HL)          ; pick it up in C.
@@ -1567,55 +1715,62 @@ ROM_TRAP:
                                 ; are associated with it.)
         JP      (HL)            ; jump to that routine.
 
-; --------------------------------
-; THE 'CLOSE STREAM LOOK-UP' TABLE
-; --------------------------------
-;   This table contains an entry for a letter found in the CHANS area.
-;   followed by an 8-bit displacement, from that byte's address in the
-;   table to the routine that performs any ancillary actions associated
-;   with closing the stream of that channel.
-;   The table doesn't require a zero end-marker as the letter has been
-;   picked up from a channel that has an open stream.
-
-;; cl-str-lu
+;;; @brief THE 'CLOSE STREAM LOOK-UP' TABLE
+;;;
+;;;   This table contains an entry for a letter found in the CHANS area.
+;;;   followed by an 8-bit displacement, from that byte's address in the
+;;;   table to the routine that performs any ancillary actions associated
+;;;   with closing the stream of that channel.
+;;;   The table doesn't require a zero end-marker as the letter has been
+;;;   picked up from a channel that has an open stream.
+;;;
+;;; ; cl-str-lu
 CL_STR_LU:
         DB          'K', CLOSE_STR-$-1  ; offset 5 to CLOSE-STR
         DB          'S', CLOSE_STR-$-1  ; offset 3 to CLOSE-STR
         DB          'P', CLOSE_STR-$-1  ; offset 1 to CLOSE-STR
 
 
-; ------------------------------
-; THE 'CLOSE STREAM' SUBROUTINES
-; ------------------------------
-; The close stream routines in fact have no ancillary actions to perform
-; which is not surprising with regard to 'K' and 'S'.
-
-;; CLOSE-STR
+;;; @brief THE 'CLOSE STREAM' SUBROUTINES
+;;;
+;;; The close stream routines in fact have no ancillary actions to perform
+;;; which is not surprising with regard to 'K' and 'S'.
+;;;
+;;; ; CLOSE-STR
 CLOSE_STR:
         POP     HL              ; * now just restore the stream data pointer
         RET                     ; in STRMS and return.
 
-; -----------
-; Stream data
-; -----------
-; This routine finds the data entry in the STRMS area for the specified
-; stream which is passed on the calculator stack. It returns with HL
-; pointing to this system variable and BC holding a displacement from
-; the CHANS area to the second byte of the stream's channel. If BC holds
-; zero, then that signifies that the stream is closed.
-
-;; STR-DATA
+;;; @brief Stream data
+;;;
+;;; This routine finds the data entry in the STRMS area for the specified
+;;; stream which is passed on the calculator stack. It returns with HL
+;;; pointing to this system variable and BC holding a displacement from
+;;; the CHANS area to the second byte of the stream's channel. If BC holds
+;;; zero, then that signifies that the stream is closed.
+;;;
+;;; ; STR-DATA
+;;; @calls FIND_INT1
+;;; @jumps STR_DATA1
+;;; @calledby CLOSE, OPEN
+;;; @fallthrough REPORT_OB
 STR_DATA:
         CALL    FIND_INT1           ; routine FIND-INT1 fetches parameter to A
         CP      $10                 ; is it less than 16d ?
         JR      C,STR_DATA1         ; skip forward to STR-DATA1 if so.
 
-;; REPORT-Ob
+;;; @brief ; REPORT-Ob
+;;;
+;;; ; REPORT-Ob
+;;; @jumpedfrom OPEN, CAT_ETC
 REPORT_OB:
         RST     08H             ; ERROR-1
         DB          $17         ; Error Report: Invalid stream
 
-;; STR-DATA1
+;;; @brief ; STR-DATA1
+;;;
+;;; ; STR-DATA1
+;;; @jumpedfrom STR_DATA
 STR_DATA1:
         ADD     A,$03           ; add the offset for 3 system streams.
                                 ; range 00 - 15d becomes 3 - 18d.
@@ -1638,14 +1793,16 @@ STR_DATA1:
         RET                     ; return with CHANS displacement in BC
                                 ; and address of stream data entry in HL.
 
-; --------------------
-; Handle OPEN# command
-; --------------------
-; Command syntax example: OPEN #5,"s"
-; On entry the channel code entry is on the calculator stack with the next
-; value containing the stream identifier. They have to swapped.
-
-;; OPEN
+;;; @brief Handle OPEN# command
+;;;
+;;; Command syntax example: OPEN #5,"s"
+;;; On entry the channel code entry is on the calculator stack with the next
+;;; value containing the stream identifier. They have to swapped.
+;;;
+;;; ; OPEN
+;;; @calls STR_DATA
+;;; @jumps OPEN_1, REPORT_OB
+;;; @fallthrough OPEN_1
 OPEN:
         RST     28H                 ;; FP-CALC    ;s,c.
         DB          $01             ;;exchange    ;c,s.
@@ -1685,7 +1842,11 @@ OPEN:
 ; continue if one of the upper-case letters was found.
 ; and rejoin here from above if stream was closed.
 
-;; OPEN-1
+;;; @brief ; OPEN-1
+;;;
+;;; ; OPEN-1
+;;; @calls OPEN_2
+;;; @jumpedfrom OPEN
 OPEN_1:
         CALL    OPEN_2           ; routine OPEN-2 opens the stream.
 
@@ -1696,13 +1857,16 @@ OPEN_1:
         LD      (HL),D          ; insert or overwrite the high byte.
         RET                     ; return.
 
-; -----------------
-; OPEN-2 Subroutine
-; -----------------
-; There is some point in coming here as, as well as once creating buffers,
-; this routine also sets flags.
-
-;; OPEN-2
+;;; @brief OPEN-2 Subroutine
+;;;
+;;; There is some point in coming here as, as well as once creating buffers,
+;;; this routine also sets flags.
+;;;
+;;; ; OPEN-2
+;;; @calls STK_FETCH
+;;; @jumps OPEN_3
+;;; @calledby OPEN_1
+;;; @fallthrough REPORT_FB
 OPEN_2:
         PUSH    HL              ; * save the STRMS data entry pointer.
         CALL    STK_FETCH       ; routine STK-FETCH now fetches the
@@ -1714,12 +1878,20 @@ OPEN_2:
         JR      NZ,OPEN_3       ; skip forward to OPEN-3 with 1 character
                                 ; or more!
 
-;; REPORT-Fb
+;;; @brief ; REPORT-Fb
+;;;
+;;; ; REPORT-Fb
+;;; @jumpedfrom OPEN_3, OPEN_END
 REPORT_FB:
         RST     08H             ; ERROR-1
         DB          $0E         ; Error Report: Invalid file name
 
-;; OPEN-3
+;;; @brief ; OPEN-3
+;;;
+;;; ; OPEN-3
+;;; @calls INDEXER
+;;; @jumps REPORT_FB
+;;; @jumpedfrom OPEN_2
 OPEN_3:
         PUSH    BC              ; save the length of the string.
         LD      A,(DE)          ; pick up the first character.
@@ -1737,16 +1909,15 @@ OPEN_3:
         POP     BC              ; restore the length of string.
         JP      (HL)            ; now jump forward to the relevant routine.
 
-; -------------------------
-; OPEN stream look-up table
-; -------------------------
-; The open stream look-up table consists of matched pairs.
-; The channel letter is followed by an 8-bit displacement to the
-; associated stream-opening routine in this ROM.
-; The table requires a zero end-marker as the letter has been
-; provided by the user and not the operating system.
-
-;; op-str-lu
+;;; @brief OPEN stream look-up table
+;;;
+;;; The open stream look-up table consists of matched pairs.
+;;; The channel letter is followed by an 8-bit displacement to the
+;;; associated stream-opening routine in this ROM.
+;;; The table requires a zero end-marker as the letter has been
+;;; provided by the user and not the operating system.
+;;;
+;;; ; op-str-lu
 OP_STR_LU:
         DB          'K', OPEN_K-$-1  ; $06 offset to OPEN-K
         DB          'S', OPEN_S-$-1  ; $08 offset to OPEN-S
@@ -1779,36 +1950,40 @@ OP_STR_LU:
 ; containing $0001 or more likely there would be an exit within the routine.
 ; Anyway doesn't matter, these routines are long gone.
 
-; -----------------
-; OPEN-K Subroutine
-; -----------------
-; Open Keyboard stream.
-
-;; OPEN-K
+;;; @brief OPEN-K Subroutine
+;;;
+;;; Open Keyboard stream.
+;;;
+;;; ; OPEN-K
+;;; @jumps OPEN_END
 OPEN_K:
         LD      E,$01           ; 01 is offset to second byte of channel 'K'.
         JR      OPEN_END        ; forward to OPEN-END
 
-; -----------------
-; OPEN-S Subroutine
-; -----------------
-; Open Screen stream.
-
-;; OPEN-S
+;;; @brief OPEN-S Subroutine
+;;;
+;;; Open Screen stream.
+;;;
+;;; ; OPEN-S
+;;; @jumps OPEN_END
 OPEN_S:
         LD      E,$06           ; 06 is offset to 2nd byte of channel 'S'
         JR      OPEN_END        ; to OPEN-END
 
-; -----------------
-; OPEN-P Subroutine
-; -----------------
-; Open Printer stream.
-
-;; OPEN-P
+;;; @brief OPEN-P Subroutine
+;;;
+;;; Open Printer stream.
+;;;
+;;; ; OPEN-P
+;;; @fallthrough OPEN_END
 OPEN_P:
         LD      E,$10           ; 16d is offset to 2nd byte of channel 'P'
 
-;; OPEN-END
+;;; @brief ; OPEN-END
+;;;
+;;; ; OPEN-END
+;;; @jumps REPORT_FB
+;;; @jumpedfrom OPEN_K, OPEN_S
 OPEN_END:
         DEC     BC              ; the stored length of 'K','S','P' or
                                 ; whatever is now tested. ??
@@ -1822,30 +1997,33 @@ OPEN_END:
         RET                     ; return to update STRMS entry thereby
                                 ; signaling stream is open.
 
-; ----------------------------------------
-; Handle CAT, ERASE, FORMAT, MOVE commands
-; ----------------------------------------
-; These just generate an error report as the ROM is 'incomplete'.
-;
-; Luckily this provides a mechanism for extending these in a shadow ROM
-; but without the powerful mechanisms set up in this ROM.
-; An instruction fetch on $0008 may page in a peripheral ROM,
-; e.g. the Sinclair Interface 1 ROM, to handle these commands.
-; However that wasn't the plan.
-; Development of this ROM continued for another three months until the cost
-; of replacing it and the manual became unfeasible.
-; The ultimate power of channels and streams died at birth.
-
-;; CAT-ETC
+;;; @brief Handle CAT, ERASE, FORMAT, MOVE commands
+;;;
+;;; These just generate an error report as the ROM is 'incomplete'.
+;;;
+;;; Luckily this provides a mechanism for extending these in a shadow ROM
+;;; but without the powerful mechanisms set up in this ROM.
+;;; An instruction fetch on $0008 may page in a peripheral ROM,
+;;; e.g. the Sinclair Interface 1 ROM, to handle these commands.
+;;; However that wasn't the plan.
+;;; Development of this ROM continued for another three months until the cost
+;;; of replacing it and the manual became unfeasible.
+;;; The ultimate power of channels and streams died at birth.
+;;;
+;;; ; CAT-ETC
+;;; @jumps REPORT_OB
 CAT_ETC:
         JR      REPORT_OB           ; to REPORT-Ob
 
-; -----------------
-; Perform AUTO-LIST
-; -----------------
-; This produces an automatic listing in the upper screen.
-
-;; AUTO-LIST
+;;; @brief Perform AUTO-LIST
+;;;
+;;; This produces an automatic listing in the upper screen.
+;;;
+;;; ; AUTO-LIST
+;;; @calls CL_ALL, CL_LINE, LINE_ADDR
+;;; @jumps AUTO_L_2
+;;; @calledby ED_LIST, MAIN_EXEC
+;;; @fallthrough AUTO_L_1
 AUTO_LIST:
         LD      (LIST_SP),SP      ; save stack pointer in LIST_SP
         LD      (IY+$02),$10    ; update TV_FLAG set bit 3
@@ -1879,7 +2057,11 @@ AUTO_LIST:
                                 ; top line in HL and next line in DE.
         POP     BC              ; restore the result to balance stack.
 
-;; AUTO-L-1
+;;; @brief ; AUTO-L-1
+;;;
+;;; ; AUTO-L-1
+;;; @calls NEXT_ONE
+;;; @jumps AUTO_L_3
 AUTO_L_1:
         PUSH    BC              ; save the result.
         CALL    NEXT_ONE        ; routine NEXT-ONE gets address in HL of
@@ -1900,14 +2082,24 @@ AUTO_L_1:
 
 ; the jump was to here if S_TOP was greater than E_PPC
 
-;; AUTO-L-2
+;;; @brief ; AUTO-L-2
+;;;
+;;; ; AUTO-L-2
+;;; @jumpedfrom AUTO_LIST
+;;; @fallthrough AUTO_L_3
 AUTO_L_2:
         LD      (S_TOP),HL      ; make S_TOP the same as E_PPC.
 
 ; continue here with valid starting point from above or good estimate
 ; from computation
 
-;; AUTO-L-3
+;;; @brief ; AUTO-L-3
+;;;
+;;; ; AUTO-L-3
+;;; @calls LINE_ADDR
+;;; @jumps AUTO_L_4
+;;; @jumpedfrom AUTO_L_1
+;;; @fallthrough AUTO_L_4
 AUTO_L_3:
         LD      HL,(S_TOP)      ; fetch S_TOP line number to HL.
         CALL    LINE_ADDR       ; routine LINE-ADDR gets address in HL.
@@ -1916,7 +2108,11 @@ AUTO_L_3:
 
         EX      DE,HL           ; else use address of next line.
 
-;; AUTO-L-4
+;;; @brief ; AUTO-L-4
+;;;
+;;; ; AUTO-L-4
+;;; @calls LIST_ALL
+;;; @jumpedfrom AUTO_L_3
 AUTO_L_4:
         CALL    LIST_ALL           ; routine LIST-ALL                >>>
 
@@ -1925,29 +2121,35 @@ AUTO_L_4:
         RES     4,(IY+$02)      ; update TV_FLAG  - signal no auto listing.
         RET                     ; return.
 
-; ------------
-; Handle LLIST
-; ------------
-; A short form of LIST #3. The listing goes to stream 3 - default printer.
-
-;; LLIST
+;;; @brief Handle LLIST
+;;;
+;;; A short form of LIST #3. The listing goes to stream 3 - default printer.
+;;;
+;;; ; LLIST
+;;; @jumps LIST_1
 LLIST:
         LD      A,$03           ; the usual stream for ZX Printer
         JR      LIST_1          ; forward to LIST-1
 
-; -----------
-; Handle LIST
-; -----------
-; List to any stream.
-; Note. While a starting line can be specified it is
-; not possible to specify an end line.
-; Just listing a line makes it the current edit line.
-
-;; LIST
+;;; @brief Handle LIST
+;;;
+;;; List to any stream.
+;;; Note. While a starting line can be specified it is
+;;; not possible to specify an end line.
+;;; Just listing a line makes it the current edit line.
+;;;
+;;; ; LIST
+;;; @fallthrough LIST_1
 LIST:
         LD      A,$02           ; default is stream 2 - the upper screen.
 
-;; LIST-1
+;;; @brief ; LIST-1
+;;;
+;;; ; LIST-1
+;;; @calls SYNTAX_Z, CHAN_OPEN, STR_ALTER
+;;; @jumps LIST_4, LIST_2, LIST_3
+;;; @jumpedfrom LLIST
+;;; @fallthrough LIST_2
 LIST_1:
         LD      (IY+$02),$00    ; the TV_FLAG is initialized with bit 0 reset
                                 ; indicating upper screen in use.
@@ -1968,7 +2170,12 @@ LIST_1:
 
 ; we have, say,  LIST #15, and a number must follow the separator.
 
-;; LIST-2
+;;; @brief ; LIST-2
+;;;
+;;; ; LIST-2
+;;; @calls EXPT_1NUM
+;;; @jumps LIST_5
+;;; @jumpedfrom LIST_1
 LIST_2:
         RST     20H             ; NEXT-CHAR
         CALL    EXPT_1NUM       ; routine EXPT-1NUM
@@ -1978,7 +2185,12 @@ LIST_2:
 
 ; the branch was here with just LIST #3 etc.
 
-;; LIST-3
+;;; @brief ; LIST-3
+;;;
+;;; ; LIST-3
+;;; @calls USE_ZERO
+;;; @jumps LIST_5
+;;; @jumpedfrom LIST_1
 LIST_3:
         CALL    USE_ZERO         ; routine USE-ZERO
         JR      LIST_5           ; forward to LIST-5
@@ -1987,12 +2199,22 @@ LIST_3:
 
 ; the branch was here with LIST
 
-;; LIST-4
+;;; @brief ; LIST-4
+;;;
+;;; ; LIST-4
+;;; @calls FETCH_NUM
+;;; @jumpedfrom LIST_1
+;;; @fallthrough LIST_5
 LIST_4:
         CALL    FETCH_NUM           ; routine FETCH-NUM checks if a number
                                 ; follows else uses zero.
 
-;; LIST-5
+;;; @brief ; LIST-5
+;;;
+;;; ; LIST-5
+;;; @calls CHECK_END, FIND_INT2, LINE_ADDR
+;;; @jumpedfrom LIST_2, LIST_3
+;;; @fallthrough LIST_ALL
 LIST_5:
         CALL    CHECK_END           ; routine CHECK-END quits if syntax OK >>>
 
@@ -2015,11 +2237,18 @@ LIST_5:
 
 ; This routine is called from AUTO-LIST
 
-;; LIST-ALL
+;;; @brief ; LIST-ALL
+;;;
+;;; ; LIST-ALL
+;;; @calledby AUTO_L_4
+;;; @fallthrough LIST_ALL_2
 LIST_ALL:
         LD      E,$01           ; signal current line not yet printed
 
-;; LIST-ALL-2
+;;; @brief ; LIST-ALL-2
+;;;
+;;; ; LIST-ALL-2
+;;; @calls OUT_LINE, LN_FETCH
 LIST_ALL_2:
         CALL    OUT_LINE           ; routine OUT-LINE outputs a BASIC line
                                 ; using PRINT-OUT and makes an early return
@@ -2055,14 +2284,17 @@ LIST_ALL_2:
         POP     HL              ; restore the address of the next line.
         JR      LIST_ALL_2      ; back to LIST-ALL-2.
 
-; ------------------------
-; Print a whole BASIC line
-; ------------------------
-; This routine prints a whole BASIC line and it is called
-; from LIST-ALL to output the line to current channel
-; and from ED-EDIT to 'sprint' the line to the edit buffer.
-
-;; OUT-LINE
+;;; @brief Print a whole BASIC line
+;;;
+;;; This routine prints a whole BASIC line and it is called
+;;; from LIST-ALL to output the line to current channel
+;;; and from ED-EDIT to 'sprint' the line to the edit buffer.
+;;;
+;;; ; OUT-LINE
+;;; @calls CP_LINES
+;;; @jumps OUT_LINE1
+;;; @calledby ED_EDIT, LIST_ALL_2
+;;; @fallthrough OUT_LINE1
 OUT_LINE:
         LD      BC,(E_PPC)      ; fetch E_PPC the current line which may be
                                 ; unchecked and not exist.
@@ -2074,7 +2306,13 @@ OUT_LINE:
         RL      E               ; pick up carry in E if line before current
                                 ; leave E zero if same or after.
 
-;; OUT-LINE1
+;;; @brief ; OUT-LINE1
+;;;
+;;; ; OUT-LINE1
+;;; @calls OUT_NUM_2
+;;; @jumps OUT_LINE3
+;;; @jumpedfrom OUT_LINE
+;;; @fallthrough OUT_LINE2
 OUT_LINE1:
         LD      (IY+$2D),E      ; save flag in BREG which is spare.
         LD      A,(HL)          ; get high byte of line number.
@@ -2098,11 +2336,20 @@ OUT_LINE1:
 
 ; this entry point is called from ED-COPY
 
-;; OUT-LINE2
+;;; @brief ; OUT-LINE2
+;;;
+;;; ; OUT-LINE2
+;;; @calledby L111D
+;;; @fallthrough OUT_LINE3
 OUT_LINE2:
         SET     0,(IY+$01)      ; update FLAGS - suppress leading space.
 
-;; OUT-LINE3
+;;; @brief ; OUT-LINE3
+;;;
+;;; ; OUT-LINE3
+;;; @jumps OUT_LINE4
+;;; @jumpedfrom OUT_LINE1
+;;; @fallthrough OUT_LINE4
 OUT_LINE3:
         PUSH    DE              ; save flag E for a return value.
         EX      DE,HL           ; save HL address in DE.
@@ -2115,7 +2362,13 @@ OUT_LINE3:
 
         SET     2,(HL)          ; signal 'L' mode. (used for input)
 
-;; OUT-LINE4
+;;; @brief ; OUT-LINE4
+;;;
+;;; ; OUT-LINE4
+;;; @calls OUT_FLASH
+;;; @jumps OUT_LINE5
+;;; @jumpedfrom OUT_LINE3
+;;; @fallthrough OUT_LINE5
 OUT_LINE4:
         LD      HL,(X_PTR)      ; fetch X_PTR - possibly the error pointer
                                 ; address.
@@ -2126,7 +2379,12 @@ OUT_LINE4:
         LD      A,$3F           ; load A with '?' the error marker.
         CALL    OUT_FLASH       ; routine OUT-FLASH to print flashing marker.
 
-;; OUT-LINE5
+;;; @brief ; OUT-LINE5
+;;;
+;;; ; OUT-LINE5
+;;; @calls OUT_CURS, NUMBER
+;;; @jumps OUT_LINE6
+;;; @jumpedfrom OUT_LINE4
 OUT_LINE5:
         CALL    OUT_CURS           ; routine OUT-CURS will print the cursor if
                                 ; this is the right position.
@@ -2145,25 +2403,28 @@ OUT_LINE5:
 
 ; ---
 
-;; OUT-LINE6
+;;; @brief ; OUT-LINE6
+;;;
+;;; ; OUT-LINE6
+;;; @jumpedfrom OUT_LINE5
 OUT_LINE6:
         POP     DE              ; bring back the flag E, zero if current
                                 ; line printed else 1 if still to print.
         RET                     ; return with A holding $0D
 
-; -------------------------
-; Check for a number marker
-; -------------------------
-; this subroutine is called from two processes. while outputting BASIC lines
-; and while searching statements within a BASIC line.
-; during both, this routine will pass over an invisible number indicator
-; and the five bytes floating-point number that follows it.
-; Note that this causes floating point numbers to be stripped from
-; the BASIC line when it is fetched to the edit buffer by OUT_LINE.
-; the number marker also appears after the arguments of a DEF FN statement
-; and may mask old 5-byte string parameters.
-
-;; NUMBER
+;;; @brief Check for a number marker
+;;;
+;;; this subroutine is called from two processes. while outputting BASIC lines
+;;; and while searching statements within a BASIC line.
+;;; during both, this routine will pass over an invisible number indicator
+;;; and the five bytes floating-point number that follows it.
+;;; Note that this causes floating point numbers to be stripped from
+;;; the BASIC line when it is fetched to the edit buffer by OUT_LINE.
+;;; the number marker also appears after the arguments of a DEF FN statement
+;;; and may mask old 5-byte string parameters.
+;;;
+;;; ; NUMBER
+;;; @calledby OUT_LINE5, EACH_S_3
 NUMBER:
         CP      $0E             ; character fourteen ?
         RET     NZ              ; return if not.
@@ -2177,17 +2438,18 @@ NUMBER:
         LD      A,(HL)          ; fetch the following character
         RET                     ; for return value.
 
-; --------------------------
-; Print a flashing character
-; --------------------------
-; This subroutine is called from OUT-LINE to print a flashing error
-; marker '?' or from the next routine to print a flashing cursor e.g. 'L'.
-; However, this only gets called from OUT-LINE when printing the edit line
-; or the input buffer to the lower screen so a direct call to $09F4 can
-; be used, even though out-line outputs to other streams.
-; In fact the alternate set is used for the whole routine.
-
-;; OUT-FLASH
+;;; @brief Print a flashing character
+;;;
+;;; This subroutine is called from OUT-LINE to print a flashing error
+;;; marker '?' or from the next routine to print a flashing cursor e.g. 'L'.
+;;; However, this only gets called from OUT-LINE when printing the edit line
+;;; or the input buffer to the lower screen so a direct call to $09F4 can
+;;; be used, even though out-line outputs to other streams.
+;;; In fact the alternate set is used for the whole routine.
+;;;
+;;; ; OUT-FLASH
+;;; @calls RTL_PO_FETCH_EXT
+;;; @calledby OUT_LINE4, OUT_CURS
 OUT_FLASH:
         EXX                     ; switch in alternate set
 
@@ -2202,7 +2464,7 @@ OUT_FLASH:
         PUSH    DE              ; and save.
         LD      (HL),$00        ; clear inverse, over, ink/paper 9
 
-        CALL    ARAB_PO_FETCH_EXT           ; routine PRINT-OUT outputs character
+        CALL    RTL_PO_FETCH_EXT           ; routine PRINT-OUT outputs character
                                 ; without the need to vector via RST 10.
 
         POP     HL              ; pop P_FLAG to H.
@@ -2213,17 +2475,18 @@ OUT_FLASH:
         EXX                     ; switch back to main set
         RET                     ; return
 
-; ----------------
-; Print the cursor
-; ----------------
-; This routine is called before any character is output while outputting
-; a BASIC line or the input buffer. This includes listing to a printer
-; or screen, copying a BASIC line to the edit buffer and printing the
-; input buffer or edit buffer to the lower screen. It is only in the
-; latter two cases that it has any relevance and in the last case it
-; performs another very important function also.
-
-;; OUT-CURS
+;;; @brief Print the cursor
+;;;
+;;; This routine is called before any character is output while outputting
+;;; a BASIC line or the input buffer. This includes listing to a printer
+;;; or screen, copying a BASIC line to the edit buffer and printing the
+;;; input buffer or edit buffer to the lower screen. It is only in the
+;;; latter two cases that it has any relevance and in the last case it
+;;; performs another very important function also.
+;;;
+;;; ; OUT-CURS
+;;; @calls RTL_MODE_TOGGLE, OUT_FLASH
+;;; @calledby L111D, OUT_LINE5
 OUT_CURS:
         LD      HL,(K_CUR)      ; fetch K_CUR the current cursor address
         AND     A               ; prepare for true subtraction.
@@ -2270,18 +2533,18 @@ OUT_CURS:
 ;   to the standard K/L/C/E/G set, without needing to touch the letters
 ;   choice logic itself.
 ;==========================================================================
-        CALL    ARAB_MODE_TOGGLE        ; call ARAB_MODE_TOGGLE
+        CALL    RTL_MODE_TOGGLE        ; call RTL_MODE_TOGGLE
         LD      A,(MODE)               ; A = (MODE)
         AND     A                       ; A = A AND A
-        JR      NZ,ARAB_OUT_CURS_HOOK   ; if not zero, jump to ARAB_OUT_CURS_HOOK
+        JR      NZ,RTL_OUT_CURS_HOOK   ; if not zero, jump to RTL_OUT_CURS_HOOK
         DEC     HL                      ; HL = HL - 1
         RES     3,(HL)                  ; clear bit 3 of (HL)
         BIT     2,(HL)                  ; test bit 2 of (HL)
-        JR      Z,ARAB_OUT_CURS_HOOK    ; if zero, jump to ARAB_OUT_CURS_HOOK
+        JR      Z,RTL_OUT_CURS_HOOK    ; if zero, jump to RTL_OUT_CURS_HOOK
         SET     3,(HL)                  ; set bit 3 of (HL)
         LD      A,3                     ; A = 3
-ARAB_OUT_CURS_HOOK:
-        LD      HL,ARAB_CURS_TABLE      ; HL = cursor letter table
+RTL_OUT_CURS_HOOK:
+        LD      HL,LANG_CURS_TABLE      ; HL = cursor letter table
         ADD     A,L                     ; A = A + L
         LD      L,A                     ; L = A
         LD      A,(HL)                  ; A = (HL)
@@ -2289,26 +2552,31 @@ ARAB_OUT_CURS_HOOK:
         CALL    OUT_FLASH               ; call OUT_FLASH
         POP     DE                      ; pop DE off the stack
         RET                             ; return
-ARAB_CURS_TABLE:
-        DB          $63                 ; table data
-L1909:
-        DB          $68, $51, $4D, $18 ; table data
+LANG_CURS_TABLE:
+        IFDEF   LANG_PERSIAN
+        INCLUDE "lang/persian/cursor_letters.asm"
+        ELSE
+        INCLUDE "lang/arabic/cursor_letters.asm"
+        ENDIF
+L1909 EQU LANG_CURS_TABLE + 1
 L18F3   EQU    $18F3                  ; this address now falls inside the block above (label kept for reference)
 
         POP     DE              ; restore and
         RET                     ; return.
 
-; ----------------------------
-; Get line number of next line
-; ----------------------------
-; These two subroutines are called while editing.
-; This entry point is from ED-DOWN with HL addressing E_PPC
-; to fetch the next line number.
-; Also from AUTO-LIST with HL addressing S_TOP just to update S_TOP
-; with the value of the next line number. It gets fetched but is discarded.
-; These routines never get called while the editor is being used for input.
-
-;; LN-FETCH
+;;; @brief Get line number of next line
+;;;
+;;; These two subroutines are called while editing.
+;;; This entry point is from ED-DOWN with HL addressing E_PPC
+;;; to fetch the next line number.
+;;; Also from AUTO-LIST with HL addressing S_TOP just to update S_TOP
+;;; with the value of the next line number. It gets fetched but is discarded.
+;;; These routines never get called while the editor is being used for input.
+;;;
+;;; ; LN-FETCH
+;;; @calls LINE_ADDR, LINE_NO
+;;; @calledby ED_DOWN, LIST_ALL_2
+;;; @fallthrough LN_STORE
 LN_FETCH:
         LD      E,(HL)          ; fetch low byte
         INC     HL              ; address next
@@ -2322,7 +2590,10 @@ LN_FETCH:
 
 ; This entry point is from the ED-UP with HL addressing E_PPC_hi
 
-;; LN-STORE
+;;; @brief ; LN-STORE
+;;;
+;;; ; LN-STORE
+;;; @calledby ED_UP
 LN_STORE:
         BIT     5,(IY+$37)      ; test FLAGX - input mode ?
         RET     NZ              ; return if so.
@@ -2333,17 +2604,18 @@ LN_STORE:
         LD      (HL),E          ; save low byte of line number.
         RET                     ; return.
 
-; -----------------------------------------
-; Outputting numbers at start of BASIC line
-; -----------------------------------------
-; This routine entered at OUT-SP-NO is used to compute then output the first
-; three digits of a 4-digit BASIC line printing a space if necessary.
-; The line number, or residual part, is held in HL and the BC register
-; holds a subtraction value -1000, -100 or -10.
-; Note. for example line number 200 -
-; space(out_char), 2(out_code), 0(out_char) final number always out-code.
-
-;; OUT-SP-2
+;;; @brief Outputting numbers at start of BASIC line
+;;;
+;;; This routine entered at OUT-SP-NO is used to compute then output the first
+;;; three digits of a 4-digit BASIC line printing a space if necessary.
+;;; The line number, or residual part, is held in HL and the BC register
+;;; holds a subtraction value -1000, -100 or -10.
+;;; Note. for example line number 200 -
+;;; space(out_char), 2(out_code), 0(out_char) final number always out-code.
+;;;
+;;; ; OUT-SP-2
+;;; @jumps OUT_CHAR
+;;; @jumpedfrom OUT_SP_1
 OUT_SP_2:
         LD      A,E             ; will be space if OUT-CODE not yet called.
                                 ; or $FF if spaces are suppressed.
@@ -2361,11 +2633,18 @@ OUT_SP_2:
 
 ; -> the single entry point.
 
-;; OUT-SP-NO
+;;; @brief ; OUT-SP-NO
+;;;
+;;; ; OUT-SP-NO
+;;; @calledby L1A30
+;;; @fallthrough OUT_SP_1
 OUT_SP_NO:
         XOR     A               ; initialize digit to 0
 
-;; OUT-SP-1
+;;; @brief ; OUT-SP-1
+;;;
+;;; ; OUT-SP-1
+;;; @jumps OUT_SP_2, OUT_CODE
 OUT_SP_1:
         ADD     HL,BC           ; add negative number to HL.
         INC     A               ; increment digit
@@ -2379,12 +2658,14 @@ OUT_SP_1:
         JP      OUT_CODE           ; jump back to exit via OUT-CODE.    ->
 
 
-; -------------------------------------
-; Outputting characters in a BASIC line
-; -------------------------------------
-; This subroutine ...
-
-;; OUT-CHAR
+;;; @brief Outputting characters in a BASIC line
+;;;
+;;; This subroutine ...
+;;;
+;;; ; OUT-CHAR
+;;; @calls NUMERIC
+;;; @jumps OUT_CH_3, OUT_CH_1, OUT_CH_2
+;;; @jumpedfrom OUT_SP_2
 OUT_CHAR:
         CALL    NUMERIC           ; routine NUMERIC tests if it is a digit ?
         JR      NC,OUT_CH_3       ; to OUT-CH-3 to print digit without
@@ -2420,7 +2701,12 @@ OUT_CHAR:
 
 ; ---
 
-;; OUT-CH-1
+;;; @brief ; OUT-CH-1
+;;;
+;;; ; OUT-CH-1
+;;; @jumps OUT_CH_2
+;;; @jumpedfrom OUT_CHAR
+;;; @fallthrough OUT_CH_2
 OUT_CH_1:
         CP      $22             ; is it quote character '"'  ?
         JR      NZ,OUT_CH_2     ; to OUT-CH-2 with others to set 'L' mode.
@@ -2431,32 +2717,43 @@ OUT_CH_1:
         LD      (FLAGS2),A       ; update FLAGS2
         POP     AF              ; and restore character.
 
-;; OUT-CH-2
+;;; @brief ; OUT-CH-2
+;;;
+;;; ; OUT-CH-2
+;;; @jumpedfrom OUT_CHAR, OUT_CH_1
+;;; @fallthrough OUT_CH_3
 OUT_CH_2:
         SET     2,(IY+$01)      ; update FLAGS - signal L mode if the cursor
                                 ; is next.
 
-;; OUT-CH-3
+;;; @brief ; OUT-CH-3
+;;;
+;;; ; OUT-CH-3
+;;; @jumpedfrom OUT_CHAR
 OUT_CH_3:
         RST     10H             ; PRINT-A vectors the character to
                                 ; channel 'S', 'K', 'R' or 'P'.
         RET                     ; return.
 
-; -------------------------------------------
-; Get starting address of line, or line after
-; -------------------------------------------
-; This routine is used often to get the address, in HL, of a BASIC line
-; number supplied in HL, or failing that the address of the following line
-; and the address of the previous line in DE.
-
-;; LINE-ADDR
+;;; @brief Get starting address of line, or line after
+;;;
+;;; This routine is used often to get the address, in HL, of a BASIC line
+;;; number supplied in HL, or failing that the address of the following line
+;;; and the address of the previous line in DE.
+;;;
+;;; ; LINE-ADDR
+;;; @calledby ED_EDIT, ED_UP, MAIN_ADD, AUTO_LIST, AUTO_L_3, LIST_5, LN_FETCH, LINE_NEW, REST_RUN
+;;; @fallthrough LINE_AD_1
 LINE_ADDR:
         PUSH    HL              ; save line number in HL register
         LD      HL,(PROG)      ; fetch start of program from PROG
         LD      D,H             ; transfer address to
         LD      E,L             ; the DE register pair.
 
-;; LINE-AD-1
+;;; @brief ; LINE-AD-1
+;;;
+;;; ; LINE-AD-1
+;;; @calls CP_LINES, NEXT_ONE
 LINE_AD_1:
         POP     BC              ; restore the line number to BC
         CALL    CP_LINES        ; routine CP-LINES compares with that
@@ -2470,13 +2767,13 @@ LINE_AD_1:
         EX      DE,HL           ; switch so next in HL
         JR      LINE_AD_1       ; back to LINE-AD-1 for another comparison
 
-; --------------------
-; Compare line numbers
-; --------------------
-; This routine compares a line number supplied in BC with an addressed
-; line number pointed to by HL.
-
-;; CP-LINES
+;;; @brief Compare line numbers
+;;;
+;;; This routine compares a line number supplied in BC with an addressed
+;;; line number pointed to by HL.
+;;;
+;;; ; CP-LINES
+;;; @calledby OUT_LINE, LINE_AD_1
 CP_LINES:
         LD      A,(HL)          ; Load the high byte of line number and
         CP      B               ; compare with that of supplied line number.
@@ -2492,14 +2789,14 @@ CP_LINES:
                                 ; next available BASIC line or
                                 ; program end marker.
 
-; -------------------
-; Find each statement
-; -------------------
-; The single entry point EACH-STMT is used to
-; 1) To find the D'th statement in a line.
-; 2) To find a token in held E.
-
-;; not-used
+;;; @brief Find each statement
+;;;
+;;; The single entry point EACH-STMT is used to
+;;; 1) To find the D'th statement in a line.
+;;; 2) To find a token in held E.
+;;;
+;;; ; not-used
+;;; @fallthrough EACH_STMT
 NOT_USED:
         INC     HL              ;
         INC     HL              ;
@@ -2507,12 +2804,21 @@ NOT_USED:
 
 ; -> entry point.
 
-;; EACH-STMT
+;;; @brief ; EACH-STMT
+;;;
+;;; ; EACH-STMT
+;;; @calledby NEXT_LINE, LOOK_P_2, SF_NOT_FD
+;;; @jumpedfrom PASS_BY
+;;; @fallthrough EACH_S_1
 EACH_STMT:
         LD      (CH_ADD),HL      ; save HL in CH_ADD
         LD      C,$00           ; initialize quotes flag
 
-;; EACH-S-1
+;;; @brief ; EACH-S-1
+;;;
+;;; ; EACH-S-1
+;;; @jumps EACH_S_3
+;;; @jumpedfrom EACH_S_5
 EACH_S_1:
         DEC     D               ; decrease statement count
         RET     Z               ; return if zero
@@ -2527,12 +2833,22 @@ EACH_S_1:
 
 ; ---
 
-;; EACH-S-2
+;;; @brief ; EACH-S-2
+;;;
+;;; ; EACH-S-2
+;;; @jumpedfrom EACH_S_6
+;;; @fallthrough EACH_S_3
 EACH_S_2:
         INC     HL              ; next address
         LD      A,(HL)          ; next character
 
-;; EACH-S-3
+;;; @brief ; EACH-S-3
+;;;
+;;; ; EACH-S-3
+;;; @calls NUMBER
+;;; @jumps EACH_S_4
+;;; @jumpedfrom EACH_S_1
+;;; @fallthrough EACH_S_4
 EACH_S_3:
         CALL    NUMBER          ; routine NUMBER skips if number marker
         LD      (CH_ADD),HL      ; save in CH_ADD
@@ -2541,7 +2857,12 @@ EACH_S_3:
 
         DEC     C               ; toggle bit 0 of C
 
-;; EACH-S-4
+;;; @brief ; EACH-S-4
+;;;
+;;; ; EACH-S-4
+;;; @jumps EACH_S_5, EACH_S_6
+;;; @jumpedfrom EACH_S_3
+;;; @fallthrough EACH_S_5
 EACH_S_4:
         CP      $3A             ; is it ':'
         JR      Z,EACH_S_5      ; to EACH-S-5
@@ -2549,12 +2870,21 @@ EACH_S_4:
         CP      $CB             ; 'THEN'
         JR      NZ,EACH_S_6     ; to EACH-S-6
 
-;; EACH-S-5
+;;; @brief ; EACH-S-5
+;;;
+;;; ; EACH-S-5
+;;; @jumps EACH_S_1
+;;; @jumpedfrom EACH_S_4
+;;; @fallthrough EACH_S_6
 EACH_S_5:
         BIT     0,C             ; is it in quotes
         JR      Z,EACH_S_1      ; to EACH-S-1 if not
 
-;; EACH-S-6
+;;; @brief ; EACH-S-6
+;;;
+;;; ; EACH-S-6
+;;; @jumps EACH_S_2
+;;; @jumpedfrom EACH_S_4
 EACH_S_6:
         CP      $0D             ; end of line ?
         JR      NZ,EACH_S_2     ; to EACH-S-2
@@ -2587,16 +2917,18 @@ EACH_S_6:
 ;
 ; -----------------------------------------------------------------------
 
-; ------------
-; Get next one
-; ------------
-; This versatile routine is used to find the address of the next line
-; in the program area or the next variable in the variables area.
-; The reason one routine is made to handle two apparently unrelated tasks
-; is that it can be called indiscriminately when merging a line or a
-; variable.
-
-;; NEXT-ONE
+;;; @brief Get next one
+;;;
+;;; This versatile routine is used to find the address of the next line
+;;; in the program area or the next variable in the variables area.
+;;; The reason one routine is made to handle two apparently unrelated tasks
+;;; is that it can be called indiscriminately when merging a line or a
+;;; variable.
+;;;
+;;; ; NEXT-ONE
+;;; @jumps NEXT_O_3, NEXT_O_4, NEXT_O_1
+;;; @calledby ME_CONTRL, ME_ENTER, MAIN_ADD, AUTO_L_1, LINE_AD_1, V_NEXT, D_RUN
+;;; @fallthrough NEXT_O_1
 NEXT_ONE:
         PUSH    HL              ; save the pointer address.
         LD      A,(HL)          ; get first byte.
@@ -2615,7 +2947,12 @@ NEXT_ONE:
         CCF                     ; clear the carry for long-named variables.
                                 ; it remains set for for-next loop variables.
 
-;; NEXT-O-1
+;;; @brief ; NEXT-O-1
+;;;
+;;; ; NEXT-O-1
+;;; @jumps NEXT_O_2
+;;; @jumpedfrom NEXT_ONE
+;;; @fallthrough NEXT_O_2
 NEXT_O_1:
         LD      BC,$0005        ; set BC to 5 for floating point number
         JR      NC,NEXT_O_2     ; forward to NEXT-O-2 if not a for/next
@@ -2626,7 +2963,11 @@ NEXT_O_1:
 
 ; now deal with long-named variables
 
-;; NEXT-O-2
+;;; @brief ; NEXT-O-2
+;;;
+;;; ; NEXT-O-2
+;;; @jumps NEXT_O_5
+;;; @jumpedfrom NEXT_O_1
 NEXT_O_2:
         RLA                     ; test if character inverted. carry will also
                                 ; be set for single character variables
@@ -2643,13 +2984,21 @@ NEXT_O_2:
 
 ; this branch is for line numbers.
 
-;; NEXT-O-3
+;;; @brief ; NEXT-O-3
+;;;
+;;; ; NEXT-O-3
+;;; @jumpedfrom NEXT_ONE
+;;; @fallthrough NEXT_O_4
 NEXT_O_3:
         INC     HL              ; increment pointer to low byte of line no.
 
 ; strings and arrays rejoin here
 
-;; NEXT-O-4
+;;; @brief ; NEXT-O-4
+;;;
+;;; ; NEXT-O-4
+;;; @jumpedfrom NEXT_ONE
+;;; @fallthrough NEXT_O_5
 NEXT_O_4:
         INC     HL              ; increment to address the length low byte.
         LD      C,(HL)          ; transfer to C and
@@ -2659,19 +3008,23 @@ NEXT_O_4:
 
 ; the three types of numeric variables rejoin here
 
-;; NEXT-O-5
+;;; @brief ; NEXT-O-5
+;;;
+;;; ; NEXT-O-5
+;;; @jumpedfrom NEXT_O_2
+;;; @fallthrough DIFFER
 NEXT_O_5:
         ADD     HL,BC           ; add the length to give address of next
                                 ; line/variable in HL.
         POP     DE              ; restore previous address to DE.
 
-; ------------------
-; Difference routine
-; ------------------
-; This routine terminates the above routine and is also called from the
-; start of the next routine to calculate the length to reclaim.
-
-;; DIFFER
+;;; @brief Difference routine
+;;;
+;;; This routine terminates the above routine and is also called from the
+;;; start of the next routine to calculate the length to reclaim.
+;;;
+;;; ; DIFFER
+;;; @calledby RECLAIM_1
 DIFFER:
         AND     A               ; prepare for true subtraction.
         SBC     HL,DE           ; subtract the two pointers.
@@ -2683,16 +3036,22 @@ DIFFER:
                                 ; low pointer (previous) in HL,
                                 ; high pointer (next) in DE.
 
-; -----------------------
-; Handle reclaiming space
-; -----------------------
-;
-
-;; RECLAIM-1
+;;; @brief Handle reclaiming space
+;;;
+;;; ; RECLAIM-1
+;;; @calls DIFFER
+;;; @calledby LD_CONTRL, CLEAR_SP, CLEAR_1
+;;; @jumpedfrom REC_EDIT
+;;; @fallthrough RECLAIM_2
 RECLAIM_1:
         CALL    DIFFER           ; routine DIFFER immediately above
 
-;; RECLAIM-2
+;;; @brief ; RECLAIM-2
+;;;
+;;; ; RECLAIM-2
+;;; @calls POINTERS
+;;; @calledby LD_CONTRL, ME_ENTER, REMOVE_FP, MAIN_ADD, D_RUN
+;;; @jumpedfrom ED_DELETE, L_ADD
 RECLAIM_2:
         PUSH    BC              ;
 
@@ -2715,23 +3074,26 @@ RECLAIM_2:
         POP     HL              ;
         RET                     ;
 
-; ----------------------------------------
-; Read line number of line in editing area
-; ----------------------------------------
-; This routine reads a line number in the editing area returning the number
-; in the BC register or zero if no digits exist before commands.
-; It is called from LINE-SCAN to check the syntax of the digits.
-; It is called from MAIN-3 to extract the line number in preparation for
-; inclusion of the line in the BASIC program area.
-;
-; Interestingly the calculator stack is moved from its normal place at the
-; end of dynamic memory to an adequate area within the system variables area.
-; This ensures that in a low memory situation, that valid line numbers can
-; be extracted without raising an error and that memory can be reclaimed
-; by deleting lines. If the stack was in its normal place then a situation
-; arises whereby the Spectrum becomes locked with no means of reclaiming space.
-
-;; E-LINE-NO
+;;; @brief Read line number of line in editing area
+;;;
+;;; This routine reads a line number in the editing area returning the number
+;;; in the BC register or zero if no digits exist before commands.
+;;; It is called from LINE-SCAN to check the syntax of the digits.
+;;; It is called from MAIN-3 to extract the line number in preparation for
+;;; inclusion of the line in the BASIC program area.
+;;;
+;;; Interestingly the calculator stack is moved from its normal place at the
+;;; end of dynamic memory to an adequate area within the system variables area.
+;;; This ensures that in a low memory situation, that valid line numbers can
+;;; be extracted without raising an error and that memory can be reclaimed
+;;; by deleting lines. If the stack was in its normal place then a situation
+;;; arises whereby the Spectrum becomes locked with no means of reclaiming space.
+;;;
+;;; ; E-LINE-NO
+;;; @calls L13FC
+;;; @jumps E_L_1
+;;; @calledby MAIN_EXEC, LINE_SCAN
+;;; @fallthrough E_L_1
 E_LINE_NO:
         LD      HL,(E_LINE)      ; load HL from system variable E_LINE.
 
@@ -2761,7 +3123,11 @@ E_LINE_NO:
         LD      HL,$D8F0        ; load HL with value -9999
         ADD     HL,BC           ; add to line number in BC
 
-;; E-L-1
+;;; @brief ; E-L-1
+;;;
+;;; ; E-L-1
+;;; @jumps REPORT_C, SET_STK
+;;; @jumpedfrom E_LINE_NO
 E_L_1:
         JP      C,REPORT_C         ; to REPORT-C 'Nonsense in BASIC' if over.
                                 ; Note. As ERR_SP points to ED_ERROR
@@ -2778,19 +3144,21 @@ E_L_1:
                                 ; stack back to its normal place and exit
                                 ; from there.
 
-; ---------------------------------
-; Report and line number outputting
-; ---------------------------------
-; Entry point OUT-NUM-1 is used by the Error Reporting code to print
-; the line number and later the statement number held in BC.
-; If the statement was part of a direct command then -2 is used as a
-; dummy line number so that zero will be printed in the report.
-; This routine is also used to print the exponent of E-format numbers.
-;
-; Entry point OUT-NUM-2 is used from OUT-LINE to output the line number
-; addressed by HL with leading spaces if necessary.
-
-;; OUT-NUM-1
+;;; @brief Report and line number outputting
+;;;
+;;; Entry point OUT-NUM-1 is used by the Error Reporting code to print
+;;; the line number and later the statement number held in BC.
+;;; If the statement was part of a direct command then -2 is used as a
+;;; dummy line number so that zero will be printed in the report.
+;;; This routine is also used to print the exponent of E-format numbers.
+;;;
+;;; Entry point OUT-NUM-2 is used from OUT-LINE to output the line number
+;;; addressed by HL with leading spaces if necessary.
+;;;
+;;; ; OUT-NUM-1
+;;; @jumps OUT_NUM_4, L1A30
+;;; @calledby MAIN_EXEC
+;;; @jumpedfrom PF_E_SIGN
 OUT_NUM_1:
         PUSH    DE              ; save the
         PUSH    HL              ; registers.
@@ -2808,7 +3176,11 @@ OUT_NUM_1:
 
 ; from OUT-LINE - HL addresses line number.
 
-;; OUT-NUM-2
+;;; @brief ; OUT-NUM-2
+;;;
+;;; ; OUT-NUM-2
+;;; @calledby OUT_LINE1
+;;; @fallthrough L1A30
 OUT_NUM_2:
         PUSH    DE              ; save flags
         LD      D,(HL)          ; high byte to D
@@ -2818,7 +3190,14 @@ OUT_NUM_2:
         EX      DE,HL           ; transfer number to HL
         LD      E,$20           ; signal 'output leading spaces'
 
-;; OUT-NUM-3
+;;; @brief ; OUT-NUM-3
+;;;
+;;; ; OUT-NUM-3
+;;; @address $1A30
+;;; @calls OUT_SP_NO
+;;; @jumps L1436
+;;; @jumpedfrom OUT_NUM_1
+;;; @fallthrough OUT_NUM_4
 L1A30:
         JP      L1436           ; jump to L1436
         CALL    OUT_SP_NO       ; routine OUT-SP-NO outputs space or number
@@ -2828,7 +3207,11 @@ L1A30:
         CALL    OUT_SP_NO       ; routine OUT-SP-NO
         LD      A,L             ; remainder to A.
 
-;; OUT-NUM-4
+;;; @brief ; OUT-NUM-4
+;;;
+;;; ; OUT-NUM-4
+;;; @calls OUT_CODE
+;;; @jumpedfrom OUT_NUM_1
 OUT_NUM_4:
         CALL    OUT_CODE           ; routine OUT-CODE for final digit.
                                 ; else report code zero wouldn't get

@@ -1,3 +1,6 @@
+;;; @file 04_cassette_handling_routines.asm
+;;; @brief Part 4. CASSETTE HANDLING ROUTINES
+
 ;****************************************
 ;** Part 4. CASSETTE HANDLING ROUTINES **
 ;****************************************
@@ -48,17 +51,17 @@ L04B9:
 ;           7   6   5   4   3   2   1   0
 ;
 
-; ----------------------------------
-; Save header and program/data bytes
-; ----------------------------------
-;   This routine saves a section of data. It is called from SA-CTRL to save the
-;   seventeen bytes of header data. It is also the exit route from that routine
-;   when it is set up to save the actual data.
-;   On entry -
-;   HL points to start of data.
-;   IX points to descriptor.
-;   The accumulator is set to  $00 for a header, $FF for data.
-
+;;; @brief Save header and program/data bytes
+;;;
+;;;   This routine saves a section of data. It is called from SA-CTRL to save the
+;;;   seventeen bytes of header data. It is also the exit route from that routine
+;;;   when it is set up to save the actual data.
+;;;   On entry -
+;;;   HL points to start of data.
+;;;   IX points to descriptor.
+;;;   The accumulator is set to  $00 for a header, $FF for data.
+;;; @calledby SA_CONTRL
+;;; @jumpedfrom SA_CONTRL
 SA_BYTES:
         LD      HL,SA_LD_RET    ; address: SA/LD-RET
         PUSH    HL              ; is pushed as common exit route.
@@ -171,19 +174,26 @@ SA_PARITY:
 
 ; ---
 
-;   The entry point to save yellow part of bit.
-;   A bit consists of a period with mic on and blue border followed by
-;   a period of mic off with yellow border.
-;   Note. since the DJNZ instruction does not affect flags, the zero flag is
-;   used to indicate which of the two passes is in effect and the carry
-;   maintains the state of the bit to be saved.
+;;; @brief The entry point to save yellow part of bit
+;;;
+;;;   The entry point to save yellow part of bit.
+;;;   A bit consists of a period with mic on and blue border followed by
+;;;   a period of mic off with yellow border.
+;;;   Note. since the DJNZ instruction does not affect flags, the zero flag is
+;;;   used to indicate which of the two passes is in effect and the carry
+;;;   maintains the state of the bit to be saved.
+;;; @jumpedfrom SA_BIT_1
+;;; @fallthrough SA_BIT_1
 SA_BIT_2:
         LD      A,C             ; fetch 'mic on and yellow' which is
                                 ; held permanently in C.
         BIT     7,B             ; set the zero flag. B holds $3E.
 
-;   The entry point to save 1 entire bit. For first bit B holds $3B(*).
-;   Carry is set if saved bit is 1. zero is reset NZ on entry.
+;;; @brief The entry point to save 1 entire bit
+;;;
+;;;   The entry point to save 1 entire bit. For first bit B holds $3B(*).
+;;;   Carry is set if saved bit is 1. zero is reset NZ on entry.
+;;; @jumps SA_BIT_2
 SA_BIT_1:
         DJNZ    SA_BIT_1           ; self loop for delay to SA-BIT-1
 
@@ -241,15 +251,14 @@ SA_DELAY:
 
         RET                     ; return - - >
 
-; ------------------------------
-; THE 'SAVE/LOAD RETURN' ROUTINE
-; ------------------------------
-;   The address of this routine is pushed on the stack prior to any load/save
-;   operation and it handles normal completion with the restoration of the
-;   border and also abnormal termination when the break key, or to be more
-;   precise the space key is pressed during a tape operation.
-;
-; - - >
+;;; @brief THE 'SAVE/LOAD RETURN' ROUTINE
+;;;
+;;;   The address of this routine is pushed on the stack prior to any load/save
+;;;   operation and it handles normal completion with the restoration of the
+;;;   border and also abnormal termination when the break key, or to be more
+;;;   precise the space key is pressed during a tape operation.
+;;;
+;;; - - >
 SA_LD_RET:
         PUSH    AF              ; preserve accumulator throughout.
         LD      A,(BORDCR)       ; fetch border colour from BORDCR.
@@ -277,13 +286,15 @@ SA_LD_END:
         POP     AF              ; restore the accumulator.
         RET                     ; return.
 
-; ------------------------------------
-; Load header or block of information
-; ------------------------------------
-;   This routine is used to load bytes and on entry A is set to $00 for a
-;   header or to $FF for data.  IX points to the start of receiving location
-;   and DE holds the length of bytes to be loaded. If, on entry the carry flag
-;   is set then data is loaded, if reset then it is verified.
+;;; @brief Load header or block of information
+;;;
+;;;   This routine is used to load bytes and on entry A is set to $00 for a
+;;;   header or to $FF for data.  IX points to the start of receiving location
+;;;   and DE holds the length of bytes to be loaded. If, on entry the carry flag
+;;;   is set then data is loaded, if reset then it is verified.
+;;; @calls LD_EDGE_1, LD_EDGE_2
+;;; @calledby REPORT_FA, LD_BLOCK
+;;; @fallthrough LD_SYNC
 LD_BYTES:
         INC     D               ; reset the zero flag without disturbing carry.
         EX      AF,AF'          ; preserve entry flags.
@@ -349,8 +360,11 @@ LD_LEADER:
         INC     H               ; proceed to test 256 edged sample.
         JR      NZ,LD_LEADER        ; back to LD-LEADER while more to do.
 
-;   sample indicates we are in the middle of a two or five second lead-in.
-;   Now test every edge looking for the terminal sync signal.
+;;; @brief sample indicates we are in the middle of a two or five second lead-in
+;;;
+;;;   sample indicates we are in the middle of a two or five second lead-in.
+;;;   Now test every edge looking for the terminal sync signal.
+;;; @calls LD_EDGE_1
 LD_SYNC:
         LD      B,$C9           ; initial timing value in B.
         CALL    LD_EDGE_1           ; routine LD-EDGE-1
@@ -382,8 +396,10 @@ LD_SYNC:
                                 ; zero flag reset to indicate first byte
                                 ; is discarded.
 
-; --------------
-;   the loading loop loads each byte and is entered at the mid point.
+;;; @brief the loading loop loads each byte and is entered at the mid point
+;;;
+;;;   the loading loop loads each byte and is entered at the mid point.
+;;; @calls LD_EDGE_2
 LD_LOOP:
         EX      AF,AF'          ; restore entry flags and type in A.
         JR      NZ,LD_FLAG        ; forward to LD-FLAG if awaiting initial flag
@@ -468,20 +484,21 @@ LD_8_BITS:
         RET                     ; return
                                 ; in no carry then error as checksum disagrees.
 
-; -------------------------
-; Check signal being loaded
-; -------------------------
-;   An edge is a transition from one mic state to another.
-;   More specifically a change in bit 6 of value input from port $FE.
-;   Graphically it is a change of border colour, say, blue to yellow.
-;   The first entry point looks for two adjacent edges. The second entry point
-;   is used to find a single edge.
-;   The B register holds a count, up to 256, within which the edge (or edges)
-;   must be found. The gap between two edges will be more for a '1' than a '0'
-;   so the value of B denotes the state of the bit (two edges) read from tape.
-
-; ->
-
+;;; @brief Check signal being loaded
+;;;
+;;;   An edge is a transition from one mic state to another.
+;;;   More specifically a change in bit 6 of value input from port $FE.
+;;;   Graphically it is a change of border colour, say, blue to yellow.
+;;;   The first entry point looks for two adjacent edges. The second entry point
+;;;   is used to find a single edge.
+;;;   The B register holds a count, up to 256, within which the edge (or edges)
+;;;   must be found. The gap between two edges will be more for a '1' than a '0'
+;;;   so the value of B denotes the state of the bit (two edges) read from tape.
+;;;
+;;; ->
+;;; @calls LD_EDGE_1
+;;; @calledby LD_BYTES, LD_LOOP
+;;; @fallthrough LD_EDGE_1
 LD_EDGE_2:
         CALL    LD_EDGE_1           ; call routine LD-EDGE-1 below.
         RET     NC              ; return if space pressed or time-out.
@@ -493,6 +510,8 @@ LD_EDGE_2:
 ;   this entry point is used to find a single edge from above but also
 ;   when detecting a read-in signal on the tape.
 
+;;; @brief Entry point LD_EDGE_1 (no original comment).
+;;; @calledby LD_BYTES, LD_SYNC, LD_EDGE_2
 LD_EDGE_1:
         LD      A,$16           ; a delay value of twenty two.
 
@@ -530,24 +549,30 @@ LD_SAMPLE:
                                 ; time allowed.
         RET                     ; return.
 
-; ---------------------------------
-; Entry point for all tape commands
-; ---------------------------------
-;   This is the single entry point for the four tape commands.
-;   The routine first determines in what context it has been called by examining
-;   the low byte of the Syntax table entry which was stored in T_ADDR.
-;   Subtracting $EO (the present arrangement) gives a value of
-;   $00 - SAVE
-;   $01 - LOAD
-;   $02 - VERIFY
-;   $03 - MERGE
-;   As with all commands the address STMT-RET is on the stack.
+;;; @brief Entry point for all tape commands
+;;;
+;;;   This is the single entry point for the four tape commands.
+;;;   The routine first determines in what context it has been called by examining
+;;;   the low byte of the Syntax table entry which was stored in T_ADDR.
+;;;   Subtracting $EO (the present arrangement) gives a value of
+;;;   $00 - SAVE
+;;;   $01 - LOAD
+;;;   $02 - VERIFY
+;;;   $03 - MERGE
+;;;   As with all commands the address STMT-RET is on the stack.
+;;; @jumpedfrom CLASS_0B
+;;; @fallthrough L0609
 SAVE_ETC:
         POP     AF              ; discard address STMT-RET.
         LD      A,(T_ADDR)       ; fetch T_ADDR
 
-;   Now reduce the low byte of the Syntax table entry to give command.
-;   Note. For ZASM use SUB $E0 as next instruction.
+;;; @brief Now reduce the low byte of the Syntax table entry to give command
+;;;
+;;;   Now reduce the low byte of the Syntax table entry to give command.
+;;;   Note. For ZASM use SUB $E0 as next instruction.
+;;; @address $0609
+;;; @calls EXPT_EXP, SYNTAX_Z, STK_FETCH
+;;; @fallthrough REPORT_FA
 L0609:
         SUB     LOW(P_SAVE + 1 % 256) ; subtract the known offset.
                                 ; ( is SUB $E0 in standard ROM )
@@ -607,10 +632,15 @@ SA_BLANK:
         AND     A               ; test for zero - SAVE.
         JR      NZ,SA_NULL        ; forward to SA-NULL if not the SAVE command.
 
-;   but no more than ten characters are allowed for SAVE.
-;   The first ten characters of any other command parameter are acceptable.
-;   Weird, but necessary, if saving to sectors.
-;   Note. the golden rule that there are no restriction on anything is broken.
+;;; @brief but no more than ten characters are allowed for SAVE
+;;;
+;;;   but no more than ten characters are allowed for SAVE.
+;;;   The first ten characters of any other command parameter are acceptable.
+;;;   Weird, but necessary, if saving to sectors.
+;;;   Note. the golden rule that there are no restriction on anything is broken.
+;;; @calls LOOK_VARS, SYNTAX_Z, CHECK_END, PR_ST_END, USE_ZERO, EXPT_1NUM, FIND_INT2, LD_BYTES, CHAN_OPEN, PO_MSG
+;;; @jumps REPORT_C, SA_CONTRL, VR_CONTRL, LD_CONTRL, ME_CONTRL
+;;; @fallthrough VR_CONTRL
 REPORT_FA:
         RST     08H             ; ERROR-1
         DB          $0E             ; Error Report: Invalid file name
@@ -1007,13 +1037,13 @@ LD_CH_PR:
 
 ;   else continue into VERIFY control routine to verify.
 
-; ----------------------------
-; THE 'VERIFY CONTROL' ROUTINE
-; ----------------------------
-;   There are two branches to this routine.
-;   1) From above to verify a program or array
-;   2) from earlier with no carry to load or verify code.
-
+;;; @brief THE 'VERIFY CONTROL' ROUTINE
+;;;
+;;;   There are two branches to this routine.
+;;;   1) From above to verify a program or array
+;;;   2) from earlier with no carry to load or verify code.
+;;; @jumpedfrom REPORT_FA
+;;; @fallthrough LD_BLOCK
 VR_CONTRL:
         PUSH    HL              ; save pointer to data.
         LD      L,(IX-$06)      ; fetch length of old data
@@ -1064,12 +1094,14 @@ VR_CONT_2:
 VR_CONT_3:
         LD      A,$FF           ; signal data block to be loaded
 
-; -----------------
-; Load a data block
-; -----------------
-;   This routine is called from 3 places other than above to load a data block.
-;   In all cases the accumulator is first set to $FF so the routine could be
-;   called at the previous instruction.
+;;; @brief Load a data block
+;;;
+;;;   This routine is called from 3 places other than above to load a data block.
+;;;   In all cases the accumulator is first set to $FF so the routine could be
+;;;   called at the previous instruction.
+;;; @calls LD_BYTES
+;;; @calledby ME_CONTRL
+;;; @jumpedfrom LD_CONTRL
 LD_BLOCK:
         CALL    LD_BYTES           ; routine LD-BYTES
         RET     C               ; return if successful.
@@ -1078,10 +1110,12 @@ REPORT_R:
         RST     08H             ; ERROR-1
         DB          $1A             ; Error Report: Tape loading error
 
-; --------------------------
-; THE 'LOAD CONTROL' ROUTINE
-; --------------------------
-;   This branch is taken when the command is LOAD with type 0, 1 or 2.
+;;; @brief THE 'LOAD CONTROL' ROUTINE
+;;;
+;;;   This branch is taken when the command is LOAD with type 0, 1 or 2.
+;;; @calls TEST_ROOM, RECLAIM_2, MAKE_ROOM, RECLAIM_1
+;;; @jumps LD_BLOCK
+;;; @jumpedfrom REPORT_FA
 LD_CONTRL:
         LD      E,(IX+$0B)      ; fetch length of found data block
         LD      D,(IX+$0C)      ; from 2nd descriptor.
@@ -1217,11 +1251,11 @@ LD_PROG_1:
         LD      A,$FF           ; signal data as opposed to a header.
         JP      LD_BLOCK           ; jump back to LD-BLOCK
 
-; ---------------------------
-; THE 'MERGE CONTROL' ROUTINE
-; ---------------------------
-;   the branch was here to merge a program and its variables or an array.
-;
+;;; @brief THE 'MERGE CONTROL' ROUTINE
+;;;
+;;;   the branch was here to merge a program and its variables or an array.
+;;; @calls LD_BLOCK, NEXT_ONE, ME_ENTER
+;;; @jumpedfrom REPORT_FA
 ME_CONTRL:
         LD      C,(IX+$0B)      ; fetch length
         LD      B,(IX+$0C)      ; of data block on tape.
@@ -1370,13 +1404,13 @@ ME_VAR_L2:
         CALL    ME_ENTER           ; routine ME-ENTER copies variable in.
         JR      ME_VAR_LP           ; loop back to ME-VAR-LP
 
-; ------------------------
-; Merge a Line or Variable
-; ------------------------
-;   A BASIC line or variable is inserted at the current point. If the line
-;   number or variable names match (zero flag set) then a replacement takes
-;   place.
-
+;;; @brief Merge a Line or Variable
+;;;
+;;;   A BASIC line or variable is inserted at the current point. If the line
+;;;   number or variable names match (zero flag set) then a replacement takes
+;;;   place.
+;;; @calls NEXT_ONE, RECLAIM_2, MAKE_ROOM
+;;; @calledby ME_CONTRL
 ME_ENTER:
         JR      NZ,ME_ENT_1        ; forward to ME-ENT-1 for insertion only.
 
@@ -1440,14 +1474,16 @@ ME_ENT_3:
         POP     DE              ; restore the prog/vars pointer
         RET                     ; return.
 
-; --------------------------
-; THE 'SAVE CONTROL' ROUTINE
-; --------------------------
-;   A branch from the main SAVE-ETC routine at SAVE-ALL.
-;   First the header data is saved. Then after a wait of 1 second
-;   the data itself is saved.
-;   HL points to start of data.
-;   IX points to start of descriptor.
+;;; @brief THE 'SAVE CONTROL' ROUTINE
+;;;
+;;;   A branch from the main SAVE-ETC routine at SAVE-ALL.
+;;;   First the header data is saved. Then after a wait of 1 second
+;;;   the data itself is saved.
+;;;   HL points to start of data.
+;;;   IX points to start of descriptor.
+;;; @calls CHAN_OPEN, PO_MSG, WAIT_KEY, SA_BYTES
+;;; @jumps SA_BYTES
+;;; @jumpedfrom REPORT_FA
 SA_CONTRL:
         PUSH    HL              ; save start of data
 
@@ -1512,49 +1548,22 @@ SA_1_SEC:
 ;
 
 
-; ------------------------
-; Canned cassette messages
-; ------------------------
-;   The last-character-inverted Cassette messages.
-;   Starts with normal initial step-over byte.
-
+;;; @brief Canned cassette messages
+;;;
+;;;   The last-character-inverted Cassette messages.
+;;;   Starts with normal initial step-over byte.
 TAPE_MSGS:
-        DB          $80              ; initial inverted step-over byte (message 0 starts after it)
-;
-; Cassette message 0  ->  "Start tape, then press any key."
-;     ابدا الشريط واضغط مفتاحا    (literal: "begin the tape and press a key")
-        DM          "GHOG GdTQiW hGVZW eaJGM"
-TAPE_MSG_0_END:
-        DB          'G'+$80
-;
-; Cassette message 1  ->  "Program:"
-;     CR + برمجة :     (the heading printed in the loader line, e.g. "Program: name")
-        DB          $0D
-        DM          "HQeLI"
-        DB          ':'+$80
-;
-; Cassette message 2  ->  "Number array:"
-;     CR + تنطيم رقم :   (literal: "array of number" - spelled with the letter ط)
-        DB          $0D
-        DM          "JfWie eQbe"
-        DB          ':'+$80
-;
-; Cassette message 3  ->  "Character array:"
-;     CR + تنطيم حرف :   (literal: "array of character")
-        DB          $0D
-        DM          "JfWie MQha"
-        DB          ':'+$80
-;
-; Cassette message 4  ->  "Bytes:"
-;     CR + بايتس :     (transliteration of "bytes")
-        DB          $0D
-        DM          "HGiJS"
-TAPE_MSG_4_END:
-        DB          ':'+$80
-;
-; ----------------------------------------------------------------------------
+        IFDEF   LANG_PERSIAN
+        INCLUDE "lang/persian/tape_msgs.asm"
+        ELSE
+        INCLUDE "lang/arabic/tape_msgs.asm"
+        ENDIF
+        IFNDEF  LANG_PERSIAN
+TAPE_MSG_0_END EQU TAPE_MSGS + $18
+TAPE_MSG_4_END EQU TAPE_MSGS + $3E
+        ENDIF
 ; Message 5 - NOT a cassette message: the ARABIC BOOT TITLE LOGO (boot splash).
-; Appended to this table by the Arabic ROM.  ARAB_PRINT_EXTRA_MSG ($3CF6, file 11),
+; Appended to this table by the Arabic ROM.  RTL_PRINT_EXTRA_MSG ($3CF6, file 11),
 ; called from START-NEW (file 06), does  CALL CLS / XOR A / LD DE,$09DF / JP PO-MSG
 ; ($09DF = the ':'+$80 that ends message 4, used as the step-over byte), so the
 ; message starts at $09E0.  Like every message printed right after CLS it goes to the
@@ -1569,21 +1578,31 @@ TAPE_MSG_4_END:
 ;       row 14, columns 11-19 :   عرب | رام        =  "ARAB | RAM"
 ; The closing AT 12,8 opens the lower window to 13 lines (DF_SZ=13), which pushes the
 ; three logo lines up so they end up in the middle of the screen.  The copyright line
-; (file 01, ARAB_BOOT_COPYRIGHT_MSG) is then printed at the bottom:
+; (file 01, LANG_BOOT_COPYRIGHT_MSG) is then printed at the bottom:
 ;       (c) اوتورام كمبيوتر                  =  "(c) AutoRAM Computer"
 ; ----------------------------------------------------------------------------
-        DB          $06              ; comma: to column 16
-        DB          '*'              ; row 12 (after scrolling): top ornament of the logo
-        DB          $06, $06         ; comma: wrap to the next line, comma: column 16 again
-        DB          '|'              ; row 13: second ornament
-        DB          $17, $0C, $00    ; TAB 12: already past it, so wrap to the next line, column 12
-        DM          "YQH | QGe"      ; row 14: عرب | رام  =  "ARAB | RAM"
-        DB          $16, $0C         ; AT 12, (column follows)
-        DB          $88              ; column 8 with bit 7 set = end of message (control byte)
-
-ARAB_PO_FETCH_EXT:
+        IFNDEF  LANG_PERSIAN
+        INCLUDE "lang/arabic/boot_title.asm"
+        ENDIF
+        IFDEF   LANG_PERSIAN
+        ASSERT  $ <= $09ED
+        IF      $ < $09ED
+        DS      $09ED-$, $FF
+        ENDIF
+RTL_FORM_OVERRIDE_ENTRY:
+        ADD     A,A
+        LD      DE,RTL_FORM_OVERRIDE_OUT
+        JP      L0A7B
+        ASSERT  $ == $09F4
+        ENDIF
+;;; @brief Entry point RTL_PO_FETCH_EXT (no original comment).
+;;; @calls PO_SCR, PO_CHAR, RTL_INSTALL_PRINT_HOOK, PO_FETCH, PO_SAVE
+;;; @jumps RTL_NEW_CTRL_HANDLER, PO_FETCH, COPY_BUFF, CL_SET, PO_STORE, CO_TEMP_5, REPORT_BB, PO_SCR
+;;; @calledby ED_SPACES, OUT_FLASH
+;;; @jumpedfrom L387B
+RTL_PO_FETCH_EXT:
         CP      6                       ; is this a new Arabic control code (0-5)?
-        JP      C,ARAB_NEW_CTRL_HANDLER ; if so, divert to the new control-code handler
+        JP      C,RTL_NEW_CTRL_HANDLER ; if so, divert to the new control-code handler
         LD      HL,PO_CTRL_TABLE-6      ; HL = control-code jump table base (first entry is code 6)
         LD      DE,$20                  ; DE = $20
         CP      E                       ; compare A with E
@@ -1653,14 +1672,14 @@ L0A6B:
 L0A7B:
         LD      (TVDATA),A               ; (TVDATA) = A
 L0A7E:
-        JP      ARAB_SET_CURCHL_VECTOR                   ; jump to ARAB_SET_CURCHL_VECTOR
+        JP      RTL_SET_CURCHL_VECTOR                   ; jump to RTL_SET_CURCHL_VECTOR
 L0A81:
-        CALL    ARAB_INSTALL_PRINT_HOOK                   ; call ARAB_INSTALL_PRINT_HOOK
+        CALL    RTL_INSTALL_PRINT_HOOK                   ; call RTL_INSTALL_PRINT_HOOK
         LD      D,A                     ; D = A
         LD      A,(TVDATA)               ; A = (TVDATA)
         JP      CO_TEMP_5                   ; jump to CO_TEMP_5
 L0A8B:
-        CALL    ARAB_INSTALL_PRINT_HOOK                   ; call ARAB_INSTALL_PRINT_HOOK
+        CALL    RTL_INSTALL_PRINT_HOOK                   ; call RTL_INSTALL_PRINT_HOOK
         LD      HL,(TVDATA)              ; HL = (TVDATA)
         BIT     0,L                     ; test bit 0 of L
         JR      NZ,L0ABE                ; if not zero, jump to L0ABE
@@ -1720,4 +1739,3 @@ L0A7D  EQU    $0A7D                   ; this address now falls inside the block 
 L0A80  EQU    $0A80                   ; this address now falls inside the block above (label kept for reference)
 L0A87  EQU    $0A87                   ; this address now falls inside the block above (label kept for reference)
 L0AD0  EQU    $0AD0                   ; this address now falls inside the block above (label kept for reference)
-

@@ -1,3 +1,6 @@
+;;; @file 02_keyboard_routines.asm
+;;; @brief Part 2. KEYBOARD ROUTINES
+
 ;*******************************
 ;** Part 2. KEYBOARD ROUTINES **
 ;*******************************
@@ -29,12 +32,12 @@
 ;   then all 8 half-rows have been read. Shift is the first key to be
 ;   read. The lower six bits of the shifts are unambiguous.
 
-; -------------------------------
-; THE 'KEYBOARD SCANNING' ROUTINE
-; -------------------------------
-;   From keyboard and s-inkey$
-;   Returns 1 or 2 keys in DE, most significant shift first if any
-;   key values 0-39 else 255
+;;; @brief THE 'KEYBOARD SCANNING' ROUTINE
+;;;
+;;;   From keyboard and s-inkey$
+;;;   Returns 1 or 2 keys in DE, most significant shift first if any
+;;;   key values 0-39 else 255
+;;; @calledby KEYBOARD, S_INKEY
 KEY_SCAN:
         LD      L,$2F           ; initial key value
                                 ; valid values are obtained by subtracting
@@ -100,11 +103,12 @@ KEY_DONE:
         RET                     ; return (with zero set if it was).
                                 ; but with symbol shift now in D
 
-; ----------------------
-; THE 'KEYBOARD' ROUTINE
-; ----------------------
-;   Called from the interrupt 50 times a second.
-;
+;;; @brief THE 'KEYBOARD' ROUTINE
+;;;
+;;;   Called from the interrupt 50 times a second.
+;;; @calls KEY_SCAN, K_TEST, L38DA
+;;; @jumps K_REPEAT
+;;; @calledby MASK_INT
 KEYBOARD:
         CALL    KEY_SCAN        ; routine KEY-SCAN
         RET     NZ              ; return if invalid combinations
@@ -193,13 +197,13 @@ K_END:
         SET     5,(IY+$01)      ; update FLAGS  - signal a new key.
         RET                     ; return to interrupt routine.
 
-; -----------------------
-; THE 'REPEAT KEY' BRANCH
-; -----------------------
-;   A possible repeat has been identified. HL addresses the raw key.
-;   The last location of the key map holds the decoded key from the first
-;   context.  This could be a keyword and, with the exception of NOT a repeat
-;   is syntactically incorrect and not really desirable.
+;;; @brief THE 'REPEAT KEY' BRANCH
+;;;
+;;;   A possible repeat has been identified. HL addresses the raw key.
+;;;   The last location of the key map holds the decoded key from the first
+;;;   context.  This could be a keyword and, with the exception of NOT a repeat
+;;;   is syntactically incorrect and not really desirable.
+;;; @jumpedfrom KEYBOARD
 K_REPEAT:
         INC     HL              ; increment the map pointer to second location.
         LD      (HL),$05        ; maintain interrupt counter at 5.
@@ -221,11 +225,11 @@ K_REPEAT:
                                 ; e.g. cp $a5; ret nc; (3 extra bytes)
         JR      K_END           ; back to K-END
 
-; ----------------------
-; THE 'KEY-TEST' ROUTINE
-; ----------------------
-;   also called from s-inkey$
-;   begin by testing for a shift with no other.
+;;; @brief THE 'KEY-TEST' ROUTINE
+;;;
+;;;   also called from s-inkey$
+;;;   begin by testing for a shift with no other.
+;;; @calledby KEYBOARD, S_INKEY
 K_TEST:
         LD      B,D             ; load most significant key to B
                                 ; will be $FF if not shift.
@@ -249,10 +253,11 @@ K_MAIN:
         SCF                     ; set carry flag
         RET                     ; return    (B has other key still)
 
-; ----------------------------------
-; THE 'KEYBOARD DECODING' SUBROUTINE
-; ----------------------------------
-;   also called from s-inkey$
+;;; @brief THE 'KEYBOARD DECODING' SUBROUTINE
+;;;
+;;;   also called from s-inkey$
+;;; @calledby S_INKEY, L38DA
+;;; @fallthrough L0363
 K_DECODE:
         LD      A,E             ; pick up the stored main key
         CP      $3A             ; an arbitrary point between digits and letters
@@ -336,6 +341,9 @@ K_KLC_LET:
 L035E:
         BIT     3,(IY+$30)              ; test bit 3 of (IY+$30)
         RET     NZ                      ; return if not zero
+;;; @brief Entry point L0363 (no original comment).
+;;; @address $0363
+;;; @calledby RTL_GLYPH_SUBSTITUTE
 L0363:
         INC     B                       ; B = B + 1
 L0364:
@@ -426,12 +434,11 @@ K_KLC_DGT:
         LD      HL,K_SYM_DIGITS-$30     ; HL = K_SYM_DIGITS - $30 (table is indexed by the digit's ASCII code)
         JR      K_LOOK_UP               ; jump to K_LOOK_UP
 K_SYM_DIGITS:
-        DB          $5F, $21, $40, $23, $24, $25, $26 ; table data
-L03B2:
-        DB          $27, $29, $28    ; table data
-
-
-; ------------------------------------------------------------------------
+        IFDEF   LANG_PERSIAN
+        INCLUDE "lang/persian/sym_digits.asm"
+        ELSE
+        INCLUDE "lang/arabic/sym_digits.asm"
+        ENDIF
 ;   The Spectrum Input character keys. One or two are abbreviated.
 ;   From $00 Flash 0 to $FF COPY. The routine above has decoded all these.
 

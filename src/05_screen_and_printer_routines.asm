@@ -1,20 +1,24 @@
+;;; @file 05_screen_and_printer_routines.asm
+;;; @brief Part 5. SCREEN AND PRINTER HANDLING ROUTINES
+
 ;**************************************************
 ;** Part 5. SCREEN AND PRINTER HANDLING ROUTINES **
 ;**************************************************
-; ----------------------
-; Printable character(s)
-; ----------------------
-; This routine prints printable characters and continues into
-; the position store routine
+;;; @brief Printable character(s)
+;;;
+;;; This routine prints printable characters and continues into
+;;; the position store routine
+;;; @calls PO_ANY
+;;; @fallthrough PO_STORE
 PO_ABLE:
         CALL    PO_ANY           ; routine PO-ANY
                                 ; and continue into position store routine.
 
-; ----------------------------
-; THE 'POSITION STORE' ROUTINE
-; ----------------------------
-;   This routine updates the system variables associated with the main screen,
-;   the lower screen/input buffer or the ZX printer.
+;;; @brief THE 'POSITION STORE' ROUTINE
+;;;
+;;;   This routine updates the system variables associated with the main screen,
+;;;   the lower screen/input buffer or the ZX printer.
+;;; @jumpedfrom RTL_PO_FETCH_EXT, CL_SET_1
 PO_STORE:
         BIT     1,(IY+$01)      ; Test FLAGS - is printer in use ?
         JR      NZ,PO_ST_PR     ; Forward, if so, to PO-ST-PR
@@ -53,16 +57,18 @@ PO_ST_PR:
 ;   the value 91 decimal.
 ;   Credit April 1983, Dilwyn Jones. "Delving Deeper into your ZX Spectrum".
 
-; ----------------------------
-; THE 'POSITION FETCH' ROUTINE
-; ----------------------------
-;   This routine fetches the line/column and display file address of the upper
-;   and lower screen or, if the printer is in use, the column position and
-;   absolute memory address.
-;   Note. that PR-CC-hi (23681) is used by this routine and if, in accordance
-;   with the manual (that says this is unused), the location has been used for
-;   other purposes, then subsequent output to the printer buffer could corrupt
-;   a 256-byte section of memory.
+;;; @brief THE 'POSITION FETCH' ROUTINE
+;;;
+;;;   This routine fetches the line/column and display file address of the upper
+;;;   and lower screen or, if the printer is in use, the column position and
+;;;   absolute memory address.
+;;;   Note. that PR-CC-hi (23681) is used by this routine and if, in accordance
+;;;   with the manual (that says this is unused), the location has been used for
+;;;   other purposes, then subsequent output to the printer buffer could corrupt
+;;;   a 256-byte section of memory.
+;;; @jumps PO_F_PR
+;;; @calledby RTL_PO_FETCH_EXT, PO_ANY
+;;; @jumpedfrom RTL_PO_FETCH_EXT, PO_GR_2
 PO_FETCH:
         BIT     1,(IY+$01)      ; Test FLAGS - is printer in use ?
         JR      NZ,PO_F_PR      ; Forward, if so, to PO-F-PR
@@ -83,17 +89,22 @@ PO_FETCH:
 
 ; ---
 
-;   This section deals with the ZX Printer.
+;;; @brief This section deals with the ZX Printer
+;;;
+;;;   This section deals with the ZX Printer.
+;;; @jumpedfrom PO_FETCH
 PO_F_PR:
         LD      C,(IY+$45)      ; Fetch column from P_POSN.
         LD      HL,(PR_CC)      ; Fetch printer buffer address from PR_CC.
         RET                     ; Return.
 
-; ---------------------------------
-; THE 'PRINT ANY CHARACTER' ROUTINE
-; ---------------------------------
-;   This routine is used to print any character in range 32d - 255d
-;   It is only called from PO-ABLE which continues into PO-STORE
+;;; @brief THE 'PRINT ANY CHARACTER' ROUTINE
+;;;
+;;;   This routine is used to print any character in range 32d - 255d
+;;;   It is only called from PO-ABLE which continues into PO-STORE
+;;; @calls PO_GR_1, PO_FETCH
+;;; @jumps PO_CHAR, PR_ALL
+;;; @calledby PO_ABLE
 PO_ANY:
         CP      $80             ; ASCII ?
         JR      C,PO_CHAR       ; to PO-CHAR is so.
@@ -113,6 +124,10 @@ PO_ANY:
 
 ; ---
 
+;;; @brief Entry point PO_GR_1 (no original comment).
+;;; @calls PO_GR_2
+;;; @calledby PO_ANY
+;;; @fallthrough PO_GR_2
 PO_GR_1:
         LD      HL,MEM_0        ; address MEM-0 - a temporary buffer in
                                 ; systems variables which is normally used
@@ -121,6 +136,10 @@ PO_GR_1:
                                 ; and continue into routine to construct
                                 ; bottom half.
 
+;;; @brief Entry point PO_GR_2 (no original comment).
+;;; @calls PO_TOKENS
+;;; @jumps PO_FETCH
+;;; @calledby PO_GR_1
 PO_GR_2:
         RR      B               ; rotate bit 0/2 to carry
         SBC     A,A             ; result $00 or $FF
@@ -164,6 +183,11 @@ PO_T:
 
 ; This point is used to print ASCII characters  32d - 127d.
 
+;;; @brief Entry point PO_CHAR (no original comment).
+;;; @calls RTL_GLYPH_SUBSTITUTE
+;;; @calledby RTL_PO_FETCH_EXT
+;;; @jumpedfrom PO_ANY
+;;; @fallthrough PR_ALL
 PO_CHAR:
         PUSH    BC              ; save print position
 ;==========================================================================
@@ -216,7 +240,7 @@ PO_CHAR:
 ;   not been isolated yet -- flagged as an open item rather than guessed
 ;   at further.
 ;==========================================================================
-        CALL    ARAB_GLYPH_SUBSTITUTE   ; call ARAB_GLYPH_SUBSTITUTE
+        CALL    RTL_GLYPH_SUBSTITUTE   ; call RTL_GLYPH_SUBSTITUTE
         NOP                             ; no operation
 
 ; This common code is used to transfer the character bytes to memory.
@@ -241,14 +265,15 @@ PO_CHAR_3:
         POP     BC              ; the source address CHARS or UDG
         EX      DE,HL           ; character address to DE
 
-; ----------------------------------
-; THE 'PRINT ALL CHARACTERS' ROUTINE
-; ----------------------------------
-;   This entry point entered from above to print ASCII and UDGs but also from
-;   earlier to print mosaic characters.
-;   HL=destination
-;   DE=character source
-;   BC=line/column
+;;; @brief THE 'PRINT ALL CHARACTERS' ROUTINE
+;;;
+;;;   This entry point entered from above to print ASCII and UDGs but also from
+;;;   earlier to print mosaic characters.
+;;;   HL=destination
+;;;   DE=character source
+;;;   BC=line/column
+;;; @calls COPY_BUFF, PO_SCR, PO_ATTR
+;;; @jumpedfrom PO_ANY
 PR_ALL:
         LD      A,C             ; column to A
         DEC     A               ; move right
@@ -340,14 +365,15 @@ PR_ALL_6:
         EX      AF,AF'          ; fetch the flag
         JR      PR_ALL_5        ; back to PR-ALL-5
 
-; -----------------------------------
-; THE 'GET ATTRIBUTE ADDRESS' ROUTINE
-; -----------------------------------
-;   This routine is entered with the HL register holding the last screen
-;   address to be updated by PRINT or PLOT.
-;   The Spectrum screen arrangement leads to the L register holding the correct
-;   value for the attribute file and it is only necessary to manipulate H to
-;   form the correct colour attribute address.
+;;; @brief THE 'GET ATTRIBUTE ADDRESS' ROUTINE
+;;;
+;;;   This routine is entered with the HL register holding the last screen
+;;;   address to be updated by PRINT or PLOT.
+;;;   The Spectrum screen arrangement leads to the L register holding the correct
+;;;   value for the attribute file and it is only necessary to manipulate H to
+;;;   form the correct colour attribute address.
+;;; @calledby PR_ALL
+;;; @jumpedfrom PLOT_END
 PO_ATTR:
         LD       A,H            ; fetch high byte $40 - $57
         RRCA                    ; shift
@@ -384,14 +410,15 @@ PO_ATTR_2:
         LD      (HL),A          ; save the new attribute.
         RET                     ; return.
 
-; ---------------------------------
-; THE 'MESSAGE PRINTING' SUBROUTINE
-; ---------------------------------
-;   This entry point is used to print tape, boot-up, scroll? and error messages.
-;   On entry the DE register points to an initial step-over byte or the
-;   inverted end-marker of the previous entry in the table.
-;   Register A contains the message number, often zero to print first message.
-;   (HL has nothing important usually P_FLAG)
+;;; @brief THE 'MESSAGE PRINTING' SUBROUTINE
+;;;
+;;;   This entry point is used to print tape, boot-up, scroll? and error messages.
+;;;   On entry the DE register points to an initial step-over byte or the
+;;;   inverted end-marker of the previous entry in the table.
+;;;   Register A contains the message number, often zero to print first message.
+;;;   (HL has nothing important usually P_FLAG)
+;;; @calledby REPORT_FA, SA_CONTRL, PO_SCR, NMI_VECT, MAIN_EXEC
+;;; @jumpedfrom RTL_PRINT_EXTRA_MSG
 PO_MSG:
         PUSH    HL              ; put hi-byte zero on stack to suppress
         LD      H,$00           ; trailing spaces
@@ -402,6 +429,11 @@ PO_MSG:
 
 ;   This entry point prints the BASIC keywords, '<>' etc. from alt set
 
+;;; @brief Entry point PO_TOKENS (no original comment).
+;;; @calls PO_SEARCH, PO_SAVE
+;;; @jumps RTL_PO_MSG_HOOK
+;;; @calledby PO_GR_2
+;;; @fallthrough PO_SAVE
 PO_TOKENS:
         LD      DE,TKN_TABLE    ; address: TKN-TABLE
         PUSH    AF              ; save the token number to control
@@ -430,7 +462,7 @@ L0C23:
         LD      A,(HL)                  ; A = (HL)
         INC     HL                      ; HL = HL + 1
         BIT     7,A                     ; test bit 7 of A
-        JP      ARAB_PO_MSG_HOOK        ; jump to the Arabic PO-MSG hook (file 11)
+        JP      RTL_PO_MSG_HOOK        ; jump to the Arabic PO-MSG hook (file 11)
 L0C2A:
         DEC     HL                      ; HL = HL - 1
         LD      A,(HL)                  ; A = (HL)
@@ -458,12 +490,12 @@ PO_TR_SP:
         LD      A,$20           ; Prepare the space character and continue to
                                 ; print and make an indirect return.
 
-; -----------------------------------
-; THE 'RECURSIVE PRINTING' SUBROUTINE
-; -----------------------------------
-;   This routine which is part of PRINT-OUT allows RST $10 to be used
-;   recursively to print tokens and the spaces associated with them.
-;   It is called on three occasions when the value of DE must be preserved.
+;;; @brief THE 'RECURSIVE PRINTING' SUBROUTINE
+;;;
+;;;   This routine which is part of PRINT-OUT allows RST $10 to be used
+;;;   recursively to print tokens and the spaces associated with them.
+;;;   It is called on three occasions when the value of DE must be preserved.
+;;; @calledby RTL_PO_FETCH_EXT, PO_TOKENS, RTL_PO_MSG_HOOK, RTL_PO_MSG_LAST
 PO_SAVE:
         PUSH    DE              ; Save DE value.
         EXX                     ; Switch in main set
@@ -475,11 +507,11 @@ PO_SAVE:
 
         RET                     ; Return.
 
-; ------------
-; Table search
-; ------------
-; This subroutine searches a message or the token table for the
-; message number held in A. DE holds the address of the table.
+;;; @brief Table search
+;;;
+;;; This subroutine searches a message or the token table for the
+;;; message number held in A. DE holds the address of the table.
+;;; @calledby PO_TOKENS
 PO_SEARCH:
         PUSH    AF              ; save the message/token number
         EX      DE,HL           ; transfer DE to HL
@@ -503,14 +535,16 @@ PO_STEP:
         RET                     ; if it is less that 'A'
                                 ; i.e. '<>', '<=', '>='
 
-; ---------------
-; Test for scroll
-; ---------------
-; This test routine is called when printing carriage return, when considering
-; PRINT AT and from the general PRINT ALL characters routine to test if
-; scrolling is required, prompting the user if necessary.
-; This is therefore using the alternate set.
-; The B register holds the current line.
+;;; @brief Test for scroll
+;;;
+;;; This test routine is called when printing carriage return, when considering
+;;; PRINT AT and from the general PRINT ALL characters routine to test if
+;;; scrolling is required, prompting the user if necessary.
+;;; This is therefore using the alternate set.
+;;; The B register holds the current line.
+;;; @calls CHAN_OPEN, PO_MSG, WAIT_KEY, CL_SC_ALL, CL_ADDR
+;;; @calledby RTL_PO_FETCH_EXT, PR_ALL
+;;; @jumpedfrom RTL_PO_FETCH_EXT
 PO_SCR:
         BIT     1,(IY+$01)      ; test FLAGS  - is printer in use ?
         RET     NZ              ; return immediately if so.
@@ -643,19 +677,22 @@ PO_SCR_3A:
 
 ; The message 'scroll?' appears here with last byte inverted.
 
-; Deciphered: the message is "رفع؟" (key codes "QaY" + '?'):
-;   'Q' = ر (ra), 'a' = ف (fa), 'Y' = ع (ain)  ->  "رفع" ("raise / lift [the screen up]")
-;   followed by a plain Latin '?'.
-; The original English text was "scroll?" (7 bytes: "scroll" + '?'+$80).  The Arabic
-; patch overwrote the first 5 bytes with  $04 'Q' 'a' 'Y' '?'+$80  and the last two bytes
-; of the English message ('l', '?'+$80) were left behind.  PO-MSG stops at the FIRST byte
-; with bit 7 set, so those last two bytes are DEAD, never printed.
+;;; @brief Deciphered
+;;;
+;;; Deciphered: the message is "رفع؟" (key codes "QaY" + '?'):
+;;;   'Q' = ر (ra), 'a' = ف (fa), 'Y' = ع (ain)  ->  "رفع" ("raise / lift [the screen up]")
+;;;   followed by a plain Latin '?'.
+;;; The original English text was "scroll?" (7 bytes: "scroll" + '?'+$80).  The Arabic
+;;; patch overwrote the first 5 bytes with  $04 'Q' 'a' 'Y' '?'+$80  and the last two bytes
+;;; of the English message ('l', '?'+$80) were left behind.  PO-MSG stops at the FIRST byte
+;;; with bit 7 set, so those last two bytes are DEAD, never printed.
+;;; @calls TEMPS, CL_SCROLL, CL_SET
 SCRL_MSSG:
-        DB          $80             ; initial step-over byte.
-        DB          $04             ; Arabic ON
-        DB          "QaY", '?'+$80  ; "رفع؟" - last byte has bit 7 set = end of message
-        DB          'l', '?'+$80    ; unreachable leftover of the English "scroll?"
-
+        IFDEF   LANG_PERSIAN
+        INCLUDE "lang/persian/scroll_msg.asm"
+        ELSE
+        INCLUDE "lang/arabic/scroll_msg.asm"
+        ENDIF
 REPORT_D:
         RST     08H             ; ERROR-1
         DB          $0C         ; Error Report: BREAK - CONT repeats
@@ -721,11 +758,12 @@ PO_SCR_4B:
         POP     BC              ; restore line/column
         RET                     ; return via CL-SET for lower display.
 
-; ----------------------
-; Temporary colour items
-; ----------------------
-; This subroutine is called 11 times to copy the permanent colour items
-; to the temporary ones.
+;;; @brief Temporary colour items
+;;;
+;;; This subroutine is called 11 times to copy the permanent colour items
+;;; to the temporary ones.
+;;; @calledby SCRL_MSSG, CLS_LOWER, CL_ALL, L111D, CLASS_07, CLASS_09, PRINT_1
+;;; @jumpedfrom NEXT_CHAR, CHAN_S_1, PLOT, LINE_DRAW
 TEMPS:
         XOR     A               ; clear the accumulator
         LD      HL,(ATTR_P)      ; fetch L=ATTR_P and H=MASK_P
@@ -754,12 +792,16 @@ TEMPS_2:
         LD      (HL),A          ; apply permanent bits to temporary bits.
         RET                     ; and return.
 
-; -----------------
-; THE 'CLS' COMMAND
-; -----------------
-;    This command clears the display.
-;    The routine is also called during initialization and by the CLEAR command.
-;    If it's difficult to write it should be difficult to read.
+;;; @brief THE 'CLS' COMMAND
+;;;
+;;; @verbatim
+;;;    This command clears the display.
+;;;    The routine is also called during initialization and by the CLEAR command.
+;;;    If it's difficult to write it should be difficult to read.
+;;; @endverbatim
+;;; @calls CL_ALL
+;;; @calledby NMI_VECT, CLEAR_1, RTL_PRINT_EXTRA_MSG
+;;; @fallthrough CLS_LOWER
 CLS:
         CALL    CL_ALL           ; Routine CL-ALL clears the entire display and
                                 ; sets the attributes to the permanent ones
@@ -770,14 +812,18 @@ CLS:
 ;   the attributes for the lower lines are the same as upper ones and have
 ;   to be changed to match the BORDER colour.
 
-; --------------------------
-; THE 'CLS-LOWER' SUBROUTINE
-; --------------------------
-;   This routine is called from INPUT, and from the MAIN execution loop.
-;   This is very much a housekeeping routine which clears between 2 and 23
-;   lines of the display, setting attributes and correcting situations where
-;   errors have occurred while the normal input and output routines have been
-;   temporarily diverted to deal with, say colour control codes.
+;;; @brief THE 'CLS-LOWER' SUBROUTINE
+;;;
+;;;   This routine is called from INPUT, and from the MAIN execution loop.
+;;;   This is very much a housekeeping routine which clears between 2 and 23
+;;;   lines of the display, setting attributes and correcting situations where
+;;;   errors have occurred while the normal input and output routines have been
+;;;   temporarily diverted to deal with, say colour control codes.
+;;; @calls TEMPS, CL_LINE
+;;; @jumps CLS_3
+;;; @calledby KEY_INPUT, MAIN_EXEC, INPUT
+;;; @jumpedfrom INPUT_2
+;;; @fallthrough CLS_3
 CLS_LOWER:
         LD      HL,TV_FLAG        ; address System Variable TV_FLAG.
         RES     5,(HL)          ; TV_FLAG - signal do not clear lower screen.
@@ -819,7 +865,11 @@ CLS_2:
         DEC     C               ; decrease the 32 counter.
         JR      NZ,CLS_2        ; loop back to CLS-2 until all 32 cells done.
 
-;; CLS-3
+;;; @brief ; CLS-3
+;;;
+;;; ; CLS-3
+;;; @jumpedfrom CLS_LOWER
+;;; @fallthrough CL_CHAN
 CLS_3:
         DJNZ    CLS_1           ; decrease B counter and back to CLS-1
                                 ; if not zero.
@@ -829,17 +879,25 @@ CLS_3:
 ; This entry point is also called from CL-ALL below to
 ; reset the system channel input and output addresses to normal.
 
-;; CL-CHAN
+;;; @brief ; CL-CHAN
+;;;
+;;; ; CL-CHAN
+;;; @calls CHAN_OPEN
+;;; @calledby CL_ALL
+;;; @fallthrough CL_CHAN_A
 CL_CHAN:
         LD      A,$FD           ; select system channel 'K'
 
         CALL    CHAN_OPEN           ; routine CHAN-OPEN opens it.
 
         LD      HL,(CURCHL)      ; fetch CURCHL to HL to address current channel
-        LD      DE,ARAB_PO_FETCH_EXT ; set address to PRINT-OUT for first pass.
+        LD      DE,RTL_PO_FETCH_EXT ; set address to PRINT-OUT for first pass.
         AND     A               ; clear carry for first pass.
 
-;; CL-CHAN-A
+;;; @brief ; CL-CHAN-A
+;;;
+;;; ; CL-CHAN-A
+;;; @jumps CL_SET
 CL_CHAN_A:
         LD      (HL),E          ; Insert the output address on the first pass
         INC     HL              ; or the input address on the second pass.
@@ -855,16 +913,18 @@ CL_CHAN_A:
         JR      CL_SET          ; exit via CL-SET to set column
                                 ; for lower display
 
-; ---------------------------
-; Clearing whole display area
-; ---------------------------
-; This subroutine called from CLS, AUTO-LIST and MAIN-3
-; clears 24 lines of the display and resets the relevant system variables.
-; This routine also recovers from an error situation where, for instance, an
-; invalid colour or position control code has left the output routine addressing
-; PO-TV-2 or PO-CONT.
-
-;; CL-ALL
+;;; @brief Clearing whole display area
+;;;
+;;; This subroutine called from CLS, AUTO-LIST and MAIN-3
+;;; clears 24 lines of the display and resets the relevant system variables.
+;;; This routine also recovers from an error situation where, for instance, an
+;;; invalid colour or position control code has left the output routine addressing
+;;; PO-TV-2 or PO-CONT.
+;;;
+;;; ; CL-ALL
+;;; @calls CL_CHAN, CHAN_OPEN, TEMPS, CL_LINE
+;;; @calledby CLS, MAIN_EXEC, AUTO_LIST
+;;; @fallthrough CL_SET
 CL_ALL:
         LD      HL,$0000        ; Initialize plot coordinates.
         LD      (COORDS),HL      ; Set system variable COORDS to 0,0.
@@ -888,7 +948,7 @@ CL_ALL:
 
         LD      HL,(CURCHL)      ; fetch CURCHL make HL address output routine.
 
-        LD      DE,ARAB_PO_FETCH_EXT ; address: PRINT-OUT
+        LD      DE,RTL_PO_FETCH_EXT ; address: PRINT-OUT
         LD      (HL),E          ; is made
         INC     HL              ; the normal
         LD      (HL),D          ; output address.
@@ -901,14 +961,17 @@ CL_ALL:
                                 ; and continue into CL-SET, below, exiting
                                 ; via PO-STORE (for the upper screen).
 
-; --------------------
-; THE 'CL-SET' ROUTINE
-; --------------------
-; This important subroutine is used to calculate the character output
-; address for screens or printer based on the line/column for screens
-; or the column for printer.
-
-;; CL-SET
+;;; @brief THE 'CL-SET' ROUTINE
+;;;
+;;; This important subroutine is used to calculate the character output
+;;; address for screens or printer based on the line/column for screens
+;;; or the column for printer.
+;;;
+;;; ; CL-SET
+;;; @jumps CL_SET_1
+;;; @calledby SCRL_MSSG, ED_C_END, INPUT_2, IN_VAR_4
+;;; @jumpedfrom RTL_PO_FETCH_EXT, CL_CHAN_A, PRB_BYTES
+;;; @fallthrough CL_SET_1
 CL_SET:
         LD      HL,SWAP        ; the base address of printer buffer
         BIT     1,(IY+$01)      ; test FLAGS  - is printer in use ?
@@ -921,7 +984,12 @@ CL_SET:
         ADD     A,(IY+$31)      ; add DF_SZ for lower screen
         SUB     $18             ; and adjust.
 
-;; CL-SET-1
+;;; @brief ; CL-SET-1
+;;;
+;;; ; CL-SET-1
+;;; @calls CL_ADDR
+;;; @jumps PO_STORE
+;;; @jumpedfrom CL_SET
 CL_SET_1:
         PUSH    BC              ; save the line/column.
         LD      B,A             ; transfer line to B
@@ -976,14 +1044,19 @@ L0DF4:
 
         JP      PO_STORE           ; exit via PO-STORE to update the relevant
                                 ; system variables.
-; ----------------
-; Handle scrolling
-; ----------------
-; The routine CL-SC-ALL is called once from PO to scroll all the display
-; and from the routine CL-SCROLL, once, to scroll part of the display.
+;;; @brief Handle scrolling
+;;;
+;;; The routine CL-SC-ALL is called once from PO to scroll all the display
+;;; and from the routine CL-SCROLL, once, to scroll part of the display.
+;;; @calledby PO_SCR
+;;; @fallthrough CL_SCROLL
 CL_SC_ALL:
         LD      B,$17           ; scroll 23 lines, after 'scroll?'.
 
+;;; @brief Entry point CL_SCROLL (no original comment).
+;;; @calls CL_ADDR, CL_ATTR
+;;; @calledby SCRL_MSSG
+;;; @fallthrough CL_LINE
 CL_SCROLL:
         CALL    CL_ADDR         ; routine CL-ADDR gets screen address in HL.
         LD      C,$08           ; there are 8 pixel lines to scroll.
@@ -1044,12 +1117,13 @@ CL_SCR_3:
         LDIR                    ; copy bytes scrolling the linear attributes.
         LD      B,$01           ; continue to clear the bottom line.
 
-; ------------------------------
-; THE 'CLEAR TEXT LINES' ROUTINE
-; ------------------------------
-; This subroutine, called from CL-ALL, CLS-LOWER and AUTO-LIST and above,
-; clears text lines at bottom of display.
-; The B register holds on entry the number of lines to be cleared 1-24.
+;;; @brief THE 'CLEAR TEXT LINES' ROUTINE
+;;;
+;;; This subroutine, called from CL-ALL, CLS-LOWER and AUTO-LIST and above,
+;;; clears text lines at bottom of display.
+;;; The B register holds on entry the number of lines to be cleared 1-24.
+;;; @calls CL_ADDR, CL_ATTR
+;;; @calledby CLS_LOWER, CL_ALL, AUTO_LIST
 CL_LINE:
         PUSH    BC              ; save line count
         CALL    CL_ADDR         ; routine CL-ADDR gets top address
@@ -1108,16 +1182,16 @@ CL_LINE_3:
         LD      C,$21           ; make column $21. (No use is made of this)
         RET                     ; return to the calling routine.
 
-; ------------------
-; Attribute handling
-; ------------------
-; This subroutine is called from CL-LINE or CL-SCROLL with the HL register
-; pointing to the 'ninth' line and H needs to be decremented before or after
-; the division. Had it been done first then either present code or that used
-; at the start of PO-ATTR could have been used.
-; The Spectrum screen arrangement leads to the L register already holding
-; the correct value for the attribute file and it is only necessary
-; to manipulate H to form the correct colour attribute address.
+;;; @brief Attribute handling
+;;;
+;;; This subroutine is called from CL-LINE or CL-SCROLL with the HL register
+;;; pointing to the 'ninth' line and H needs to be decremented before or after
+;;; the division. Had it been done first then either present code or that used
+;;; at the start of PO-ATTR could have been used.
+;;; The Spectrum screen arrangement leads to the L register already holding
+;;; the correct value for the attribute file and it is only necessary
+;;; to manipulate H to form the correct colour attribute address.
+;;; @calledby CL_SCROLL, CL_LINE
 CL_ATTR:
         LD      A,H             ; fetch H to A - $48, $50, or $58.
         RRCA                    ; divide by
@@ -1141,11 +1215,11 @@ CL_ATTR:
 
         RET                     ; return.
 
-; -------------------------------
-; Handle display with line number
-; -------------------------------
-; This subroutine is called from four places to calculate the address
-; of the start of a screen character line which is supplied in B.
+;;; @brief Handle display with line number
+;;;
+;;; This subroutine is called from four places to calculate the address
+;;; of the start of a screen character line which is supplied in B.
+;;; @calledby PO_SCR, CL_SET_1, CL_SCROLL, CL_LINE
 CL_ADDR:
         LD      A,$18           ; reverse the line number
         SUB     B               ; to range $00 - $17.
@@ -1166,15 +1240,16 @@ CL_ADDR:
         LD      H,A             ; HL now has the correct address.
         RET                     ; return.
 
-; -------------------
-; Handle COPY command
-; -------------------
-; This command copies the top 176 lines to the ZX Printer
-; It is popular to call this from machine code at point
-; L0EAF with B holding 192 (and interrupts disabled) for a full-screen
-; copy. This particularly applies to 16K Spectrums as time-critical
-; machine code routines cannot be written in the first 16K of RAM as
-; it is shared with the ULA which has precedence over the Z80 chip.
+;;; @brief Handle COPY command
+;;;
+;;; This command copies the top 176 lines to the ZX Printer
+;;; It is popular to call this from machine code at point
+;;; L0EAF with B holding 192 (and interrupts disabled) for a full-screen
+;;; copy. This particularly applies to 16K Spectrums as time-critical
+;;; machine code routines cannot be written in the first 16K of RAM as
+;;; it is shared with the ULA which has precedence over the Z80 chip.
+;;; @calls COPY_LINE
+;;; @jumps COPY_END
 COPY:
         DI                      ; disable interrupts as this is time-critical.
 
@@ -1214,19 +1289,24 @@ COPY_2:
                                 ; motor and enable interrupts.
                                 ; Note. Nothing else is required.
 
-; ------------------------------
-; Pass printer buffer to printer
-; ------------------------------
-; This routine is used to copy 8 text lines from the printer buffer
-; to the ZX Printer. These text lines are mapped linearly so HL does
-; not need to be adjusted at the end of each line.
-
+;;; @brief Pass printer buffer to printer
+;;;
+;;; This routine is used to copy 8 text lines from the printer buffer
+;;; to the ZX Printer. These text lines are mapped linearly so HL does
+;;; not need to be adjusted at the end of each line.
+;;; @calledby PR_ALL, MAIN_EXEC
+;;; @jumpedfrom RTL_PO_FETCH_EXT
+;;; @fallthrough COPY_3
 COPY_BUFF:
         DI                      ; disable interrupts
         LD      HL,SWAP        ; the base address of the Printer Buffer.
         LD      B,$08           ; set count to 8 lines of 32 bytes.
 
-;; COPY-3
+;;; @brief ; COPY-3
+;;;
+;;; ; COPY-3
+;;; @calls COPY_LINE
+;;; @fallthrough COPY_END
 COPY_3:
         PUSH    BC              ; save counter.
 
@@ -1239,35 +1319,43 @@ COPY_3:
 ; Note. the COPY command rejoins here, essentially to execute the next
 ; three instructions.
 
-;; COPY-END
+;;; @brief ; COPY-END
+;;;
+;;; ; COPY-END
+;;; @jumpedfrom COPY
+;;; @fallthrough CLEAR_PRB
 COPY_END:
         LD      A,$04           ; output value 4 to port
         OUT     ($FB),A         ; to stop the slowed printer motor.
         EI                      ; enable interrupts.
 
-; --------------------
-; Clear Printer Buffer
-; --------------------
-; This routine clears an arbitrary 256 bytes of memory.
-; Note. The routine seems designed to clear a buffer that follows the
-; system variables.
-; The routine should check a flag or HL address and simply return if COPY
-; is in use.
-; As a consequence of this omission the buffer will needlessly
-; be cleared when COPY is used and the screen/printer position may be set to
-; the start of the buffer and the line number to 0 (B)
-; giving an 'Out of Screen' error.
-; There seems to have been an unsuccessful attempt to circumvent the use
-; of PR_CC_hi.
-
-;; CLEAR-PRB
+;;; @brief Clear Printer Buffer
+;;;
+;;; This routine clears an arbitrary 256 bytes of memory.
+;;; Note. The routine seems designed to clear a buffer that follows the
+;;; system variables.
+;;; The routine should check a flag or HL address and simply return if COPY
+;;; is in use.
+;;; As a consequence of this omission the buffer will needlessly
+;;; be cleared when COPY is used and the screen/printer position may be set to
+;;; the start of the buffer and the line number to 0 (B)
+;;; giving an 'Out of Screen' error.
+;;; There seems to have been an unsuccessful attempt to circumvent the use
+;;; of PR_CC_hi.
+;;;
+;;; ; CLEAR-PRB
+;;; @calledby COPY_L_1, NMI_VECT
+;;; @fallthrough PRB_BYTES
 CLEAR_PRB:
         LD      HL,SWAP        ; the location of the buffer.
         LD      (IY+$46),L      ; update PR_CC_lo - set to zero - superfluous.
         XOR     A               ; clear the accumulator.
         LD      B,A             ; set count to 256 bytes.
 
-;; PRB-BYTES
+;;; @brief ; PRB-BYTES
+;;;
+;;; ; PRB-BYTES
+;;; @jumps CL_SET
 PRB_BYTES:
         LD      (HL),A          ; set addressed location to zero.
         INC     HL              ; address next byte - Note. not INC L.
@@ -1277,20 +1365,21 @@ PRB_BYTES:
         LD      C,$21           ; set the column position .
         JP      CL_SET          ; exit via CL-SET and then PO-STORE.
 
-; -----------------
-; Copy line routine
-; -----------------
-; This routine is called from COPY and COPY-BUFF to output a line of
-; 32 bytes to the ZX Printer.
-; Output to port $FB -
-; bit 7 set - activate stylus.
-; bit 7 low - deactivate stylus.
-; bit 2 set - stops printer.
-; bit 2 reset - starts printer
-; bit 1 set - slows printer.
-; bit 1 reset - normal speed.
-
-;; COPY-LINE
+;;; @brief Copy line routine
+;;;
+;;; This routine is called from COPY and COPY-BUFF to output a line of
+;;; 32 bytes to the ZX Printer.
+;;; Output to port $FB -
+;;; bit 7 set - activate stylus.
+;;; bit 7 low - deactivate stylus.
+;;; bit 2 set - stops printer.
+;;; bit 2 reset - starts printer
+;;; bit 1 set - slows printer.
+;;; bit 1 reset - normal speed.
+;;;
+;;; ; COPY-LINE
+;;; @calledby COPY, COPY_3
+;;; @fallthrough COPY_L_1
 COPY_LINE:
         LD      A,B             ; fetch the counter 1-8 or 1-176
         CP      $03             ; is it 01 or 02 ?.
@@ -1301,7 +1390,11 @@ COPY_LINE:
                                 ; last two lines.
         LD      D,A             ; save the mask to control the printer later.
 
-;; COPY-L-1
+;;; @brief ; COPY-L-1
+;;;
+;;; ; COPY-L-1
+;;; @calls BREAK_KEY, CLEAR_PRB
+;;; @fallthrough COPY_L_4
 COPY_L_1:
         CALL    BREAK_KEY          ; call BREAK-KEY to read keyboard immediately.
         JR      C,COPY_L_2         ; forward to COPY-L-2 if 'break' not pressed.
@@ -1332,13 +1425,18 @@ COPY_L_3:
         INC     HL              ; address next location. Note. not INC L.
         LD      B,$08           ; count the bits.
 
-;; COPY-L-4
+;;; @brief ; COPY-L-4
+;;;
+;;; ; COPY-L-4
+;;; @fallthrough COPY_L_5
 COPY_L_4:
         RL      D               ; prepare mask to receive bit.
         RL      E               ; rotate leftmost print bit to carry
         RR      D               ; and back to bit 7 of D restoring bit 1
 
-;; COPY-L-5
+;;; @brief ; COPY-L-5
+;;;
+;;; ; COPY-L-5
 COPY_L_5:
         IN      A,($FB)         ; read the port.
         RRA                     ; bit 0 to carry.
@@ -1354,22 +1452,27 @@ COPY_L_5:
         RET                     ; return to calling routine COPY/COPY-BUFF.
 
 
-; ----------------------------------
-; Editor routine for BASIC and INPUT
-; ----------------------------------
-; The editor is called to prepare or edit a BASIC line.
-; It is also called from INPUT to input a numeric or string expression.
-; The behaviour and options are quite different in the various modes
-; and distinguished by bit 5 of FLAGX.
-;
-; This is a compact and highly versatile routine.
-
-;; EDITOR
+;;; @brief Editor routine for BASIC and INPUT
+;;;
+;;; The editor is called to prepare or edit a BASIC line.
+;;; It is also called from INPUT to input a numeric or string expression.
+;;; The behaviour and options are quite different in the various modes
+;;; and distinguished by bit 5 of FLAGX.
+;;;
+;;; This is a compact and highly versatile routine.
+;;;
+;;; ; EDITOR
+;;; @calledby MAIN_EXEC, IN_VAR_2, IN_VAR_3
+;;; @fallthrough ED_AGAIN
 EDITOR:
         LD      HL,(ERR_SP)      ; fetch ERR_SP
         PUSH    HL              ; save on stack
 
-;; ED-AGAIN
+;;; @brief ; ED-AGAIN
+;;;
+;;; ; ED-AGAIN
+;;; @jumpedfrom ED_ERROR
+;;; @fallthrough L0F38
 ED_AGAIN:
         LD      HL,ED_ERROR     ; address: ED-ERROR
         PUSH    HL              ; save address on stack and
@@ -1390,12 +1493,18 @@ ED_AGAIN:
 ; handler and an input stream set up to supply characters.
 ; The character that has been received can now be processed.
 
-; (original ROM code at this address, superseded above): LD D,$00 ; and give a short click based
-; (original ROM code at this address, superseded above): LD E,(IY-$01) ; on PIP value for duration.
-; (original ROM code at this address, superseded above): CALL BEEPER ; routine BEEPER gives click - effective
-; (original ROM code at this address, superseded above): POP AF ; get saved key value.
+;;; @brief (original ROM code at this address, superseded above)
+;;;
+;;; (original ROM code at this address, superseded above): LD D,$00 ; and give a short click based
+;;; (original ROM code at this address, superseded above): LD E,(IY-$01) ; on PIP value for duration.
+;;; (original ROM code at this address, superseded above): CALL BEEPER ; routine BEEPER gives click - effective
+;;; (original ROM code at this address, superseded above): POP AF ; get saved key value.
+;;; @address $0F38
+;;; @calls ONE_SPACE, WAIT_KEY
+;;; @jumps RTL_ED_KEY_EXT, ADD_CHAR, ED_KEYS, ED_CONTR, ED_IGNORE
+;;; @fallthrough ED_CONTR
 L0F38:
-        JP      ARAB_ED_KEY_EXT                   ; jump to ARAB_ED_KEY_EXT
+        JP      RTL_ED_KEY_EXT                   ; jump to RTL_ED_KEY_EXT
 L0F3B:
         BIT     6,(IY+2)                ; test bit 6 of (IY+2)
         JR      Z,ADD_CHAR              ; if zero, jump to ADD_CHAR
@@ -1438,7 +1547,12 @@ L0F4D:
                                 ; but is reset to KEY-INPUT
         LD      E,A             ; save first in E
 
-;; ED-CONTR
+;;; @brief ; ED-CONTR
+;;;
+;;; ; ED-CONTR
+;;; @calls WAIT_KEY, MAKE_ROOM
+;;; @jumps ADD_CH_1
+;;; @jumpedfrom L0F38
 ED_CONTR:
         CALL    WAIT_KEY           ; routine WAIT-KEY for control.
                                 ; input address will be key-next.
@@ -1457,14 +1571,17 @@ ED_CONTR:
                                 ; then DE points to this location also.
         JR      ADD_CH_1           ; forward to ADD-CH-1
 
-; ------------------------
-; Add code to current line
-; ------------------------
-; this is the branch used to add normal non-control characters
-; with ED-LOOP as the stacked return address.
-; it is also the OUTPUT service routine for system channel 'R'.
-
-;; ADD-CHAR
+;;; @brief Add code to current line
+;;;
+;;; this is the branch used to add normal non-control characters
+;;; with ED-LOOP as the stacked return address.
+;;; it is also the OUTPUT service routine for system channel 'R'.
+;;;
+;;; ; ADD-CHAR
+;;; @calls ONE_SPACE
+;;; @calledby RTL_ED_KEY_EXT
+;;; @jumpedfrom L0F38, ED_GRAPH
+;;; @fallthrough ADD_CH_1
 ADD_CHAR:
         RES     0,(IY+$07)      ; set MODE to 'L'
 X0F85:
@@ -1474,7 +1591,10 @@ X0F85:
 
 ; either a continuation of above or from ED-CONTR with ED-LOOP on stack.
 
-;; ADD-CH-1
+;;; @brief ; ADD-CH-1
+;;;
+;;; ; ADD-CH-1
+;;; @jumpedfrom ED_CONTR
 ADD_CH_1:
         LD      (DE),A          ; load current character to last new location.
         INC     DE              ; address next
@@ -1487,7 +1607,10 @@ ADD_CH_1:
 ; a branch of the editing loop to deal with control characters
 ; using a look-up table.
 
-;; ED-KEYS
+;;; @brief ; ED-KEYS
+;;;
+;;; ; ED-KEYS
+;;; @jumpedfrom L0F38
 ED_KEYS:
         LD      E,A             ; character to E.
         LD      D,$00           ; prepare to add.
@@ -1499,15 +1622,14 @@ ED_KEYS:
         LD      HL,(K_CUR)      ; load address of cursor from K_CUR.
         RET                     ; Make an indirect jump forward to routine.
 
-; ------------------
-; Editing keys table
-; ------------------
-; For each code in the range $07 to $0F this table contains a
-; single offset byte to the routine that services that code.
-; Note. for what was intended there should also have been an
-; entry for chr$ 6 with offset to ed-symbol.
-
-;; ed-keys-t
+;;; @brief Editing keys table
+;;;
+;;; For each code in the range $07 to $0F this table contains a
+;;; single offset byte to the routine that services that code.
+;;; Note. for what was intended there should also have been an
+;;; entry for chr$ 6 with offset to ed-symbol.
+;;;
+;;; ; ed-keys-t
 ED_KEYS_T:
         DB          ED_EDIT - $  ; 07d offset $09 to Address: ED-EDIT
         DB          ED_LEFT - $  ; 08d offset $66 to Address: ED-LEFT
@@ -1519,14 +1641,15 @@ ED_KEYS_T:
         DB          ED_SYMBOL - $ ; 14d offset $CF to Address: ED-SYMBOL
         DB          ED_GRAPH - $ ; 15d offset $D4 to Address: ED-GRAPH
 
-; ---------------
-; Handle EDIT key
-; ---------------
-; The user has pressed SHIFT 1 to bring edit line down to bottom of screen.
-; Alternatively the user wishes to clear the input buffer and start again.
-; Alternatively ...
-
-;; ED-EDIT
+;;; @brief Handle EDIT key
+;;;
+;;; The user has pressed SHIFT 1 to bring edit line down to bottom of screen.
+;;; Alternatively the user wishes to clear the input buffer and start again.
+;;; Alternatively ...
+;;;
+;;; ; ED-EDIT
+;;; @calls LINE_ADDR, LINE_NO, TEST_ROOM, CLEAR_SP, CHAN_OPEN, OUT_LINE, CHAN_FLAG
+;;; @jumps CLEAR_SP
 ED_EDIT:
         LD      HL,(E_PPC)      ; fetch E_PPC the last line number entered.
                                 ; Note. may not exist and may follow program.
@@ -1587,14 +1710,15 @@ ED_EDIT:
 
         RET                     ; RETURN to ED-LOOP.
 
-; -------------------
-; Cursor down editing
-; -------------------
-;   The BASIC lines are displayed at the top of the screen and the user
-;   wishes to move the cursor down one line in edit mode.
-;   With INPUT LINE, this key must be used instead of entering STOP.
-
-;; ED-DOWN
+;;; @brief Cursor down editing
+;;;
+;;;   The BASIC lines are displayed at the top of the screen and the user
+;;;   wishes to move the cursor down one line in edit mode.
+;;;   With INPUT LINE, this key must be used instead of entering STOP.
+;;;
+;;; ; ED-DOWN
+;;; @calls LN_FETCH
+;;; @jumps ED_STOP, ED_LIST
 ED_DOWN:
         BIT     5,(IY+$37)      ; test FLAGX  - Input Mode ?
         JR      NZ,ED_STOP      ; skip to ED-STOP if so
@@ -1607,30 +1731,35 @@ ED_DOWN:
 
 ; ---
 
-;; ED-STOP
+;;; @brief ; ED-STOP
+;;;
+;;; ; ED-STOP
+;;; @jumps ED_ENTER
+;;; @jumpedfrom ED_DOWN
 ED_STOP:
         LD      (IY+$00),$10    ; set ERR_NR to 'STOP in INPUT' code
         JR      ED_ENTER        ; forward to ED-ENTER to produce error.
 
-; -------------------
-; Cursor left editing
-; -------------------
-; This acts on the cursor in the lower section of the screen in both
-; editing and input mode.
-
-;; ED-LEFT
+;;; @brief Cursor left editing
+;;;
+;;; This acts on the cursor in the lower section of the screen in both
+;;; editing and input mode.
+;;;
+;;; ; ED-LEFT
+;;; @calls ED_EDGE
+;;; @jumps ED_CUR
 ED_LEFT:
         CALL    ED_EDGE          ; routine ED-EDGE moves left if possible
         JR      ED_CUR           ; forward to ED-CUR to update K-CUR
                                 ; and return to ED-LOOP.
 
-; --------------------
-; Cursor right editing
-; --------------------
-; This acts on the cursor in the lower screen in both editing and input
-; mode and moves it to the right.
-
-;; ED-RIGHT
+;;; @brief Cursor right editing
+;;;
+;;; This acts on the cursor in the lower screen in both editing and input
+;;; mode and moves it to the right.
+;;;
+;;; ; ED-RIGHT
+;;; @fallthrough ED_CUR
 ED_RIGHT:
         LD      A,(HL)          ; fetch addressed character.
         CP      $0D             ; is it carriage return ?
@@ -1639,53 +1768,63 @@ ED_RIGHT:
 L1010:
         INC     HL              ; address next character
 
-;; ED-CUR
+;;; @brief ; ED-CUR
+;;;
+;;; ; ED-CUR
+;;; @jumpedfrom ED_LEFT, RTL_ED_KEY_EXT
 ED_CUR:
         LD      (K_CUR),HL      ; update K_CUR system variable
         RET                     ; return to ED-LOOP
 
-; --------------
-; DELETE editing
-; --------------
-; This acts on the lower screen and deletes the character to left of
-; cursor. If control characters are present these are deleted first
-; leaving the naked parameter (0-7) which appears as a '?' except in the
-; case of chr$ 6 which is the comma control character. It is not mandatory
-; to delete these second characters.
-
-;; ED-DELETE
+;;; @brief DELETE editing
+;;;
+;;; This acts on the lower screen and deletes the character to left of
+;;; cursor. If control characters are present these are deleted first
+;;; leaving the naked parameter (0-7) which appears as a '?' except in the
+;;; case of chr$ 6 which is the comma control character. It is not mandatory
+;;; to delete these second characters.
+;;;
+;;; ; ED-DELETE
+;;; @calls ED_EDGE
+;;; @jumps RECLAIM_2
 ED_DELETE:
         CALL    ED_EDGE         ; routine ED-EDGE moves cursor to left.
 L1018:
         LD      BC,$0001        ; of character to be deleted.
         JP      RECLAIM_2       ; to RECLAIM-2 reclaim the character.
 
-; ------------------------------------------
-; Ignore next 2 codes from key-input routine
-; ------------------------------------------
-; Since AT and TAB cannot be entered this point is never reached
-; from the keyboard. If inputting from a tape device or network then
-; the control and two following characters are ignored and processing
-; continues as if a carriage return had been received.
-; Here, perhaps, another Spectrum has said print #15; AT 0,0; "This is yellow"
-; and this one is interpreting input #15; a$.
-
-;; ED-IGNORE
+;;; @brief Ignore next 2 codes from key-input routine
+;;;
+;;; Since AT and TAB cannot be entered this point is never reached
+;;; from the keyboard. If inputting from a tape device or network then
+;;; the control and two following characters are ignored and processing
+;;; continues as if a carriage return had been received.
+;;; Here, perhaps, another Spectrum has said print #15; AT 0,0; "This is yellow"
+;;; and this one is interpreting input #15; a$.
+;;;
+;;; ; ED-IGNORE
+;;; @calls WAIT_KEY
+;;; @jumpedfrom L0F38
+;;; @fallthrough ED_ENTER
 ED_IGNORE:
         CALL    WAIT_KEY           ; routine WAIT-KEY to ignore keystroke.
         CALL    WAIT_KEY           ; routine WAIT-KEY to ignore next key.
 
-; -------------
-; Enter/newline
-; -------------
-; The enter key has been pressed to have BASIC line or input accepted.
-
-;; ED-ENTER
+;;; @brief Enter/newline
+;;;
+;;; The enter key has been pressed to have BASIC line or input accepted.
+;;;
+;;; ; ED-ENTER
+;;; @jumpedfrom ED_STOP, ED_SYMBOL
+;;; @fallthrough ED_END
 ED_ENTER:
         POP     HL              ; discard address ED-LOOP
         POP     HL              ; drop address ED-ERROR
 
-;; ED-END
+;;; @brief ; ED-END
+;;;
+;;; ; ED-END
+;;; @jumpedfrom ED_ERROR
 ED_END:
         POP     HL              ; the previous value of ERR_SP
         LD      (ERR_SP),HL      ; is restored to ERR_SP system variable
@@ -1695,19 +1834,21 @@ ED_END:
         LD      SP,HL           ; else put error routine on stack
         RET                     ; and make an indirect jump to it.
 
-; -----------------------------
-; Move cursor left when editing
-; -----------------------------
-; This routine moves the cursor left. The complication is that it must
-; not position the cursor between control codes and their parameters.
-; It is further complicated in that it deals with TAB and AT characters
-; which are never present from the keyboard.
-; The method is to advance from the beginning of the line each time,
-; jumping one, two, or three characters as necessary saving the original
-; position at each jump in DE. Once it arrives at the cursor then the next
-; legitimate leftmost position is in DE.
-
-;; ED-EDGE
+;;; @brief Move cursor left when editing
+;;;
+;;; This routine moves the cursor left. The complication is that it must
+;;; not position the cursor between control codes and their parameters.
+;;; It is further complicated in that it deals with TAB and AT characters
+;;; which are never present from the keyboard.
+;;; The method is to advance from the beginning of the line each time,
+;;; jumping one, two, or three characters as necessary saving the original
+;;; position at each jump in DE. Once it arrives at the cursor then the next
+;;; legitimate leftmost position is in DE.
+;;;
+;;; ; ED-EDGE
+;;; @calls SET_DE
+;;; @calledby ED_LEFT, ED_DELETE
+;;; @fallthrough ED_EDGE_1
 ED_EDGE:
         SCF                     ; carry flag must be set to call the nested
         CALL    SET_DE          ; subroutine SET-DE.
@@ -1725,7 +1866,12 @@ ED_EDGE:
         LD      C,L             ; to BC register pair.
                                 ; at this point DE addresses start of line.
 
-;; ED-EDGE-1
+;;; @brief ; ED-EDGE-1
+;;;
+;;; ; ED-EDGE-1
+;;; @jumps ED_EDGE_2
+;;; @jumpedfrom ED_EDGE_2
+;;; @fallthrough ED_EDGE_2
 ED_EDGE_1:
         LD      H,D             ; transfer DE - leftmost pointer
         LD      L,E             ; to HL
@@ -1752,7 +1898,11 @@ ED_EDGE_1:
 
         INC     HL              ; increment a third time for 'at'/'tab'
 
-;; ED-EDGE-2
+;;; @brief ; ED-EDGE-2
+;;;
+;;; ; ED-EDGE-2
+;;; @jumps ED_EDGE_1
+;;; @jumpedfrom ED_EDGE_1
 ED_EDGE_2:
         AND     A               ; prepare for true subtraction
         SBC     HL,BC           ; subtract cursor address from pointer
@@ -1767,14 +1917,15 @@ ED_EDGE_2:
 
         RET                     ; return.
 
-; -----------------
-; Cursor up editing
-; -----------------
-; The main screen displays part of the BASIC program and the user wishes
-; to move up one line scrolling if necessary.
-; This has no alternative use in input mode.
-
-;; ED-UP
+;;; @brief Cursor up editing
+;;;
+;;; The main screen displays part of the BASIC program and the user wishes
+;;; to move up one line scrolling if necessary.
+;;; This has no alternative use in input mode.
+;;;
+;;; ; ED-UP
+;;; @calls LINE_ADDR, LINE_NO, LN_STORE
+;;; @fallthrough ED_LIST
 ED_UP:
         BIT     5,(IY+$37)      ; test FLAGX  - input mode ?
         RET     NZ              ; return if not in editor - to ED-LOOP.
@@ -1790,32 +1941,38 @@ ED_UP:
 
 ; this branch is also taken from ed-down.
 
-;; ED-LIST
+;;; @brief ; ED-LIST
+;;;
+;;; ; ED-LIST
+;;; @calls AUTO_LIST
+;;; @jumps CHAN_OPEN
+;;; @jumpedfrom ED_DOWN
 ED_LIST:
         CALL    AUTO_LIST           ; routine AUTO-LIST lists to upper screen
                                 ; including adjusted current line.
         LD      A,$00           ; select lower screen again
         JP      CHAN_OPEN       ; exit via CHAN-OPEN to ED-LOOP
 
-; --------------------------------
-; Use of symbol and graphics codes
-; --------------------------------
-; These will not be encountered with the keyboard but would be handled
-; otherwise as follows.
-; As noted earlier, Vickers says there should have been an entry in
-; the KEYS table for chr$ 6 which also pointed here.
-; If, for simplicity, two Spectrums were both using #15 as a bi-directional
-; channel connected to each other:-
-; then when the other Spectrum has said PRINT #15; x, y
-; input #15; i ; j  would treat the comma control as a newline and the
-; control would skip to input j.
-; You can get round the missing chr$ 6 handler by sending multiple print
-; items separated by a newline '.
-
-; chr$14 would have the same functionality.
-
-; This is chr$ 14.
-;; ED-SYMBOL
+;;; @brief Use of symbol and graphics codes
+;;;
+;;; These will not be encountered with the keyboard but would be handled
+;;; otherwise as follows.
+;;; As noted earlier, Vickers says there should have been an entry in
+;;; the KEYS table for chr$ 6 which also pointed here.
+;;; If, for simplicity, two Spectrums were both using #15 as a bi-directional
+;;; channel connected to each other:-
+;;; then when the other Spectrum has said PRINT #15; x, y
+;;; input #15; i ; j  would treat the comma control as a newline and the
+;;; control would skip to input j.
+;;; You can get round the missing chr$ 6 handler by sending multiple print
+;;; items separated by a newline '.
+;;;
+;;; chr$14 would have the same functionality.
+;;;
+;;; This is chr$ 14.
+;;; ; ED-SYMBOL
+;;; @jumps ED_ENTER
+;;; @fallthrough ED_GRAPH
 ED_SYMBOL:
         BIT     7,(IY+$37)      ; test FLAGX - is this INPUT LINE ?
         JR      Z,ED_ENTER      ; back to ED-ENTER if not to treat as if
@@ -1825,17 +1982,21 @@ ED_SYMBOL:
 ; Next is chr$ 15
 ; Note that ADD-CHAR precedes the table so we can't offset to it directly.
 
-;; ED-GRAPH
+;;; @brief ; ED-GRAPH
+;;;
+;;; ; ED-GRAPH
+;;; @jumps ADD_CHAR
 ED_GRAPH:
         JP      ADD_CHAR           ; jump back to ADD-CHAR
 
-; --------------------
-; Editor error routine
-; --------------------
-; If an error occurs while editing, or inputting, then ERR_SP
-; points to the stack location holding address ED_ERROR.
-
-;; ED-ERROR
+;;; @brief Editor error routine
+;;;
+;;; If an error occurs while editing, or inputting, then ERR_SP
+;;; points to the stack location holding address ED_ERROR.
+;;;
+;;; ; ED-ERROR
+;;; @calls BEEPER
+;;; @jumps ED_END, ED_AGAIN
 ED_ERROR:
         BIT     4,(IY+$30)      ; test FLAGS2  - is K channel in use ?
         JR      Z,ED_END        ; back to ED-END if not.
@@ -1851,17 +2012,19 @@ ED_ERROR:
         JP      ED_AGAIN        ; to ED-AGAIN to re-stack address of
                                 ; this routine and make ERR_SP point to it.
 
-; ---------------------
-; Clear edit/work space
-; ---------------------
-; The editing area or workspace is cleared depending on context.
-; This is called from ED-EDIT to clear workspace if edit key is
-; used during input, to clear editing area if no program exists
-; and to clear editing area prior to copying the edit line to it.
-; It is also used by the error routine to clear the respective
-; area depending on FLAGX.
-
-;; CLEAR-SP
+;;; @brief Clear edit/work space
+;;;
+;;; The editing area or workspace is cleared depending on context.
+;;; This is called from ED-EDIT to clear workspace if edit key is
+;;; used during input, to clear editing area if no program exists
+;;; and to clear editing area prior to copying the edit line to it.
+;;; It is also used by the error routine to clear the respective
+;;; area depending on FLAGX.
+;;;
+;;; ; CLEAR-SP
+;;; @calls SET_HL, RECLAIM_1
+;;; @calledby ED_EDIT, MAIN_EXEC
+;;; @jumpedfrom ED_EDIT
 CLEAR_SP:
         PUSH    HL              ; preserve HL
         CALL    SET_HL          ; routine SET-HL
@@ -1874,12 +2037,13 @@ CLEAR_SP:
         POP     HL              ; restore HL.
         RET                     ; return.
 
-; ----------------------------
-; THE 'KEYBOARD INPUT' ROUTINE
-; ----------------------------
-; This is the service routine for the input stream of the keyboard channel 'K'.
-
-;; KEY-INPUT
+;;; @brief THE 'KEYBOARD INPUT' ROUTINE
+;;;
+;;; This is the service routine for the input stream of the keyboard channel 'K'.
+;;;
+;;; ; KEY-INPUT
+;;; @calls L111D, CLS_LOWER
+;;; @jumps L38F3, KEY_CONTR, KEY_M_CL, KEY_DATA
 KEY_INPUT:
         BIT     3,(IY+$02)      ; test TV_FLAG  - has a key been pressed in
                                 ; editor ?
@@ -1933,7 +2097,11 @@ L10C8:
 
 ; Now separate capslock 06 from modes 7-15.
 
-;; KEY-M-CL
+;;; @brief ; KEY-M-CL
+;;;
+;;; ; KEY-M-CL
+;;; @jumps KEY_MODE, KEY_FLAG
+;;; @jumpedfrom KEY_INPUT
 KEY_M_CL:
         JR      NZ,KEY_MODE        ; forward to KEY-MODE if not 06 (capslock)
 
@@ -1945,7 +2113,12 @@ KEY_M_CL:
 
 ; ---
 
-;; KEY-MODE
+;;; @brief ; KEY-MODE
+;;;
+;;; ; KEY-MODE
+;;; @jumps KEY_FLAG
+;;; @jumpedfrom KEY_M_CL
+;;; @fallthrough KEY_FLAG
 KEY_MODE:
         CP      $0E             ; compare with chr 14d
         RET     C               ; return with carry set "key found" for
@@ -1964,7 +2137,10 @@ KEY_MODE:
                                 ; the Extended Mode/Graphics key is pressed
                                 ; again to get out.
 
-;; KEY-FLAG
+;;; @brief ; KEY-FLAG
+;;;
+;;; ; KEY-FLAG
+;;; @jumpedfrom KEY_M_CL, KEY_MODE
 KEY_FLAG:
         SET     3,(IY+$02)      ; update TV_FLAG  - show key state has changed
         CP      A               ; clear carry and reset zero flags -
@@ -1975,7 +2151,12 @@ KEY_FLAG:
 
 ; now deal with colour controls - 16-23 ink, 24-31 paper
 
-;; KEY-CONTR
+;;; @brief ; KEY-CONTR
+;;;
+;;; ; KEY-CONTR
+;;; @jumps KEY_DATA
+;;; @jumpedfrom KEY_INPUT
+;;; @fallthrough KEY_DATA
 KEY_CONTR:
         LD      B,A             ; make a copy of character.
         AND     $07             ; mask to leave bits 0-7
@@ -1987,7 +2168,11 @@ KEY_CONTR:
 
         INC     A               ; else change from INK to PAPER (17d) if so.
 
-;; KEY-DATA
+;;; @brief ; KEY-DATA
+;;;
+;;; ; KEY-DATA
+;;; @jumps KEY_CHAN
+;;; @jumpedfrom KEY_INPUT, KEY_CONTR
 KEY_DATA:
         LD      (IY-$2D),C         ; put the colour (0-7)/state(0/1) in KDATA
         LD      DE,KEY_NEXT        ; address: KEY-NEXT will be next input stream
@@ -1997,14 +2182,21 @@ KEY_DATA:
 
 ; ... so that INPUT_AD directs control to here at next call to WAIT-KEY
 
-;; KEY-NEXT
+;;; @brief ; KEY-NEXT
+;;;
+;;; ; KEY-NEXT
+;;; @fallthrough KEY_CHAN
 KEY_NEXT:
         LD      A,(KDATA)       ; pick up the parameter stored in KDATA.
         LD      DE,KEY_INPUT    ; address: KEY-INPUT will be next input stream
                                 ; continue to restore default channel and
                                 ; make a return with the control code.
 
-;; KEY-CHAN
+;;; @brief ; KEY-CHAN
+;;;
+;;; ; KEY-CHAN
+;;; @jumpedfrom KEY_DATA
+;;; @fallthrough KEY_DONE2
 KEY_CHAN:
         LD      HL,(CHANS)      ; address start of CHANNELS area using CHANS
                                 ; system variable.
@@ -2016,24 +2208,30 @@ KEY_CHAN:
         INC     HL              ; routine address for
         LD      (HL),D          ; the next call to WAIT-KEY.
 
-;; KEY-DONE2
+;;; @brief ; KEY-DONE2
+;;;
+;;; ; KEY-DONE2
+;;; @jumpedfrom L38F3
 KEY_DONE2:
         SCF                     ; set carry flag to show a key has been found
         RET                     ; and return.
 
-; --------------------
-; Lower screen copying
-; --------------------
-; This subroutine is called whenever the line in the editing area or
-; input workspace is required to be printed to the lower screen.
-; It is by calling this routine after any change that the cursor, for
-; instance, appears to move to the left.
-; Remember the edit line will contain characters and tokens
-; e.g. "1000 LET a=1" is 8 characters.
-
-;; ED-COPY
+;;; @brief Lower screen copying
+;;;
+;;; This subroutine is called whenever the line in the editing area or
+;;; input workspace is required to be printed to the lower screen.
+;;; It is by calling this routine after any change that the cursor, for
+;;; instance, appears to move to the left.
+;;; Remember the edit line will contain characters and tokens
+;;; e.g. "1000 LET a=1" is 8 characters.
+;;;
+;;; ; ED-COPY
+;;; @address $111D
+;;; @calls RTL_TEMPS_HOOK, SET_DE, OUT_LINE2, OUT_CURS, TEMPS
+;;; @calledby KEY_INPUT, IN_VAR_4
+;;; @fallthrough ED_BLANK
 L111D:
-        CALL    ARAB_TEMPS_HOOK ; call ARAB_TEMPS_HOOK
+        CALL    RTL_TEMPS_HOOK ; call RTL_TEMPS_HOOK
         RES     3,(IY+$02)      ; update TV_FLAG  - signal no change in mode
         RES     5,(IY+$02)      ; update TV_FLAG  - signal don't clear lower
                                 ; screen.
@@ -2071,7 +2269,12 @@ L111D:
 ; the lower screen was not cleared, at the outset, so if deleting then old
 ; text from a previous print may follow this line and requires blanking.
 
-;; ED-BLANK
+;;; @brief ; ED-BLANK
+;;;
+;;; ; ED-BLANK
+;;; @jumps ED_C_DONE, ED_SPACES
+;;; @jumpedfrom ED_SPACES
+;;; @fallthrough ED_SPACES
 ED_BLANK:
         LD      A,($5C8B)       ; fetch SPOSNL_hi is current line
         SUB     D               ; compare with old
@@ -2083,11 +2286,16 @@ ED_BLANK:
         SUB     (IY+$50)        ; subtract new in SPOSNL_lo
         JR      NC,ED_C_DONE    ; forward to ED-C-DONE if no backfilling.
 
-;; ED-SPACES
+;;; @brief ; ED-SPACES
+;;;
+;;; ; ED-SPACES
+;;; @calls RTL_PO_FETCH_EXT
+;;; @jumps ED_BLANK
+;;; @jumpedfrom ED_BLANK
 ED_SPACES:
         LD      A,$20           ; prepare a space.
         PUSH    DE              ; save old line/column.
-        CALL    ARAB_PO_FETCH_EXT ; routine PRINT-OUT prints a space over
+        CALL    RTL_PO_FETCH_EXT ; routine PRINT-OUT prints a space over
                                 ; any text from previous print.
                                 ; Note. Since the blanking only occurs when
                                 ; using $09F4 to print to the lower screen,
@@ -2096,16 +2304,17 @@ ED_SPACES:
         POP     DE              ; restore the old line column.
         JR      ED_BLANK        ; back to ED-BLANK until all old text blanked.
 
-; -------------------------------
-; THE 'EDITOR-FULL' ERROR ROUTINE
-; -------------------------------
-;   This is the error routine addressed by ERR_SP.  This is not for the out of
-;   memory situation as we're just printing.  The pitch and duration are exactly
-;   the same as used by ED-ERROR from which this has been augmented.  The
-;   situation is that the lower screen is full and a rasp is given to suggest
-;   that this is perhaps not the best idea you've had that day.
-
-;; ED-FULL
+;;; @brief THE 'EDITOR-FULL' ERROR ROUTINE
+;;;
+;;;   This is the error routine addressed by ERR_SP.  This is not for the out of
+;;;   memory situation as we're just printing.  The pitch and duration are exactly
+;;;   the same as used by ED-ERROR from which this has been augmented.  The
+;;;   situation is that the lower screen is full and a rasp is given to suggest
+;;;   that this is perhaps not the best idea you've had that day.
+;;;
+;;; ; ED-FULL
+;;; @calls BEEPER
+;;; @jumps ED_C_END
 ED_FULL:
         LD      D,$00           ; prepare to moan.
         LD      E,(IY-$02)      ; fetch RASP value.
@@ -2121,14 +2330,22 @@ ED_FULL:
 
 ; the exit point from line printing continues here.
 
-;; ED-C-DONE
+;;; @brief ; ED-C-DONE
+;;;
+;;; ; ED-C-DONE
+;;; @jumpedfrom ED_BLANK
+;;; @fallthrough ED_C_END
 ED_C_DONE:
         POP     DE              ; fetch new line/column.
         POP     HL              ; fetch the error address.
 
 ; the error path rejoins here.
 
-;; ED-C-END
+;;; @brief ; ED-C-END
+;;;
+;;; ; ED-C-END
+;;; @calls CL_SET
+;;; @jumpedfrom ED_FULL
 ED_C_END:
         POP     HL              ; restore the old value of ERR_SP.
         LD      (ERR_SP),HL      ; update the system variable ERR_SP
@@ -2146,16 +2363,17 @@ ED_C_END:
 
         RET                     ; return
 
-; -----------------------------------------------
-; Point to first and last locations of work space
-; -----------------------------------------------
-;   These two nested routines ensure that the appropriate pointers are
-;   selected for the editing area or workspace. The routines that call
-;   these routines are designed to work on either area.
-
-; this routine is called once
-
-;; SET-HL
+;;; @brief Point to first and last locations of work space
+;;;
+;;;   These two nested routines ensure that the appropriate pointers are
+;;;   selected for the editing area or workspace. The routines that call
+;;;   these routines are designed to work on either area.
+;;;
+;;; this routine is called once
+;;;
+;;; ; SET-HL
+;;; @calledby CLEAR_SP
+;;; @fallthrough SET_DE
 SET_HL:
         LD      HL,(WORKSP)      ; fetch WORKSP to HL.
         DEC     HL              ; point to last location of editing area.
@@ -2164,7 +2382,10 @@ SET_HL:
 
 ; this routine is called with carry set and exits at a conditional return.
 
-;; SET-DE
+;;; @brief ; SET-DE
+;;;
+;;; ; SET-DE
+;;; @calledby ED_EDGE, L111D
 SET_DE:
         LD      DE,(E_LINE)      ; fetch E_LINE to DE
         BIT     5,(IY+$37)      ; test FLAGX  - Input Mode ?
@@ -2176,17 +2397,18 @@ SET_DE:
         LD      HL,(STKBOT)      ; fetch STKBOT to HL as well
         RET                     ; and return  (entry = set-hl (in input))
 
-; -----------------------------------
-; THE 'REMOVE FLOATING POINT' ROUTINE
-; -----------------------------------
-;   When a BASIC LINE or the INPUT BUFFER is parsed any numbers will have
-;   an invisible chr 14d inserted after them and the 5-byte integer or
-;   floating point form inserted after that.  Similar invisible value holders
-;   are also created after the numeric and string variables in a DEF FN list.
-;   This routine removes these 'compiled' numbers from the edit line or
-;   input workspace.
-
-;; REMOVE-FP
+;;; @brief THE 'REMOVE FLOATING POINT' ROUTINE
+;;;
+;;;   When a BASIC LINE or the INPUT BUFFER is parsed any numbers will have
+;;;   an invisible chr 14d inserted after them and the 5-byte integer or
+;;;   floating point form inserted after that.  Similar invisible value holders
+;;;   are also created after the numeric and string variables in a DEF FN list.
+;;;   This routine removes these 'compiled' numbers from the edit line or
+;;;   input workspace.
+;;;
+;;; ; REMOVE-FP
+;;; @calls RECLAIM_2
+;;; @calledby MAIN_EXEC, IN_VAR_2
 REMOVE_FP:
         LD      A,(HL)          ; fetch character
         CP      $0E             ; is it the CHR$ 14 number marker ?

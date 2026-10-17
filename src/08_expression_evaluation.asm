@@ -1,3 +1,6 @@
+;;; @file 08_expression_evaluation.asm
+;;; @brief Part 8. EXPRESSION EVALUATION
+
 ;***********************************
 ;** Part 8. EXPRESSION EVALUATION **
 ;***********************************
@@ -17,13 +20,11 @@
 ; system is remarkably robust.
 
 
-; ---------------------------------
-; Scan expression or sub-expression
-; ---------------------------------
-;
-;
-
-;; SCANNING
+;;; @brief Scan expression or sub-expression
+;;;
+;;; ; SCANNING
+;;; @calledby VAL_FET_2, EXPT_1NUM, EXPT_EXP, DATA_1, DEF_FN_6, PR_ITEM_3, S_BRACKET, SF_ARGMTS, SF_ARG_VL, SF_VALUE, +1 more
+;;; @fallthrough S_LOOP_1
 SCANNING:
         RST     18H             ; GET-CHAR
         LD      B,$00           ; priority marker zero is pushed on stack
@@ -33,7 +34,12 @@ SCANNING:
                                 ; and proceed to consider the first character
                                 ; of the expression.
 
-;; S-LOOP-1
+;;; @brief ; S-LOOP-1
+;;;
+;;; ; S-LOOP-1
+;;; @calls INDEXER
+;;; @jumps S_ALPHNUM
+;;; @jumpedfrom S_U_PLUS, S_PUSH_PO, S_NEXT
 S_LOOP_1:
         LD      C,A             ; store the character while a look up is done.
         LD      HL,SCAN_FUNC        ; Address: scan-func
@@ -52,13 +58,14 @@ S_LOOP_1:
         JP      (HL)            ; and jump to the routine e.g. S-BIN
                                 ; making an indirect exit from there.
 
-; -------------------------------------------------------------------------
-; The four service subroutines for routines in the scanning function table
-; -------------------------------------------------------------------------
-
-; PRINT """Hooray!"" he cried."
-
-;; S-QUOTE-S
+;;; @brief The four service subroutines for routines in the scanning function table
+;;;
+;;; PRINT """Hooray!"" he cried."
+;;;
+;;; ; S-QUOTE-S
+;;; @calls CH_ADD_1
+;;; @jumps REPORT_C
+;;; @calledby S_QUOTE, S_Q_AGAIN
 S_QUOTE_S:
         CALL    CH_ADD_1           ; routine CH-ADD+1 points to next character
                                 ; and fetches that character.
@@ -81,7 +88,13 @@ S_QUOTE_S:
 ; functions SCREEN$, ATTR and POINT that have two fixed parameters and
 ; therefore require surrounding braces.
 
-;; S-2-COORD
+;;; @brief ; S-2-COORD
+;;;
+;;; ; S-2-COORD
+;;; @calls NEXT_2NUM
+;;; @jumps S_RPORT_C
+;;; @calledby S_SCREEN, S_ATTR, S_POINT
+;;; @fallthrough S_RPORT_C
 S_2_COORD:
         RST     20H             ; NEXT-CHAR
         CP      $28             ; is it the opening '(' ?
@@ -97,39 +110,46 @@ S_2_COORD:
         RST     18H             ; GET-CHAR
         CP      $29             ; is it the closing ')' ?
 
-;; S-RPORT-C
+;;; @brief ; S-RPORT-C
+;;;
+;;; ; S-RPORT-C
+;;; @jumps REPORT_C
+;;; @jumpedfrom S_2_COORD
+;;; @fallthrough SYNTAX_Z
 S_RPORT_C:
         JP      NZ,REPORT_C        ; jump back to REPORT-C if not.
                                 ; 'Nonsense in BASIC'.
 
-; ------------
-; Check syntax
-; ------------
-; This routine is called on a number of occasions to check if syntax is being
-; checked or if the program is being run. To test the flag inline would use
-; four bytes of code, but a call instruction only uses 3 bytes of code.
-
-;; SYNTAX-Z
+;;; @brief Check syntax
+;;;
+;;; This routine is called on a number of occasions to check if syntax is being
+;;; checked or if the program is being run. To test the flag inline would use
+;;; four bytes of code, but a call instruction only uses 3 bytes of code.
+;;;
+;;; ; SYNTAX-Z
+;;; @calledby L0609, REPORT_FA, LIST_1, LINE_END, CHECK_END, VAR_A_2, CLASS_09, USE_ZERO, STOP, READ, +21 more
 SYNTAX_Z:
         BIT     7,(IY+$01)      ; test FLAGS  - checking syntax only ?
         RET                     ; return.
 
-; ----------------
-; Scanning SCREEN$
-; ----------------
-; This function returns the code of a bit-mapped character at screen
-; position at line C, column B. It is unable to detect the mosaic characters
-; which are not bit-mapped but detects the ASCII 32 - 127 range.
-; The bit-mapped UDGs are ignored which is curious as it requires only a
-; few extra bytes of code. As usual, anything to do with CHARS is weird.
-; If no match is found a null string is returned.
-; No actual check on ranges is performed - that's up to the BASIC programmer.
-; No real harm can come from SCREEN$(255,255) although the BASIC manual
-; says that invalid values will be trapped.
-; Interestingly, in the Pitman pocket guide, 1984, Vickers says that the
-; range checking will be performed.
-
-;; S-SCRN$-S
+;;; @brief Scanning SCREEN$
+;;;
+;;; This function returns the code of a bit-mapped character at screen
+;;; position at line C, column B. It is unable to detect the mosaic characters
+;;; which are not bit-mapped but detects the ASCII 32 - 127 range.
+;;; The bit-mapped UDGs are ignored which is curious as it requires only a
+;;; few extra bytes of code. As usual, anything to do with CHARS is weird.
+;;; If no match is found a null string is returned.
+;;; No actual check on ranges is performed - that's up to the BASIC programmer.
+;;; No real harm can come from SCREEN$(255,255) although the BASIC manual
+;;; says that invalid values will be trapped.
+;;; Interestingly, in the Pitman pocket guide, 1984, Vickers says that the
+;;; range checking will be performed.
+;;;
+;;; ; S-SCRN$-S
+;;; @calls STK_TO_BC, L1543
+;;; @calledby S_SCREEN
+;;; @fallthrough S_SCR_STO
 S_SCRN_S:
         CALL    STK_TO_BC           ; routine STK-TO-BC.
                                 ; Note. not inc h. ??
@@ -225,7 +245,10 @@ L255A  EQU    $255A                   ; this address now falls inside the block 
 
         LD      C,B             ; B is now zero, so BC now zero.
 
-;; S-SCR-STO
+;;; @brief ; S-SCR-STO
+;;;
+;;; ; S-SCR-STO
+;;; @jumps STK_STO
 S_SCR_STO:
         JP      STK_STO           ; to STK-STO-$ to store the string in
                                 ; workspace or a string with zero length.
@@ -237,14 +260,16 @@ S_SCR_STO:
 ; The instruction at S_SCR_STO should just be a RET.
 ; credit Stephen Kelly and others, 1982.
 
-; -------------
-; Scanning ATTR
-; -------------
-; This function subroutine returns the attributes of a screen location -
-; a numeric result.
-; Again it's up to the BASIC programmer to supply valid values of line/column.
-
-;; S-ATTR-S
+;;; @brief Scanning ATTR
+;;;
+;;; This function subroutine returns the attributes of a screen location -
+;;; a numeric result.
+;;; Again it's up to the BASIC programmer to supply valid values of line/column.
+;;;
+;;; ; S-ATTR-S
+;;; @calls STK_TO_BC
+;;; @jumps STACK_A
+;;; @calledby S_ATTR
 S_ATTR_S:
         CALL    STK_TO_BC           ; routine STK-TO-BC fetches line to C,
                                 ; and column to B.
@@ -267,33 +292,32 @@ S_ATTR_S:
         JP      STACK_A           ; forward to STACK-A to store result
                                 ; and make an indirect exit.
 
-; -----------------------
-; Scanning function table
-; -----------------------
-; This table is used by INDEXER routine to find the offsets to
-; four operators and eight functions. e.g. $A8 is the token 'FN'.
-; This table is used in the first instance for the first character of an
-; expression or by a recursive call to SCANNING for the first character of
-; any sub-expression. It eliminates functions that have no argument or
-; functions that can have more than one argument and therefore require
-; braces. By eliminating and dealing with these now it can later take a
-; simplistic approach to all other functions and assume that they have
-; one argument.
-; Similarly by eliminating BIN and '.' now it is later able to assume that
-; all numbers begin with a digit and that the presence of a number or
-; variable can be detected by a call to ALPHANUM.
-; By default all expressions are positive and the spurious '+' is eliminated
-; now as in print +2. This should not be confused with the operator '+'.
-; Note. this does allow a degree of nonsense to be accepted as in
-; PRINT +"3 is the greatest.".
-; An acquired programming skill is the ability to include brackets where
-; they are not necessary.
-; A bracket at the start of a sub-expression may be spurious or necessary
-; to denote that the contained expression is to be evaluated as an entity.
-; In either case this is dealt with by recursive calls to SCANNING.
-; An expression that begins with a quote requires special treatment.
-
-;; scan-func
+;;; @brief Scanning function table
+;;;
+;;; This table is used by INDEXER routine to find the offsets to
+;;; four operators and eight functions. e.g. $A8 is the token 'FN'.
+;;; This table is used in the first instance for the first character of an
+;;; expression or by a recursive call to SCANNING for the first character of
+;;; any sub-expression. It eliminates functions that have no argument or
+;;; functions that can have more than one argument and therefore require
+;;; braces. By eliminating and dealing with these now it can later take a
+;;; simplistic approach to all other functions and assume that they have
+;;; one argument.
+;;; Similarly by eliminating BIN and '.' now it is later able to assume that
+;;; all numbers begin with a digit and that the presence of a number or
+;;; variable can be detected by a call to ALPHANUM.
+;;; By default all expressions are positive and the spurious '+' is eliminated
+;;; now as in print +2. This should not be confused with the operator '+'.
+;;; Note. this does allow a degree of nonsense to be accepted as in
+;;; PRINT +"3 is the greatest.".
+;;; An acquired programming skill is the ability to include brackets where
+;;; they are not necessary.
+;;; A bracket at the start of a sub-expression may be spurious or necessary
+;;; to denote that the contained expression is to be evaluated as an entity.
+;;; In either case this is dealt with by recursive calls to SCANNING.
+;;; An expression that begins with a quote requires special treatment.
+;;;
+;;; ; scan-func
 SCAN_FUNC:
         DB          $22, S_QUOTE-$-1  ; $1C offset to S-QUOTE
         DB          '(', S_BRACKET-$-1  ; $4F offset to S-BRACKET
@@ -311,24 +335,29 @@ SCAN_FUNC:
 
         DB          $00             ; zero end marker
 
-; --------------------------
-; Scanning function routines
-; --------------------------
-; These are the 11 subroutines accessed by the above table.
-; S-BIN and S-DECIMAL are the same
-; The 1-byte offset limits their location to within 255 bytes of their
-; entry in the table.
-
-; ->
-;; S-U-PLUS
+;;; @brief Scanning function routines
+;;;
+;;; These are the 11 subroutines accessed by the above table.
+;;; S-BIN and S-DECIMAL are the same
+;;; The 1-byte offset limits their location to within 255 bytes of their
+;;; entry in the table.
+;;;
+;;; ->
+;;; ; S-U-PLUS
+;;; @jumps S_LOOP_1
 S_U_PLUS:
         RST     20H             ; NEXT-CHAR just ignore
         JP      S_LOOP_1           ; to S-LOOP-1
 
 ; ---
 
-; ->
-;; S-QUOTE
+;;; @brief > ; S-QUOTE
+;;;
+;;; ->
+;;; ; S-QUOTE
+;;; @calls S_QUOTE_S
+;;; @jumps S_Q_PRMS
+;;; @fallthrough S_Q_AGAIN
 S_QUOTE:
         RST     18H             ; GET-CHAR
         INC     HL              ; address next character (first in quotes)
@@ -337,7 +366,12 @@ S_QUOTE:
         CALL    S_QUOTE_S           ; routine S-QUOTE-S
         JR      NZ,S_Q_PRMS        ; forward to S-Q-PRMS if
 
-;; S-Q-AGAIN
+;;; @brief ; S-Q-AGAIN
+;;;
+;;; ; S-Q-AGAIN
+;;; @calls S_QUOTE_S, SYNTAX_Z
+;;; @jumps S_Q_PRMS
+;;; @fallthrough S_Q_COPY
 S_Q_AGAIN:
         CALL    S_QUOTE_S           ; routine S-QUOTE-S copies string until a
                                 ; quote is encountered
@@ -355,7 +389,10 @@ S_Q_AGAIN:
         POP     HL              ; re-fetch start of quoted text.
         PUSH    DE              ; save start in workspace.
 
-;; S-Q-COPY
+;;; @brief ; S-Q-COPY
+;;;
+;;; ; S-Q-COPY
+;;; @fallthrough S_Q_PRMS
 S_Q_COPY:
         LD      A,(HL)          ; fetch a character from source.
         INC     HL              ; advance source address.
@@ -372,12 +409,21 @@ S_Q_COPY:
 
 ; proceed when terminating quote encountered.
 
-;; S-Q-PRMS
+;;; @brief ; S-Q-PRMS
+;;;
+;;; ; S-Q-PRMS
+;;; @jumpedfrom S_QUOTE, S_Q_AGAIN
+;;; @fallthrough S_STRING
 S_Q_PRMS:
         DEC     BC              ; decrease count by 1.
         POP     DE              ; restore start of string in workspace.
 
-;; S-STRING
+;;; @brief ; S-STRING
+;;;
+;;; ; S-STRING
+;;; @calls STK_STO
+;;; @jumps S_CONT_2
+;;; @jumpedfrom S_SCREEN
 S_STRING:
         LD      HL,FLAGS        ; Address FLAGS system variable.
         RES     6,(HL)          ; signal string result.
@@ -387,8 +433,12 @@ S_STRING:
 
 ; ---
 
-; ->
-;; S-BRACKET
+;;; @brief > ; S-BRACKET
+;;;
+;;; ->
+;;; ; S-BRACKET
+;;; @calls SCANNING
+;;; @jumps REPORT_C, S_CONT_2
 S_BRACKET:
         RST     20H             ; NEXT-CHAR
         CALL    SCANNING           ; routine SCANNING is called recursively.
@@ -401,8 +451,11 @@ S_BRACKET:
 
 ; ---
 
-; ->
-;; S-FN
+;;; @brief > ; S-FN
+;;;
+;;; ->
+;;; ; S-FN
+;;; @jumps S_FN_SBRN
 S_FN:
         JP      S_FN_SBRN           ; jump forward to S-FN-SBRN.
 
@@ -470,7 +523,12 @@ S_FN:
 ;
 ; ->
 
-;; S-RND
+;;; @brief ; S-RND
+;;;
+;;; ; S-RND
+;;; @calls SYNTAX_Z, STACK_BC, FP_TO_BC
+;;; @jumps S_RND_END
+;;; @fallthrough S_RND_END
 S_RND:
         CALL    SYNTAX_Z           ; routine SYNTAX-Z
         JR      Z,S_RND_END         ; forward to S-RND-END if checking syntax.
@@ -506,7 +564,11 @@ S_RND:
         SUB     $10             ; reduce exponent by 2^16
         LD      (HL),A          ; place back
 
-;; S-RND-END
+;;; @brief ; S-RND-END
+;;;
+;;; ; S-RND-END
+;;; @jumps S_PI_END
+;;; @jumpedfrom S_RND
 S_RND_END:
         JR      S_PI_END           ; forward to S-PI-END
 
@@ -514,8 +576,13 @@ S_RND_END:
 
 ; the number PI 3.14159...
 
-; ->
-;; S-PI
+;;; @brief > ; S-PI
+;;;
+;;; ->
+;;; ; S-PI
+;;; @calls SYNTAX_Z
+;;; @jumps S_PI_END
+;;; @fallthrough S_PI_END
 S_PI:
         CALL    SYNTAX_Z           ; routine SYNTAX-Z
         JR      Z,S_PI_END         ; to S-PI-END if checking syntax.
@@ -527,15 +594,24 @@ S_PI:
         INC     (HL)            ; increment the exponent leaving pi
                                 ; on the calculator stack.
 
-;; S-PI-END
+;;; @brief ; S-PI-END
+;;;
+;;; ; S-PI-END
+;;; @jumps S_NUMERIC
+;;; @jumpedfrom S_RND_END, S_PI
 S_PI_END:
         RST     20H             ; NEXT-CHAR
         JP      S_NUMERIC           ; jump forward to S-NUMERIC
 
 ; ---
 
-; ->
-;; S-INKEY$
+;;; @brief > ; S-INKEY$
+;;;
+;;; ->
+;;; ; S-INKEY$
+;;; @calls KEY_SCAN, K_TEST, K_DECODE
+;;; @jumps S_PUSH_PO, S_INK_EN, S_IK_STK
+;;; @fallthrough S_IK_STK
 S_INKEY:
         LD      BC,$105A        ; priority $10, operation code $1A ('read-in')
                                 ; +$40 for string result, numeric operand.
@@ -576,19 +652,32 @@ S_INKEY:
         LD      (DE),A          ; put the key in workspace
         LD      C,$01           ; set C length to one
 
-;; S-IK$-STK
+;;; @brief ; S-IK$-STK
+;;;
+;;; ; S-IK$-STK
+;;; @calls STK_STO
+;;; @jumpedfrom S_INKEY
+;;; @fallthrough S_INK_EN
 S_IK_STK:
         LD      B,$00           ; set high byte of length to zero
         CALL    STK_STO           ; routine STK-STO-$
 
-;; S-INK$-EN
+;;; @brief ; S-INK$-EN
+;;;
+;;; ; S-INK$-EN
+;;; @jumps S_CONT_2
+;;; @jumpedfrom S_INKEY
 S_INK_EN:
         JP      S_CONT_2           ; to S-CONT-2            ===>
 
 ; ---
 
-; ->
-;; S-SCREEN$
+;;; @brief > ; S-SCREEN$
+;;;
+;;; ->
+;;; ; S-SCREEN$
+;;; @calls S_2_COORD, S_SCRN_S
+;;; @jumps S_STRING
 S_SCREEN:
         CALL    S_2_COORD           ; routine S-2-COORD
         CALL    NZ,S_SCRN_S        ; routine S-SCRN$-S
@@ -598,8 +687,12 @@ S_SCREEN:
 
 ; ---
 
-; ->
-;; S-ATTR
+;;; @brief > ; S-ATTR
+;;;
+;;; ->
+;;; ; S-ATTR
+;;; @calls S_2_COORD, S_ATTR_S
+;;; @jumps S_NUMERIC
 S_ATTR:
         CALL    S_2_COORD           ; routine S-2-COORD
         CALL    NZ,S_ATTR_S        ; routine S-ATTR-S
@@ -609,8 +702,12 @@ S_ATTR:
 
 ; ---
 
-; ->
-;; S-POINT
+;;; @brief > ; S-POINT
+;;;
+;;; ->
+;;; ; S-POINT
+;;; @calls S_2_COORD, POINT_SUB
+;;; @jumps S_NUMERIC
 S_POINT:
         CALL    S_2_COORD           ; routine S-2-COORD
         CALL    NZ,POINT_SUB        ; routine POINT-SUB
@@ -622,7 +719,13 @@ S_POINT:
 
 ; ==> The branch was here if not in table.
 
-;; S-ALPHNUM
+;;; @brief ; S-ALPHNUM
+;;;
+;;; ; S-ALPHNUM
+;;; @calls ALPHANUM
+;;; @jumps S_NEGATE, S_LETTER
+;;; @jumpedfrom S_LOOP_1
+;;; @fallthrough S_DECIMAL
 S_ALPHNUM:
         CALL    ALPHANUM           ; routine ALPHANUM checks if variable or
                                 ; a digit.
@@ -640,9 +743,13 @@ S_ALPHNUM:
 ; after the numeric expression. During runtime it just picks these
 ; numbers up. It also handles BIN format numbers.
 
-; ->
-;; S-BIN
-;; S-DECIMAL
+;;; @brief > ; S-BIN ; S-DECIMAL
+;;;
+;;; ->
+;;; ; S-BIN
+;;; ; S-DECIMAL
+;;; @calls SYNTAX_Z, L139E, MAKE_ROOM, TEMP_PTR1
+;;; @jumps S_STK_DEC, S_NUMERIC
 S_DECIMAL:
         CALL    SYNTAX_Z           ; routine SYNTAX-Z
         JR      NZ,S_STK_DEC        ; to S-STK-DEC in runtime
@@ -673,11 +780,19 @@ S_DECIMAL:
 
 ; branch here in runtime.
 
-;; S-STK-DEC
+;;; @brief ; S-STK-DEC
+;;;
+;;; ; S-STK-DEC
+;;; @jumpedfrom S_DECIMAL
+;;; @fallthrough S_SD_SKIP
 S_STK_DEC:
         RST     18H             ; GET-CHAR positions HL at digit.
 
-;; S-SD-SKIP
+;;; @brief ; S-SD-SKIP
+;;;
+;;; ; S-SD-SKIP
+;;; @calls STACK_NUM
+;;; @fallthrough S_NUMERIC
 S_SD_SKIP:
         INC     HL              ; advance pointer
         LD      A,(HL)          ; until we find
@@ -689,7 +804,11 @@ S_SD_SKIP:
         CALL    STACK_NUM           ; routine STACK-NUM stacks it
         LD      (CH_ADD),HL      ; update system variable CH_ADD
 
-;; S-NUMERIC
+;;; @brief ; S-NUMERIC
+;;;
+;;; ; S-NUMERIC
+;;; @jumps S_CONT_1
+;;; @jumpedfrom S_PI_END, S_ATTR, S_POINT, S_DECIMAL
 S_NUMERIC:
         SET     6,(IY+$01)      ; update FLAGS  - Signal numeric result
         JR      S_CONT_1           ; forward to S-CONT-1               ===>
@@ -699,13 +818,13 @@ S_NUMERIC:
 
 ; end of functions accessed from scanning functions table.
 
-; --------------------------
-; Scanning variable routines
-; --------------------------
-;
-;
-
-;; S-LETTER
+;;; @brief Scanning variable routines
+;;;
+;;; ; S-LETTER
+;;; @calls LOOK_VARS, STK_VAR, STACK_NUM
+;;; @jumps REPORT_2, S_CONT_1
+;;; @jumpedfrom S_ALPHNUM
+;;; @fallthrough S_CONT_1
 S_LETTER:
         CALL    LOOK_VARS           ; routine LOOK-VARS
 
@@ -722,7 +841,11 @@ S_LETTER:
         INC     HL              ; advance pointer
         CALL    STACK_NUM           ; routine STACK-NUM
 
-;; S-CONT-1
+;;; @brief ; S-CONT-1
+;;;
+;;; ; S-CONT-1
+;;; @jumps S_CONT_2
+;;; @jumpedfrom S_NUMERIC, S_LETTER
 S_CONT_1:
         JR      S_CONT_2           ; forward to S-CONT-2                 ===>
 
@@ -738,7 +861,12 @@ S_CONT_1:
 ; $40 = string result, numeric operand.             e.g. 'str$'
 ; $00 = string result, string operand.              e.g. 'val$'
 
-;; S-NEGATE
+;;; @brief ; S-NEGATE
+;;;
+;;; ; S-NEGATE
+;;; @jumps S_PUSH_PO, REPORT_C, S_NO_TO
+;;; @jumpedfrom S_ALPHNUM
+;;; @fallthrough S_NO_TO
 S_NEGATE:
         LD      BC,$09DB        ; prepare priority 09, operation code $C0 +
                                 ; 'negate' ($1B) - bits 6 and 7 set for numeric
@@ -786,7 +914,12 @@ S_NEGATE:
         RES     6,C             ; signal string operand for 'code', 'val' and
                                 ; 'len'.
 
-;; S-NO-TO-$
+;;; @brief ; S-NO-TO-$
+;;;
+;;; ; S-NO-TO-$
+;;; @jumps S_PUSH_PO
+;;; @jumpedfrom S_NEGATE
+;;; @fallthrough S_PUSH_PO
 S_NO_TO:
         CP      $EE             ; compare 'str$'
         JR      C,S_PUSH_PO         ; forward to S-PUSH-PO if lower as result
@@ -797,7 +930,11 @@ S_NO_TO:
 
 ; >> This is where they were all headed for.
 
-;; S-PUSH-PO
+;;; @brief ; S-PUSH-PO
+;;;
+;;; ; S-PUSH-PO
+;;; @jumps S_LOOP_1
+;;; @jumpedfrom S_INKEY, S_NEGATE, S_NO_TO
 S_PUSH_PO:
         PUSH    BC              ; push the priority and calculator operation
                                 ; code.
@@ -816,11 +953,19 @@ S_PUSH_PO:
 ;   Since a string slice can itself be sliced then loop repeatedly
 ;   e.g. (STR$ PI) (3 TO) (TO 2)    or "nonsense" (4 TO )
 
-;; S-CONT-2
+;;; @brief ; S-CONT-2
+;;;
+;;; ; S-CONT-2
+;;; @jumpedfrom S_STRING, S_BRACKET, S_INK_EN, S_CONT_1, SF_SYN_EN, SF_VALUE
+;;; @fallthrough S_CONT_3
 S_CONT_2:
         RST     18H             ; GET-CHAR
 
-;; S-CONT-3
+;;; @brief ; S-CONT-3
+;;;
+;;; ; S-CONT-3
+;;; @calls SLICING
+;;; @jumps S_OPERTR, S_LOOP
 S_CONT_3:
         CP      $28             ; is it '(' ?
         JR      NZ,S_OPERTR        ; forward, if not, to S-OPERTR
@@ -839,7 +984,13 @@ S_CONT_3:
 
 ;   the branch was here when possibility of a '(' has been excluded.
 
-;; S-OPERTR
+;;; @brief ; S-OPERTR
+;;;
+;;; ; S-OPERTR
+;;; @calls INDEXER
+;;; @jumps S_LOOP
+;;; @jumpedfrom S_CONT_3
+;;; @fallthrough S_LOOP
 S_OPERTR:
         LD      B,$00           ; prepare to add
         LD      C,A             ; possible operator to C
@@ -854,12 +1005,14 @@ S_OPERTR:
         ADD     HL,BC           ; index into table.
         LD      B,(HL)          ; priority to B.
 
-; ------------------
-; Scanning main loop
-; ------------------
-; the juggling act
-
-;; S-LOOP
+;;; @brief Scanning main loop
+;;;
+;;; the juggling act
+;;;
+;;; ; S-LOOP
+;;; @jumps S_TIGHTER, GET_CHAR, S_STK_LST
+;;; @jumpedfrom S_CONT_3, S_OPERTR, S_LOOPEND
+;;; @fallthrough S_STK_LST
 S_LOOP:
         POP     DE              ; fetch last priority and operation
         LD      A,D             ; priority to A
@@ -899,7 +1052,12 @@ S_LOOP:
         LD      E,$99           ; reset bit 6 and substitute $19 'usr-$'
                                 ; for string operand.
 
-;; S-STK-LST
+;;; @brief ; S-STK-LST
+;;;
+;;; ; S-STK-LST
+;;; @calls SYNTAX_Z
+;;; @jumps S_SYNTEST, S_RUNTEST
+;;; @jumpedfrom S_LOOP
 S_STK_LST:
         PUSH    DE              ; now stack this priority/operation
         CALL    SYNTAX_Z           ; routine SYNTAX-Z
@@ -929,14 +1087,23 @@ L2758:
 
 ; the branch was here if checking syntax only.
 
-;; S-SYNTEST
+;;; @brief ; S-SYNTEST
+;;;
+;;; ; S-SYNTEST
+;;; @jumpedfrom S_STK_LST
+;;; @fallthrough S_RPORT_C2
 S_SYNTEST:
         LD      A,E             ; fetch the operation code to accumulator
         XOR     (IY+$01)        ; compare with bits of FLAGS
         AND     $40             ; bit 6 will be zero now if operand
                                 ; matched expected result.
 
-;; S-RPORT-C2
+;;; @brief ; S-RPORT-C2
+;;;
+;;; ; S-RPORT-C2
+;;; @jumps REPORT_C
+;;; @jumpedfrom S_NOT_AND
+;;; @fallthrough S_RUNTEST
 S_RPORT_C2:
         JP      NZ,REPORT_C        ; to REPORT-C if mismatch
                                 ; 'Nonsense in BASIC'
@@ -944,7 +1111,12 @@ S_RPORT_C2:
 
 ; the branch is to here in runtime after a successful operation.
 
-;; S-RUNTEST
+;;; @brief ; S-RUNTEST
+;;;
+;;; ; S-RUNTEST
+;;; @jumps S_LOOPEND
+;;; @jumpedfrom S_STK_LST
+;;; @fallthrough S_LOOPEND
 S_RUNTEST:
         POP     DE              ; fetch the last operation from stack
         LD      HL,FLAGS        ; address FLAGS
@@ -954,7 +1126,11 @@ S_RUNTEST:
 
         RES     6,(HL)          ; reset bit 6 of FLAGS to show string result.
 
-;; S-LOOPEND
+;;; @brief ; S-LOOPEND
+;;;
+;;; ; S-LOOPEND
+;;; @jumps S_LOOP
+;;; @jumpedfrom S_RUNTEST
 S_LOOPEND:
         POP     BC              ; fetch the previous priority/operation
         JR      S_LOOP           ; back to S-LOOP to perform these
@@ -964,7 +1140,11 @@ S_LOOPEND:
 ; the branch was here when a stacked priority/operator had higher priority
 ; than the current one.
 
-;; S-TIGHTER
+;;; @brief ; S-TIGHTER
+;;;
+;;; ; S-TIGHTER
+;;; @jumps S_NEXT, S_NOT_AND
+;;; @jumpedfrom S_LOOP
 S_TIGHTER:
         PUSH    DE              ; save high priority op on stack again
         LD      A,C             ; fetch lower priority operation code
@@ -995,7 +1175,12 @@ S_TIGHTER:
 
 ; ---
 
-;; S-NOT-AND
+;;; @brief ; S-NOT-AND
+;;;
+;;; ; S-NOT-AND
+;;; @jumps S_RPORT_C2, S_NEXT
+;;; @jumpedfrom S_TIGHTER
+;;; @fallthrough S_NEXT
 S_NOT_AND:
         JR      C,S_RPORT_C2         ; back to S-RPORT-C2 if less
                                 ; 'Nonsense in BASIC'.
@@ -1007,24 +1192,27 @@ S_NOT_AND:
 
         SET     7,C             ; set numeric (Boolean) result for all others
 
-;; S-NEXT
+;;; @brief ; S-NEXT
+;;;
+;;; ; S-NEXT
+;;; @jumps S_LOOP_1
+;;; @jumpedfrom S_TIGHTER, S_NOT_AND
 S_NEXT:
         PUSH    BC              ; now save this priority/operation on stack
 
         RST     20H             ; NEXT-CHAR
         JP      S_LOOP_1           ; jump back to S-LOOP-1
 
-; ------------------
-; Table of operators
-; ------------------
-; This table is used to look up the calculator literals associated with
-; the operator character. The thirteen calculator operations $03 - $0F
-; have bits 6 and 7 set to signify a numeric result.
-; Some of these codes and bits may be altered later if the context suggests
-; a string comparison or operation.
-; that is '+', '=', '>', '<', '<=', '>=' or '<>'.
-
-;; tbl-of-ops
+;;; @brief Table of operators
+;;;
+;;; This table is used to look up the calculator literals associated with
+;;; the operator character. The thirteen calculator operations $03 - $0F
+;;; have bits 6 and 7 set to signify a numeric result.
+;;; Some of these codes and bits may be altered later if the context suggests
+;;; a string comparison or operation.
+;;; that is '+', '=', '>', '<', '<=', '>=' or '<>'.
+;;;
+;;; ; tbl-of-ops
 TBL_OF_OPS:
         DB          '+', $CF        ;        $C0 + 'addition'
         DB          '-', $C3        ;        $C0 + 'subtract'
@@ -1044,13 +1232,12 @@ TBL_OF_OPS:
         DB          $00             ; zero end-marker.
 
 
-; -------------------
-; Table of priorities
-; -------------------
-; This table is indexed with the operation code obtained from the above
-; table $C3 - $CF to obtain the priority for the respective operation.
-
-;; tbl-priors
+;;; @brief Table of priorities
+;;;
+;;; This table is indexed with the operation code obtained from the above
+;;; table $C3 - $CF to obtain the priority for the respective operation.
+;;;
+;;; ; tbl-priors
 TBL_PRIORS:
         DB          $06             ; '-'   opcode $C3
         DB          $08             ; '*'   opcode $C4
@@ -1066,39 +1253,42 @@ TBL_PRIORS:
         DB          $05             ; '='   opcode $CE
         DB          $06             ; '+'   opcode $CF
 
-; ----------------------
-; Scanning function (FN)
-; ----------------------
-; This routine deals with user-defined functions.
-; The definition can be anywhere in the program area but these are best
-; placed near the start of the program as we shall see.
-; The evaluation process is quite complex as the Spectrum has to parse two
-; statements at the same time. Syntax of both has been checked previously
-; and hidden locations have been created immediately after each argument
-; of the DEF FN statement. Each of the arguments of the FN function is
-; evaluated by SCANNING and placed in the hidden locations. Then the
-; expression to the right of the DEF FN '=' is evaluated by SCANNING and for
-; any variables encountered, a search is made in the DEF FN variable list
-; in the program area before searching in the normal variables area.
-;
-; Recursion is not allowed: i.e. the definition of a function should not use
-; the same function, either directly or indirectly ( through another function).
-; You'll normally get error 4, ('Out of memory'), although sometimes the system
-; will crash. - Vickers, Pitman 1984.
-;
-; As the definition is just an expression, there would seem to be no means
-; of breaking out of such recursion.
-; However, by the clever use of string expressions and VAL, such recursion is
-; possible.
-; e.g. DEF FN a(n) = VAL "n+FN a(n-1)+0" ((n<1) * 10 + 1 TO )
-; will evaluate the full 11-character expression for all values where n is
-; greater than zero but just the 11th character, "0", when n drops to zero
-; thereby ending the recursion producing the correct result.
-; Recursive string functions are possible using VAL$ instead of VAL and the
-; null string as the final addend.
-; - from a turn of the century newsgroup discussion initiated by Mike Wynne.
-
-;; S-FN-SBRN
+;;; @brief Scanning function (FN)
+;;;
+;;; This routine deals with user-defined functions.
+;;; The definition can be anywhere in the program area but these are best
+;;; placed near the start of the program as we shall see.
+;;; The evaluation process is quite complex as the Spectrum has to parse two
+;;; statements at the same time. Syntax of both has been checked previously
+;;; and hidden locations have been created immediately after each argument
+;;; of the DEF FN statement. Each of the arguments of the FN function is
+;;; evaluated by SCANNING and placed in the hidden locations. Then the
+;;; expression to the right of the DEF FN '=' is evaluated by SCANNING and for
+;;; any variables encountered, a search is made in the DEF FN variable list
+;;; in the program area before searching in the normal variables area.
+;;;
+;;; Recursion is not allowed: i.e. the definition of a function should not use
+;;; the same function, either directly or indirectly ( through another function).
+;;; You'll normally get error 4, ('Out of memory'), although sometimes the system
+;;; will crash. - Vickers, Pitman 1984.
+;;;
+;;; As the definition is just an expression, there would seem to be no means
+;;; of breaking out of such recursion.
+;;; However, by the clever use of string expressions and VAL, such recursion is
+;;; possible.
+;;; e.g. DEF FN a(n) = VAL "n+FN a(n-1)+0" ((n<1) * 10 + 1 TO )
+;;; will evaluate the full 11-character expression for all values where n is
+;;; greater than zero but just the 11th character, "0", when n drops to zero
+;;; thereby ending the recursion producing the correct result.
+;;; Recursive string functions are possible using VAL$ instead of VAL and the
+;;; null string as the final addend.
+;;; - from a turn of the century newsgroup discussion initiated by Mike Wynne.
+;;;
+;;; ; S-FN-SBRN
+;;; @calls SYNTAX_Z, ALPHA
+;;; @jumps SF_RUN, REPORT_C, SF_BRKT_1
+;;; @jumpedfrom S_FN
+;;; @fallthrough SF_BRKT_1
 S_FN_SBRN:
         CALL    SYNTAX_Z           ; routine SYNTAX-Z
         JR      NZ,SF_RUN        ; forward to SF-RUN in runtime
@@ -1118,7 +1308,12 @@ S_FN_SBRN:
 
         RST     20H             ; NEXT-CHAR
 
-;; SF-BRKT-1
+;;; @brief ; SF-BRKT-1
+;;;
+;;; ; SF-BRKT-1
+;;; @jumps SF_RPRT_C, SF_FLAG_6
+;;; @jumpedfrom S_FN_SBRN
+;;; @fallthrough SF_ARGMTS
 SF_BRKT_1:
         CP      $28             ; is '(' ?
         JR      NZ,SF_RPRT_C        ; forward to SF-RPRT-C if not
@@ -1129,7 +1324,11 @@ SF_BRKT_1:
         CP      $29             ; is it ')' ?
         JR      Z,SF_FLAG_6         ; forward to SF-FLAG-6 if no arguments.
 
-;; SF-ARGMTS
+;;; @brief ; SF-ARGMTS
+;;;
+;;; ; SF-ARGMTS
+;;; @calls SCANNING
+;;; @jumps SF_BRKT_2
 SF_ARGMTS:
         CALL    SCANNING           ; routine SCANNING checks each argument
                                 ; which may be an expression.
@@ -1144,18 +1343,32 @@ SF_ARGMTS:
 
 ; ---
 
-;; SF-BRKT-2
+;;; @brief ; SF-BRKT-2
+;;;
+;;; ; SF-BRKT-2
+;;; @jumpedfrom SF_ARGMTS
+;;; @fallthrough SF_RPRT_C
 SF_BRKT_2:
         CP      $29             ; is character the closing ')' ?
 
-;; SF-RPRT-C
+;;; @brief ; SF-RPRT-C
+;;;
+;;; ; SF-RPRT-C
+;;; @jumps REPORT_C
+;;; @jumpedfrom SF_BRKT_1
+;;; @fallthrough SF_FLAG_6
 SF_RPRT_C:
         JP      NZ,REPORT_C        ; jump to REPORT-C
                                 ; 'Nonsense in BASIC'
 
 ; at this point any optional arguments have had their syntax checked.
 
-;; SF-FLAG-6
+;;; @brief ; SF-FLAG-6
+;;;
+;;; ; SF-FLAG-6
+;;; @jumps SF_SYN_EN
+;;; @jumpedfrom SF_BRKT_1
+;;; @fallthrough SF_SYN_EN
 SF_FLAG_6:
         RST     20H             ; NEXT-CHAR
         LD      HL,FLAGS        ; address system variable FLAGS
@@ -1165,7 +1378,11 @@ SF_FLAG_6:
 
         SET     6,(HL)          ; signal numeric result
 
-;; SF-SYN-EN
+;;; @brief ; SF-SYN-EN
+;;;
+;;; ; SF-SYN-EN
+;;; @jumps S_CONT_2
+;;; @jumpedfrom SF_FLAG_6
 SF_SYN_EN:
         JP      S_CONT_2           ; jump back to S-CONT-2 to continue scanning.
 
@@ -1173,7 +1390,12 @@ SF_SYN_EN:
 
 ; the branch was here in runtime.
 
-;; SF-RUN
+;;; @brief ; SF-RUN
+;;;
+;;; ; SF-RUN
+;;; @jumps SF_ARGMT1
+;;; @jumpedfrom S_FN_SBRN
+;;; @fallthrough SF_ARGMT1
 SF_RUN:
         RST     20H             ; NEXT-CHAR fetches name
         AND     $DF             ; AND 11101111 - reset bit 5 - upper-case.
@@ -1186,7 +1408,11 @@ SF_RUN:
 
         RST     20H             ; NEXT-CHAR advances to bracket
 
-;; SF-ARGMT1
+;;; @brief ; SF-ARGMT1
+;;;
+;;; ; SF-ARGMT1
+;;; @jumpedfrom SF_RUN
+;;; @fallthrough SF_FND_DF
 SF_ARGMT1:
         RST     20H             ; NEXT-CHAR advances to start of argument
         PUSH    HL              ; save address
@@ -1194,7 +1420,13 @@ SF_ARGMT1:
         DEC     HL              ; the search starting point is the previous
                                 ; location.
 
-;; SF-FND-DF
+;;; @brief ; SF-FND-DF
+;;;
+;;; ; SF-FND-DF
+;;; @calls LOOK_PROG
+;;; @jumps SF_CP_DEF
+;;; @jumpedfrom SF_NOT_FD
+;;; @fallthrough REPORT_P
 SF_FND_DF:
         LD      DE,$00CE        ; search is for token 'DEF FN' in E,
                                 ; statement count in D.
@@ -1204,12 +1436,20 @@ SF_FND_DF:
         JR      NC,SF_CP_DEF        ; forward to SF-CP-DEF if a match was found.
 
 
-;; REPORT-P
+;;; @brief ; REPORT-P
+;;;
+;;; ; REPORT-P
 REPORT_P:
         RST     08H             ; ERROR-1
         DB          $18             ; Error Report: FN without DEF
 
-;; SF-CP-DEF
+;;; @brief ; SF-CP-DEF
+;;;
+;;; ; SF-CP-DEF
+;;; @calls FN_SKPOVR
+;;; @jumps SF_NOT_FD, SF_VALUES
+;;; @jumpedfrom SF_FND_DF
+;;; @fallthrough SF_NOT_FD
 SF_CP_DEF:
         PUSH    HL              ; save address of DEF FN
         CALL    FN_SKPOVR           ; routine FN-SKPOVR skips over white-space etc.
@@ -1228,7 +1468,12 @@ SF_CP_DEF:
 
 ; the letters matched but one was string and the other numeric.
 
-;; SF-NOT-FD
+;;; @brief ; SF-NOT-FD
+;;;
+;;; ; SF-NOT-FD
+;;; @calls EACH_STMT
+;;; @jumps SF_FND_DF
+;;; @jumpedfrom SF_CP_DEF
 SF_NOT_FD:
         POP     HL              ; restore search point.
         DEC     HL              ; make location before
@@ -1245,7 +1490,13 @@ SF_NOT_FD:
 ; Success!
 ; the branch was here with matching letter and numeric/string type.
 
-;; SF-VALUES
+;;; @brief ; SF-VALUES
+;;;
+;;; ; SF-VALUES
+;;; @calls FN_SKPOVR
+;;; @jumps SF_R_BR_2
+;;; @jumpedfrom SF_CP_DEF
+;;; @fallthrough SF_ARG_LP
 SF_VALUES:
         AND     A               ; test A ( will be zero if string '$' - '$' )
 
@@ -1260,7 +1511,13 @@ SF_VALUES:
         CP      $29             ; is character a ')' ?
         JR      Z,SF_R_BR_2         ; forward to SF-R-BR-2 if no arguments.
 
-;; SF-ARG-LP
+;;; @brief ; SF-ARG-LP
+;;;
+;;; ; SF-ARG-LP
+;;; @calls FN_SKPOVR
+;;; @jumps SF_ARG_VL
+;;; @jumpedfrom SF_ARG_VL
+;;; @fallthrough SF_ARG_VL
 SF_ARG_LP:
         INC     HL              ; point to next character.
         LD      A,(HL)          ; fetch it.
@@ -1274,7 +1531,12 @@ SF_ARG_LP:
                                 ; the 'hidden' marker.
         LD      D,$00           ; signal string.
 
-;; SF-ARG-VL
+;;; @brief ; SF-ARG-VL
+;;;
+;;; ; SF-ARG-VL
+;;; @calls SCANNING, FN_SKPOVR
+;;; @jumps REPORT_Q, SF_R_BR_2, SF_ARG_LP
+;;; @jumpedfrom SF_ARG_LP
 SF_ARG_VL:
         INC     HL              ; now address first of 5-byte location.
         PUSH    HL              ; save address in DEF FN statement
@@ -1330,7 +1592,12 @@ SF_ARG_VL:
 
 ; the branch was here when all arguments passed.
 
-;; SF-R-BR-2
+;;; @brief ; SF-R-BR-2
+;;;
+;;; ; SF-R-BR-2
+;;; @jumps SF_VALUE
+;;; @jumpedfrom SF_VALUES, SF_ARG_VL
+;;; @fallthrough REPORT_Q
 SF_R_BR_2:
         PUSH    HL              ; save location of ')' in DEF FN
 
@@ -1339,12 +1606,20 @@ SF_R_BR_2:
         JR      Z,SF_VALUE         ; forward to SF-VALUE if so.
 
 
-;; REPORT-Q
+;;; @brief ; REPORT-Q
+;;;
+;;; ; REPORT-Q
+;;; @jumpedfrom SF_ARG_VL
 REPORT_Q:
         RST     08H             ; ERROR-1
         DB          $19             ; Error Report: Parameter error
 
-;; SF-VALUE
+;;; @brief ; SF-VALUE
+;;;
+;;; ; SF-VALUE
+;;; @calls SCANNING
+;;; @jumps S_CONT_2
+;;; @jumpedfrom SF_R_BR_2
 SF_VALUE:
         POP     DE              ; location of ')' in DEF FN to DE.
         EX      DE,HL           ; now to HL, FN ')' pointer to DE.
@@ -1380,19 +1655,19 @@ SF_VALUE:
         JP      S_CONT_2           ; to S-CONT-2 - to continue current
                                 ; invocation of scanning
 
-; --------------------
-; Used to parse DEF FN
-; --------------------
-; e.g. DEF FN     s $ ( x )     =  b     $ (  TO  x  ) : REM exaggerated
-;
-; This routine is used 10 times to advance along a DEF FN statement
-; skipping spaces and colour control codes. It is similar to NEXT-CHAR
-; which is, at the same time, used to skip along the corresponding FN function
-; except the latter has to deal with AT and TAB characters in string
-; expressions. These cannot occur in a program area so this routine is
-; simpler as both colour controls and their parameters are less than space.
-
-;; FN-SKPOVR
+;;; @brief Used to parse DEF FN
+;;;
+;;; e.g. DEF FN     s $ ( x )     =  b     $ (  TO  x  ) : REM exaggerated
+;;;
+;;; This routine is used 10 times to advance along a DEF FN statement
+;;; skipping spaces and colour control codes. It is similar to NEXT-CHAR
+;;; which is, at the same time, used to skip along the corresponding FN function
+;;; except the latter has to deal with AT and TAB characters in string
+;;; expressions. These cannot occur in a program area so this routine is
+;;; simpler as both colour controls and their parameters are less than space.
+;;;
+;;; ; FN-SKPOVR
+;;; @calledby SF_CP_DEF, SF_VALUES, SF_ARG_LP, SF_ARG_VL, SFA_LOOP, SFA_CP_VR
 FN_SKPOVR:
         INC     HL              ; increase pointer
         LD      A,(HL)          ; fetch addressed character
@@ -1401,13 +1676,13 @@ FN_SKPOVR:
 
         RET                     ; return pointing to a valid character.
 
-; ---------
-; LOOK-VARS
-; ---------
-;
-;
-
-;; LOOK-VARS
+;;; @brief LOOK-VARS
+;;;
+;;; ; LOOK-VARS
+;;; @calls ALPHA, ALPHANUM
+;;; @jumps REPORT_C, V_RUN_SYN, V_STR_VAR, V_TEST_FN
+;;; @calledby REPORT_FA, CLASS_01, CLASS_04, S_LETTER, DIM
+;;; @fallthrough V_CHAR
 LOOK_VARS:
         SET     6,(IY+$01)      ; update FLAGS - presume numeric result
 
@@ -1437,7 +1712,11 @@ LOOK_VARS:
 ; It is more than one character but re-test current character so that 6 reset
 ; This loop renders the similar loop at V-PASS redundant.
 
-;; V-CHAR
+;;; @brief ; V-CHAR
+;;;
+;;; ; V-CHAR
+;;; @calls ALPHANUM
+;;; @jumps V_RUN_SYN
 V_CHAR:
         CALL    ALPHANUM           ; routine ALPHANUM
         JR      NC,V_RUN_SYN        ; to V-RUN/SYN when no more
@@ -1450,12 +1729,22 @@ V_CHAR:
 ; ---
 
 
-;; V-STR-VAR
+;;; @brief ; V-STR-VAR
+;;;
+;;; ; V-STR-VAR
+;;; @jumpedfrom LOOK_VARS
+;;; @fallthrough V_TEST_FN
 V_STR_VAR:
         RST     20H             ; NEXT-CHAR advances past '$'
         RES     6,(IY+$01)      ; update FLAGS - signal string result.
 
-;; V-TEST-FN
+;;; @brief ; V-TEST-FN
+;;;
+;;; ; V-TEST-FN
+;;; @calls SYNTAX_Z
+;;; @jumps V_RUN_SYN, STK_F_ARG
+;;; @jumpedfrom LOOK_VARS
+;;; @fallthrough V_RUN_SYN
 V_TEST_FN:
         LD      A,($5C0C)       ; load A with DEFADD_hi
         AND     A               ; and test for zero.
@@ -1468,7 +1757,12 @@ V_TEST_FN:
         JP      NZ,STK_F_ARG        ; JUMP to STK-F-ARG in runtime and then
                                 ; back to this point if no variable found.
 
-;; V-RUN/SYN
+;;; @brief ; V-RUN/SYN
+;;;
+;;; ; V-RUN/SYN
+;;; @calls SYNTAX_Z
+;;; @jumps V_RUN, V_SYNTAX
+;;; @jumpedfrom LOOK_VARS, V_CHAR, V_TEST_FN, STK_F_ARG, SFA_CP_VR
 V_RUN_SYN:
         LD      B,C             ; save flags in B
         CALL    SYNTAX_Z           ; routine SYNTAX-Z
@@ -1486,11 +1780,20 @@ V_RUN_SYN:
 
 ; but in runtime search for the variable.
 
-;; V-RUN
+;;; @brief ; V-RUN
+;;;
+;;; ; V-RUN
+;;; @jumpedfrom V_RUN_SYN
+;;; @fallthrough V_EACH
 V_RUN:
         LD      HL,(VARS)      ; set HL to start of variables from VARS
 
-;; V-EACH
+;;; @brief ; V-EACH
+;;;
+;;; ; V-EACH
+;;; @jumps V_80_BYTE, V_NEXT, V_FOUND_2
+;;; @jumpedfrom V_NEXT
+;;; @fallthrough V_MATCHES
 V_EACH:
         LD      A,(HL)          ; get first character
         AND     $7F             ; and with 01111111
@@ -1517,11 +1820,20 @@ V_EACH:
         PUSH    DE              ; save it again
         PUSH    HL              ; save variable first character pointer
 
-;; V-MATCHES
+;;; @brief ; V-MATCHES
+;;;
+;;; ; V-MATCHES
+;;; @jumpedfrom V_SPACES
+;;; @fallthrough V_SPACES
 V_MATCHES:
         INC     HL              ; address next character in vars area
 
-;; V-SPACES
+;;; @brief ; V-SPACES
+;;;
+;;; ; V-SPACES
+;;; @calls ALPHANUM
+;;; @jumps V_MATCHES, V_GET_PTR, V_FOUND_1
+;;; @fallthrough V_GET_PTR
 V_SPACES:
         LD      A,(DE)          ; pick up letter from prog area
         INC     DE              ; and advance address
@@ -1544,11 +1856,20 @@ V_SPACES:
         CALL    ALPHANUM           ; routine ALPHANUM sets carry if not alphanum
         JR      NC,V_FOUND_1        ; forward to V-FOUND-1 with a full match.
 
-;; V-GET-PTR
+;;; @brief ; V-GET-PTR
+;;;
+;;; ; V-GET-PTR
+;;; @jumpedfrom V_SPACES
+;;; @fallthrough V_NEXT
 V_GET_PTR:
         POP     HL              ; pop saved pointer to char 1
 
-;; V-NEXT
+;;; @brief ; V-NEXT
+;;;
+;;; ; V-NEXT
+;;; @calls NEXT_ONE
+;;; @jumps V_EACH
+;;; @jumpedfrom V_EACH
 V_NEXT:
         PUSH    BC              ; save flags
         CALL    NEXT_ONE           ; routine NEXT-ONE gets next variable in DE
@@ -1559,13 +1880,21 @@ V_NEXT:
 
 ; ---
 
-;; V-80-BYTE
+;;; @brief ; V-80-BYTE
+;;;
+;;; ; V-80-BYTE
+;;; @jumpedfrom V_EACH
+;;; @fallthrough V_SYNTAX
 V_80_BYTE:
         SET     7,B             ; will signal not found
 
 ; the branch was here when checking syntax
 
-;; V-SYNTAX
+;;; @brief ; V-SYNTAX
+;;;
+;;; ; V-SYNTAX
+;;; @jumps V_PASS, V_END
+;;; @jumpedfrom V_RUN_SYN
 V_SYNTAX:
         POP     DE              ; discard the pointer to 2nd. character  v2
                                 ; in BASIC line/workspace.
@@ -1583,13 +1912,21 @@ V_SYNTAX:
 ; the jump was here when a long name matched and HL pointing to last character
 ; in variables area.
 
-;; V-FOUND-1
+;;; @brief ; V-FOUND-1
+;;;
+;;; ; V-FOUND-1
+;;; @jumpedfrom V_SPACES
+;;; @fallthrough V_FOUND_2
 V_FOUND_1:
         POP     DE              ; discard pointer to first var letter
 
 ; the jump was here with all other matches HL points to first var char.
 
-;; V-FOUND-2
+;;; @brief ; V-FOUND-2
+;;;
+;;; ; V-FOUND-2
+;;; @jumpedfrom V_EACH
+;;; @fallthrough V_PASS
 V_FOUND_2:
         POP     DE              ; discard pointer to 2nd prog char       v2
         POP     DE              ; drop pointer to 1st prog char          v1
@@ -1597,7 +1934,12 @@ V_FOUND_2:
 
         RST     18H             ; GET-CHAR
 
-;; V-PASS
+;;; @brief ; V-PASS
+;;;
+;;; ; V-PASS
+;;; @calls ALPHANUM
+;;; @jumps V_END
+;;; @jumpedfrom V_SYNTAX
 V_PASS:
         CALL    ALPHANUM           ; routine ALPHANUM
         JR      NC,V_END        ; forward to V-END if not
@@ -1609,7 +1951,10 @@ V_PASS:
 
 ; ---
 
-;; V-END
+;;; @brief ; V-END
+;;;
+;;; ; V-END
+;;; @jumpedfrom V_SYNTAX, V_PASS
 V_END:
         POP     HL              ; pop the pointer to first character in
                                 ; BASIC line/workspace.
@@ -1618,17 +1963,19 @@ V_END:
         BIT     6,B             ; test the array indicator bit.
         RET                     ; return
 
-; -----------------------
-; Stack function argument
-; -----------------------
-; This branch is taken from LOOK-VARS when a defined function is currently
-; being evaluated.
-; Scanning is evaluating the expression after the '=' and the variable
-; found could be in the argument list to the left of the '=' or in the
-; normal place after the program. Preference will be given to the former.
-; The variable name to be matched is in C.
-
-;; STK-F-ARG
+;;; @brief Stack function argument
+;;;
+;;; This branch is taken from LOOK-VARS when a defined function is currently
+;;; being evaluated.
+;;; Scanning is evaluating the expression after the '=' and the variable
+;;; found could be in the argument list to the left of the '=' or in the
+;;; normal place after the program. Preference will be given to the former.
+;;; The variable name to be matched is in C.
+;;;
+;;; ; STK-F-ARG
+;;; @jumps V_RUN_SYN
+;;; @jumpedfrom V_TEST_FN
+;;; @fallthrough SFA_LOOP
 STK_F_ARG:
         LD      HL,(DEFADD)      ; set HL to DEFADD
         LD      A,(HL)          ; load the first character
@@ -1638,7 +1985,13 @@ STK_F_ARG:
 
 ; but proceed to search argument list of defined function first if not empty.
 
-;; SFA-LOOP
+;;; @brief ; SFA-LOOP
+;;;
+;;; ; SFA-LOOP
+;;; @calls FN_SKPOVR
+;;; @jumps SFA_CP_VR
+;;; @jumpedfrom SFA_CP_VR
+;;; @fallthrough SFA_CP_VR
 SFA_LOOP:
         LD      A,(HL)          ; fetch character again.
         OR      $60             ; or with 01100000 presume a simple variable.
@@ -1655,7 +2008,12 @@ SFA_LOOP:
         INC     HL              ; now address the hidden marker.
         RES     5,B             ; signal a string variable.
 
-;; SFA-CP-VR
+;;; @brief ; SFA-CP-VR
+;;;
+;;; ; SFA-CP-VR
+;;; @calls FN_SKPOVR
+;;; @jumps SFA_MATCH, V_RUN_SYN, SFA_LOOP
+;;; @jumpedfrom SFA_LOOP
 SFA_CP_VR:
         LD      A,B             ; transfer found variable letter to A.
         CP      C               ; compare with expected.
@@ -1680,7 +2038,13 @@ SFA_CP_VR:
 
 ; ---
 
-;; SFA-MATCH
+;;; @brief ; SFA-MATCH
+;;;
+;;; ; SFA-MATCH
+;;; @calls MOVE_FP
+;;; @jumps SFA_END
+;;; @jumpedfrom SFA_CP_VR
+;;; @fallthrough SFA_END
 SFA_MATCH:
         BIT     5,C             ; test if numeric
         JR      NZ,SFA_END        ; to SFA-END if so as will be stacked
@@ -1692,7 +2056,10 @@ SFA_MATCH:
         EX      DE,HL           ; new free location to HL.
         LD      (STKEND),HL      ; use it to set STKEND system variable.
 
-;; SFA-END
+;;; @brief ; SFA-END
+;;;
+;;; ; SFA-END
+;;; @jumpedfrom SFA_MATCH
 SFA_END:
         POP     DE              ; discard
         POP     DE              ; pointers.
@@ -1700,39 +2067,41 @@ SFA_END:
         INC     A               ; and zero flag.
         RET                     ; return.
 
-; ------------------------
-; Stack variable component
-; ------------------------
-; This is called to evaluate a complex structure that has been found, in
-; runtime, by LOOK-VARS in the variables area.
-; In this case HL points to the initial letter, bits 7-5
-; of which indicate the type of variable.
-; 010 - simple string, 110 - string array, 100 - array of numbers.
-;
-; It is called from CLASS-01 when assigning to a string or array including
-; a slice.
-; It is called from SCANNING to isolate the required part of the structure.
-;
-; An important part of the runtime process is to check that the number of
-; dimensions of the variable match the number of subscripts supplied in the
-; BASIC line.
-;
-; If checking syntax,
-; the B register, which counts dimensions is set to zero (256) to allow
-; the loop to continue till all subscripts are checked. While doing this it
-; is reading dimension sizes from some arbitrary area of memory. Although
-; these are meaningless it is of no concern as the limit is never checked by
-; int-exp during syntax checking.
-;
-; The routine is also called from the syntax path of DIM command to check the
-; syntax of both string and numeric arrays definitions except that bit 6 of C
-; is reset so both are checked as numeric arrays. This ruse avoids a terminal
-; slice being accepted as part of the DIM command.
-; All that is being checked is that there are a valid set of comma-separated
-; expressions before a terminal ')', although, as above, it will still go
-; through the motions of checking dummy dimension sizes.
-
-;; STK-VAR
+;;; @brief Stack variable component
+;;;
+;;; This is called to evaluate a complex structure that has been found, in
+;;; runtime, by LOOK-VARS in the variables area.
+;;; In this case HL points to the initial letter, bits 7-5
+;;; of which indicate the type of variable.
+;;; 010 - simple string, 110 - string array, 100 - array of numbers.
+;;;
+;;; It is called from CLASS-01 when assigning to a string or array including
+;;; a slice.
+;;; It is called from SCANNING to isolate the required part of the structure.
+;;;
+;;; An important part of the runtime process is to check that the number of
+;;; dimensions of the variable match the number of subscripts supplied in the
+;;; BASIC line.
+;;;
+;;; If checking syntax,
+;;; the B register, which counts dimensions is set to zero (256) to allow
+;;; the loop to continue till all subscripts are checked. While doing this it
+;;; is reading dimension sizes from some arbitrary area of memory. Although
+;;; these are meaningless it is of no concern as the limit is never checked by
+;;; int-exp during syntax checking.
+;;;
+;;; The routine is also called from the syntax path of DIM command to check the
+;;; syntax of both string and numeric arrays definitions except that bit 6 of C
+;;; is reset so both are checked as numeric arrays. This ruse avoids a terminal
+;;; slice being accepted as part of the DIM command.
+;;; All that is being checked is that there are a valid set of comma-separated
+;;; expressions before a terminal ')', although, as above, it will still go
+;;; through the motions of checking dummy dimension sizes.
+;;;
+;;; ; STK-VAR
+;;; @jumps SV_COUNT, SV_ARRAYS
+;;; @calledby VAR_A_2, S_LETTER, D_RPORT_C
+;;; @fallthrough SV_SIMPLE
 STK_VAR:
         XOR     A               ; clear A
         LD      B,A             ; and B, the syntax dimension counter (256)
@@ -1746,7 +2115,12 @@ STK_VAR:
 
         INC     A               ; set A to 1, simple string.
 
-;; SV-SIMPLE$
+;;; @brief ; SV-SIMPLE$
+;;;
+;;; ; SV-SIMPLE$
+;;; @calls STK_STO
+;;; @jumps SV_SLICE_2
+;;; @jumpedfrom SV_ARRAYS
 SV_SIMPLE:
         INC     HL              ; address length low
         LD      C,(HL)          ; place in C
@@ -1767,7 +2141,12 @@ SV_SIMPLE:
 
 ; the branch was here with string and numeric arrays in runtime.
 
-;; SV-ARRAYS
+;;; @brief ; SV-ARRAYS
+;;;
+;;; ; SV-ARRAYS
+;;; @jumps SV_PTR, SV_SIMPLE, REPORT_3
+;;; @jumpedfrom STK_VAR
+;;; @fallthrough SV_PTR
 SV_ARRAYS:
         INC     HL              ; step past
         INC     HL              ; the total length
@@ -1797,7 +2176,11 @@ SV_ARRAYS:
 
 ; runtime numeric arrays path rejoins here.
 
-;; SV-PTR
+;;; @brief ; SV-PTR
+;;;
+;;; ; SV-PTR
+;;; @jumps SV_COUNT
+;;; @jumpedfrom SV_ARRAYS
 SV_PTR:
         EX      DE,HL           ; save dimension pointer in DE
         JR      SV_COUNT           ; forward to SV-COUNT with true no of dims
@@ -1807,7 +2190,10 @@ SV_PTR:
 ; ----------------------------------------------------------
 ; the dimension counting loop which is entered at mid-point.
 
-;; SV-COMMA
+;;; @brief ; SV-COMMA
+;;;
+;;; ; SV-COMMA
+;;; @jumps SV_LOOP, REPORT_3, SV_CLOSE, SV_RPT_C
 SV_COMMA:
         PUSH    HL              ; save counter
 
@@ -1841,7 +2227,12 @@ SV_COMMA:
 
 ; the branch was here with an array of strings.
 
-;; SV-CLOSE
+;;; @brief ; SV-CLOSE
+;;;
+;;; ; SV-CLOSE
+;;; @jumps SV_DIM, SV_RPT_C
+;;; @jumpedfrom SV_COMMA
+;;; @fallthrough SV_CH_ADD
 SV_CLOSE:
         CP      $29             ; as above ')' could follow the expression
         JR      Z,SV_DIM         ; forward to SV-DIM if so
@@ -1853,7 +2244,11 @@ SV_CLOSE:
 ; now backtrack CH_ADD to set up for slicing routine.
 ; Note. in a BASIC line we can safely backtrack to a colour parameter.
 
-;; SV-CH-ADD
+;;; @brief ; SV-CH-ADD
+;;;
+;;; ; SV-CH-ADD
+;;; @jumps SV_SLICE
+;;; @jumpedfrom SV_LOOP
 SV_CH_ADD:
         RST     18H             ; GET-CHAR
         DEC     HL              ; backtrack HL
@@ -1864,11 +2259,20 @@ SV_CH_ADD:
 ; ----------------------------------------
 ; -> the mid-point entry point of the loop
 
-;; SV-COUNT
+;;; @brief ; SV-COUNT
+;;;
+;;; ; SV-COUNT
+;;; @jumpedfrom STK_VAR, SV_PTR
+;;; @fallthrough SV_LOOP
 SV_COUNT:
         LD      HL,$0000        ; initialize data pointer to zero.
 
-;; SV-LOOP
+;;; @brief ; SV-LOOP
+;;;
+;;; ; SV-LOOP
+;;; @jumps SV_MULT, SV_DIM, SV_CH_ADD
+;;; @jumpedfrom SV_COMMA
+;;; @fallthrough SV_MULT
 SV_LOOP:
         PUSH    HL              ; save the data pointer.
 
@@ -1897,7 +2301,13 @@ SV_LOOP:
 ; registers HL and DE only point to somewhere meaningful in runtime so
 ; comments apply to that situation.
 
-;; SV-MULT
+;;; @brief ; SV-MULT
+;;;
+;;; ; SV-MULT
+;;; @calls DE_DE_1, INT_EXP1, GET_HL_DE
+;;; @jumps REPORT_3
+;;; @jumpedfrom SV_LOOP
+;;; @fallthrough SV_RPT_C
 SV_MULT:
         PUSH    BC              ; save dimension number.
         PUSH    HL              ; push data pointer/rubbish.
@@ -1926,7 +2336,12 @@ SV_MULT:
         BIT     7,C             ; are we checking syntax ?
                                 ; then we've got a joker here.
 
-;; SV-RPT-C
+;;; @brief ; SV-RPT-C
+;;;
+;;; ; SV-RPT-C
+;;; @jumps SL_RPT_C, SV_ELEM, SV_NUMBER
+;;; @jumpedfrom SV_COMMA, SV_CLOSE
+;;; @fallthrough REPORT_3
 SV_RPT_C:
         JR      NZ,SL_RPT_C        ; forward to SL-RPT-C if so
                                 ; 'Nonsense in BASIC'
@@ -1950,14 +2365,21 @@ SV_RPT_C:
 
 ; else more subscripts in BASIC line than the variable definition.
 
-;; REPORT-3
+;;; @brief ; REPORT-3
+;;;
+;;; ; REPORT-3
+;;; @jumpedfrom SV_ARRAYS, SV_COMMA, SV_MULT, SV_ELEM, SL_DEFINE, D_NO_LOOP
 REPORT_3:
         RST     08H             ; ERROR-1
         DB          $02             ; Error Report: Subscript wrong
 
 ; continue if subscripts matched the numeric array.
 
-;; SV-NUMBER
+;;; @brief ; SV-NUMBER
+;;;
+;;; ; SV-NUMBER
+;;; @calls GET_HL_DE
+;;; @jumpedfrom SV_RPT_C
 SV_NUMBER:
         RST     20H             ; NEXT-CHAR moves CH_ADD to next statement
                                 ; - finished parsing.
@@ -1975,7 +2397,13 @@ SV_NUMBER:
 ; the branch was here for string subscripts when the number of subscripts
 ; in the BASIC line was one less than in variable definition.
 
-;; SV-ELEM$
+;;; @brief ; SV-ELEM$
+;;;
+;;; ; SV-ELEM$
+;;; @calls DE_DE_1, GET_HL_DE, STK_ST_0
+;;; @jumps SV_DIM, REPORT_3
+;;; @jumpedfrom SV_RPT_C
+;;; @fallthrough SV_SLICE
 SV_ELEM:
         CALL    DE_DE_1           ; routine DE,(DE+1) gets final dimension
                                 ; the length of strings in this array.
@@ -2003,17 +2431,30 @@ SV_ELEM:
         JR      NZ,REPORT_3        ; to REPORT-3 with anything else
                                 ; 'Subscript error'
 
-;; SV-SLICE
+;;; @brief ; SV-SLICE
+;;;
+;;; ; SV-SLICE
+;;; @calls SLICING
+;;; @jumpedfrom SV_CH_ADD, SV_SLICE_2
+;;; @fallthrough SV_DIM
 SV_SLICE:
         CALL    SLICING           ; routine SLICING slices the string.
 
 ; but a slice of a simple string can itself be sliced.
 
-;; SV-DIM
+;;; @brief ; SV-DIM
+;;;
+;;; ; SV-DIM
+;;; @jumpedfrom SV_CLOSE, SV_LOOP, SV_ELEM
+;;; @fallthrough SV_SLICE_2
 SV_DIM:
         RST     20H             ; NEXT-CHAR
 
-;; SV-SLICE?
+;;; @brief ; SV-SLICE?
+;;;
+;;; ; SV-SLICE?
+;;; @jumps SV_SLICE
+;;; @jumpedfrom SV_SIMPLE
 SV_SLICE_2:
         CP      $28             ; is character '(' ?
         JR      Z,SV_SLICE         ; loop back if so to SV-SLICE
@@ -2034,25 +2475,28 @@ SV_SLICE_2:
 
 
 
-; -------------------------
-; Handle slicing of strings
-; -------------------------
-; The syntax of string slicing is very natural and it is as well to reflect
-; on the permutations possible.
-; a$() and a$( TO ) indicate the entire string although just a$ would do
-; and would avoid coming here.
-; h$(16) indicates the single character at position 16.
-; a$( TO 32) indicates the first 32 characters.
-; a$(257 TO) indicates all except the first 256 characters.
-; a$(19000 TO 19999) indicates the thousand characters at position 19000.
-; Also a$(9 TO 5) returns a null string not an error.
-; This enables a$(2 TO) to return a null string if the passed string is
-; of length zero or 1.
-; A string expression in brackets can be sliced. e.g. (STR$ PI) (3 TO )
-; We arrived here from SCANNING with CH-ADD pointing to the initial '('
-; or from above.
-
-;; SLICING
+;;; @brief Handle slicing of strings
+;;;
+;;; The syntax of string slicing is very natural and it is as well to reflect
+;;; on the permutations possible.
+;;; a$() and a$( TO ) indicate the entire string although just a$ would do
+;;; and would avoid coming here.
+;;; h$(16) indicates the single character at position 16.
+;;; a$( TO 32) indicates the first 32 characters.
+;;; a$(257 TO) indicates all except the first 256 characters.
+;;; a$(19000 TO 19999) indicates the thousand characters at position 19000.
+;;; Also a$(9 TO 5) returns a null string not an error.
+;;; This enables a$(2 TO) to return a null string if the passed string is
+;;; of length zero or 1.
+;;; A string expression in brackets can be sliced. e.g. (STR$ PI) (3 TO )
+;;; We arrived here from SCANNING with CH-ADD pointing to the initial '('
+;;; or from above.
+;;;
+;;; ; SLICING
+;;; @calls SYNTAX_Z, STK_FETCH, INT_EXP2
+;;; @jumps SL_STORE, SL_SECOND
+;;; @calledby S_CONT_3, SV_SLICE
+;;; @fallthrough SL_RPT_C
 SLICING:
         CALL    SYNTAX_Z           ; routine SYNTAX-Z
         CALL    NZ,STK_FETCH        ; routine STK-FETCH fetches parameters of
@@ -2096,7 +2540,11 @@ SLICING:
 
         CP      $29             ; is it ')' ?       e.g. a$(365)
 
-;; SL-RPT-C
+;;; @brief ; SL-RPT-C
+;;;
+;;; ; SL-RPT-C
+;;; @jumps REPORT_C, SL_DEFINE
+;;; @jumpedfrom SV_RPT_C, SL_SECOND
 SL_RPT_C:
         JP      NZ,REPORT_C        ; jump to REPORT-C with anything else
                                 ; 'Nonsense in BASIC'
@@ -2107,7 +2555,13 @@ SL_RPT_C:
 
 ; ---------------------
 
-;; SL-SECOND
+;;; @brief ; SL-SECOND
+;;;
+;;; ; SL-SECOND
+;;; @calls INT_EXP2
+;;; @jumps SL_DEFINE, SL_RPT_C
+;;; @jumpedfrom SLICING
+;;; @fallthrough SL_DEFINE
 SL_SECOND:
         PUSH    HL              ; save limit length.
 
@@ -2133,7 +2587,12 @@ SL_SECOND:
 
 ; we now have start in DE and an end in HL.
 
-;; SL-DEFINE
+;;; @brief ; SL-DEFINE
+;;;
+;;; ; SL-DEFINE
+;;; @jumps SL_OVER, REPORT_3
+;;; @jumpedfrom SL_RPT_C, SL_SECOND
+;;; @fallthrough SL_OVER
 SL_DEFINE:
         POP     AF              ; pop the running flag.
         EX      (SP),HL         ; put end point on stack, start address to HL
@@ -2154,42 +2613,52 @@ SL_DEFINE:
         LD      B,H             ; transfer the length
         LD      C,L             ; to BC.
 
-;; SL-OVER
+;;; @brief ; SL-OVER
+;;;
+;;; ; SL-OVER
+;;; @jumpedfrom SL_DEFINE
+;;; @fallthrough SL_STORE
 SL_OVER:
         POP     DE              ; restore start address from machine stack ***
         RES     6,(IY+$01)      ; update FLAGS - signal string result for
                                 ; syntax.
 
-;; SL-STORE
+;;; @brief ; SL-STORE
+;;;
+;;; ; SL-STORE
+;;; @calls SYNTAX_Z
+;;; @jumpedfrom SLICING
+;;; @fallthrough STK_ST_0
 SL_STORE:
         CALL    SYNTAX_Z           ; routine SYNTAX-Z  (UNSTACK-Z?)
         RET     Z               ; return if checking syntax.
                                 ; but continue to store the string in runtime.
 
-; ------------------------------------
-; other than from above, this routine is called from STK-VAR to stack
-; a known string array element.
-; ------------------------------------
-
-;; STK-ST-0
+;;; @brief other than from above, this routine is called from STK-VAR to stack a known string array element.
+;;;
+;;; ; STK-ST-0
+;;; @calledby SV_ELEM
+;;; @fallthrough STK_STO
 STK_ST_0:
         XOR     A               ; clear to signal a sliced string or element.
 
-; -------------------------
-; this routine is called from chr$, scrn$ etc. to store a simple string result.
-; --------------------------
-
-;; STK-STO-$
+;;; @brief this routine is called from chr$, scrn$ etc. to store a simple string result.
+;;;
+;;; ; STK-STO-$
+;;; @calledby IN_VAR_6, S_STRING, S_IK_STK, SV_SIMPLE, STRS_ADD, CHRS, STR, READ_IN
+;;; @jumpedfrom S_SCR_STO
+;;; @fallthrough STK_STORE
 STK_STO:
         RES     6,(IY+$01)      ; update FLAGS - signal string result.
                                 ; and continue to store parameters of string.
 
-; ---------------------------------------
-; Pass five registers to calculator stack
-; ---------------------------------------
-; This subroutine puts five registers on the calculator stack.
-
-;; STK-STORE
+;;; @brief Pass five registers to calculator stack
+;;;
+;;; This subroutine puts five registers on the calculator stack.
+;;;
+;;; ; STK-STORE
+;;; @calls TEST_5_SP
+;;; @calledby STACK_BC, LOG_2_A
 STK_STORE:
         PUSH    BC              ; save two registers
         CALL    TEST_5_SP           ; routine TEST-5-SP checks room and puts 5
@@ -2209,24 +2678,31 @@ STK_STORE:
         LD      (STKEND),HL      ; update system variable STKEND.
         RET                     ; and return.
 
-; -------------------------------------------
-; Return result of evaluating next expression
-; -------------------------------------------
-; This clever routine is used to check and evaluate an integer expression
-; which is returned in BC, setting A to $FF, if greater than a limit supplied
-; in HL. It is used to check array subscripts, parameters of a string slice
-; and the arguments of the DIM command. In the latter case, the limit check
-; is not required and H is set to $FF. When checking optional string slice
-; parameters, it is entered at the second entry point so as not to disturb
-; the running flag A, which may be $00 or $FF from a previous invocation.
-
-;; INT-EXP1
+;;; @brief Return result of evaluating next expression
+;;;
+;;; This clever routine is used to check and evaluate an integer expression
+;;; which is returned in BC, setting A to $FF, if greater than a limit supplied
+;;; in HL. It is used to check array subscripts, parameters of a string slice
+;;; and the arguments of the DIM command. In the latter case, the limit check
+;;; is not required and H is set to $FF. When checking optional string slice
+;;; parameters, it is entered at the second entry point so as not to disturb
+;;; the running flag A, which may be $00 or $FF from a previous invocation.
+;;;
+;;; ; INT-EXP1
+;;; @calledby SV_MULT, D_NO_LOOP
+;;; @fallthrough INT_EXP2
 INT_EXP1:
         XOR     A               ; set result flag to zero.
 
 ; -> The entry point is here if A is used as a running flag.
 
-;; INT-EXP2
+;;; @brief ; INT-EXP2
+;;;
+;;; ; INT-EXP2
+;;; @calls EXPT_1NUM, SYNTAX_Z, FIND_INT2
+;;; @jumps I_RESTORE, I_CARRY
+;;; @calledby SLICING, SL_SECOND
+;;; @fallthrough I_CARRY
 INT_EXP2:
         PUSH    DE              ; preserve DE register throughout.
         PUSH    HL              ; save the supplied limit.
@@ -2258,32 +2734,39 @@ INT_EXP2:
         AND     A               ; prepare to subtract.
         SBC     HL,BC           ; subtract value from limit.
 
-;; I-CARRY
+;;; @brief ; I-CARRY
+;;;
+;;; ; I-CARRY
+;;; @jumpedfrom INT_EXP2
+;;; @fallthrough I_RESTORE
 I_CARRY:
         LD      A,D             ; move flag to accumulator $00 or $FF.
         SBC     A,$00           ; will set to $FF if carry set.
 
-;; I-RESTORE
+;;; @brief ; I-RESTORE
+;;;
+;;; ; I-RESTORE
+;;; @jumpedfrom INT_EXP2
 I_RESTORE:
         POP     HL              ; restore the limit.
         POP     DE              ; and DE register.
         RET                     ; return.
 
 
-; -----------------------
-; LD DE,(DE+1) Subroutine
-; -----------------------
-; This routine just loads the DE register with the contents of the two
-; locations following the location addressed by DE.
-; It is used to step along the 16-bit dimension sizes in array definitions.
-; Note. Such code is made into subroutines to make programs easier to
-; write and it would use less space to include the five instructions in-line.
-; However, there are so many exchanges going on at the places this is invoked
-; that to implement it in-line would make the code hard to follow.
-; It probably had a zippier label though as the intention is to simplify the
-; program.
-
-;; DE,(DE+1)
+;;; @brief LD DE,(DE+1) Subroutine
+;;;
+;;; This routine just loads the DE register with the contents of the two
+;;; locations following the location addressed by DE.
+;;; It is used to step along the 16-bit dimension sizes in array definitions.
+;;; Note. Such code is made into subroutines to make programs easier to
+;;; write and it would use less space to include the five instructions in-line.
+;;; However, there are so many exchanges going on at the places this is invoked
+;;; that to implement it in-line would make the code hard to follow.
+;;; It probably had a zippier label though as the intention is to simplify the
+;;; program.
+;;;
+;;; ; DE,(DE+1)
+;;; @calledby SV_MULT, SV_ELEM
 DE_DE_1:
         EX      DE,HL           ;
         INC     HL              ;
@@ -2292,15 +2775,17 @@ DE_DE_1:
         LD      D,(HL)          ;
         RET                     ;
 
-; -------------------
-; HL=HL*DE Subroutine
-; -------------------
-; This routine calls the mathematical routine to multiply HL by DE in runtime.
-; It is called from STK-VAR and from DIM. In the latter case syntax is not
-; being checked so the entry point could have been at the second CALL
-; instruction to save a few clock-cycles.
-
-;; GET-HL*DE
+;;; @brief HL=HL*DE Subroutine
+;;;
+;;; This routine calls the mathematical routine to multiply HL by DE in runtime.
+;;; It is called from STK-VAR and from DIM. In the latter case syntax is not
+;;; being checked so the entry point could have been at the second CALL
+;;; instruction to save a few clock-cycles.
+;;;
+;;; ; GET-HL*DE
+;;; @calls SYNTAX_Z, HL_HL_DE
+;;; @jumps REPORT_4
+;;; @calledby SV_MULT, SV_NUMBER, SV_ELEM, D_NO_LOOP
 GET_HL_DE:
         CALL    SYNTAX_Z           ; routine SYNTAX-Z.
         RET     Z               ; return if checking syntax.
@@ -2310,23 +2795,28 @@ GET_HL_DE:
 
         RET                     ; else return with 16-bit result in HL.
 
-; -----------------
-; THE 'LET' COMMAND
-; -----------------
-; Sinclair BASIC adheres to the ANSI-78 standard and a LET is required in
-; assignments e.g. LET a = 1  :   LET h$ = "hat".
-;
-; Long names may contain spaces but not colour controls (when assigned).
-; a substring can appear to the left of the equals sign.
-
-; An earlier mathematician Lewis Carroll may have been pleased that
-; 10 LET Babies cannot manage crocodiles = Babies are illogical AND
-;    Nobody is despised who can manage a crocodile AND Illogical persons
-;    are despised
-; does not give the 'Nonsense..' error if the three variables exist.
-; I digress.
-
-;; LET
+;;; @brief THE 'LET' COMMAND
+;;;
+;;; Sinclair BASIC adheres to the ANSI-78 standard and a LET is required in
+;;; assignments e.g. LET a = 1  :   LET h$ = "hat".
+;;;
+;;; Long names may contain spaces but not colour controls (when assigned).
+;;; a substring can appear to the left of the equals sign.
+;;;
+;;; An earlier mathematician Lewis Carroll may have been pleased that
+;;; 10 LET Babies cannot manage crocodiles = Babies are illogical AND
+;;; @verbatim
+;;;    Nobody is despised who can manage a crocodile AND Illogical persons
+;;;    are despised
+;;; @endverbatim
+;;; does not give the 'Nonsense..' error if the three variables exist.
+;;; I digress.
+;;;
+;;; ; LET
+;;; @jumps L_EXISTS
+;;; @calledby F_REORDER, IN_VAR_6
+;;; @jumpedfrom VAL_FET_2
+;;; @fallthrough L_EACH_CH
 LET:
         LD      HL,(DEST)      ; fetch system variable DEST to HL.
         BIT     1,(IY+$37)      ; test FLAGX - handling a new variable ?
@@ -2337,12 +2827,19 @@ LET:
 
         LD      BC,$0005        ; assume numeric and assign an initial 5 bytes
 
-;; L-EACH-CH
+;;; @brief ; L-EACH-CH
+;;;
+;;; ; L-EACH-CH
+;;; @jumpedfrom L_TEST_CH
+;;; @fallthrough L_NO_SP
 L_EACH_CH:
         INC     BC              ; increase byte count for each relevant
                                 ; character
 
-;; L-NO-SP
+;;; @brief ; L-NO-SP
+;;;
+;;; ; L-NO-SP
+;;; @jumps L_TEST_CH, L_SPACES
 L_NO_SP:
         INC     HL              ; increase pointer.
         LD      A,(HL)          ; fetch character.
@@ -2366,7 +2863,13 @@ L_NO_SP:
 
 ; the branch was to here if higher than space.
 
-;; L-TEST-CH
+;;; @brief ; L-TEST-CH
+;;;
+;;; ; L-TEST-CH
+;;; @calls ALPHANUM
+;;; @jumps L_EACH_CH, L_NEW
+;;; @jumpedfrom L_NO_SP
+;;; @fallthrough L_SPACES
 L_TEST_CH:
         CALL    ALPHANUM           ; routine ALPHANUM sets carry if alphanumeric
         JR      C,L_EACH_CH         ; loop back to L-EACH-CH for more if so.
@@ -2375,7 +2878,13 @@ L_TEST_CH:
         JP      Z,L_NEW         ; jump forward if so, to L-NEW$
                                 ; with a new string.
 
-;; L-SPACES
+;;; @brief ; L-SPACES
+;;;
+;;; ; L-SPACES
+;;; @calls MAKE_ROOM
+;;; @jumps L_SINGLE
+;;; @jumpedfrom L_NO_SP
+;;; @fallthrough L_CHAR
 L_SPACES:
         LD      A,C             ; save length lo in A.
         LD      HL,(E_LINE)      ; fetch E_LINE to HL.
@@ -2396,7 +2905,10 @@ L_SPACES:
 
 ; HL points to start of variable name after 'LET' in BASIC line.
 
-;; L-CHAR
+;;; @brief ; L-CHAR
+;;;
+;;; ; L-CHAR
+;;; @fallthrough L_SINGLE
 L_CHAR:
         INC     HL              ; increase pointer.
         LD      A,(HL)          ; pick up character.
@@ -2419,7 +2931,12 @@ L_CHAR:
 ; single character numerics rejoin here with %00000000 in mask.
 ;                                            %011      will be xor/or result
 
-;; L-SINGLE
+;;; @brief ; L-SINGLE
+;;;
+;;; ; L-SINGLE
+;;; @calls L_FIRST
+;;; @jumpedfrom L_SPACES
+;;; @fallthrough L_NUMERIC
 L_SINGLE:
         LD      HL,(DEST)      ; fetch DEST - HL addresses first character.
         XOR     (HL)            ; apply variable type indicator mask (above).
@@ -2429,7 +2946,11 @@ L_SINGLE:
                                 ; and returns with HL holding
                                 ; new E_LINE-1  the $80 vars end-marker.
 
-;; L-NUMERIC
+;;; @brief ; L-NUMERIC
+;;;
+;;; ; L-NUMERIC
+;;; @jumps L_ENTER
+;;; @jumpedfrom L_EXISTS
 L_NUMERIC:
         PUSH    HL              ; save the pointer.
 
@@ -2452,7 +2973,11 @@ L_NUMERIC:
 
 ; the jump was to here if the variable already existed.
 
-;; L-EXISTS
+;;; @brief ; L-EXISTS
+;;;
+;;; ; L-EXISTS
+;;; @jumps L_DELETE, L_NUMERIC
+;;; @jumpedfrom LET
 L_EXISTS:
         BIT     6,(IY+$01)      ; test FLAGS - numeric or string result ?
         JR      Z,L_DELETE         ; skip forward to L-DELETE$   -*->
@@ -2469,7 +2994,13 @@ L_EXISTS:
 
 ; -*-> the branch was here if a string existed.
 
-;; L-DELETE$
+;;; @brief ; L-DELETE$
+;;;
+;;; ; L-DELETE$
+;;; @calls STK_FETCH
+;;; @jumps L_ADD, L_LENGTH
+;;; @jumpedfrom L_EXISTS
+;;; @fallthrough L_LENGTH
 L_DELETE:
         LD      HL,(DEST)      ; fetch DEST to HL.
                                 ; (still set from first instruction)
@@ -2516,7 +3047,12 @@ L_DELETE:
         LD      C,L             ; length to old length.
                                 ; "hatstand" becomes "hats"
 
-;; L-LENGTH
+;;; @brief ; L-LENGTH
+;;;
+;;; ; L-LENGTH
+;;; @jumps L_IN_W_S
+;;; @jumpedfrom L_DELETE
+;;; @fallthrough L_IN_W_S
 L_LENGTH:
         EX      (SP),HL         ; (*) length to stack, pointer to HL.
         EX      DE,HL           ; pointer to DE, start of string to HL.
@@ -2527,7 +3063,11 @@ L_LENGTH:
 
         LDIR                    ; else copy bytes overwriting some spaces.
 
-;; L-IN-W/S
+;;; @brief ; L-IN-W/S
+;;;
+;;; ; L-IN-W/S
+;;; @jumpedfrom L_LENGTH
+;;; @fallthrough L_ENTER
 L_IN_W_S:
         POP     BC              ; pop the new length.  (*)
         POP     DE              ; pop pointer to new area.
@@ -2537,7 +3077,10 @@ L_IN_W_S:
 
 ; ==> branch here from  L-NUMERIC
 
-;; L-ENTER
+;;; @brief ; L-ENTER
+;;;
+;;; ; L-ENTER
+;;; @jumpedfrom L_NUMERIC
 L_ENTER:
         EX      DE,HL           ; exchange pointers HL=STKEND DE=end of vars.
         LD      A,B             ; test the length
@@ -2554,7 +3097,12 @@ L_ENTER:
 ; the branch was here from L-DELETE$ if an existing simple string.
 ; register HL addresses start of string in variables area.
 
-;; L-ADD$
+;;; @brief ; L-ADD$
+;;;
+;;; ; L-ADD$
+;;; @calls L_STRING
+;;; @jumps RECLAIM_2
+;;; @jumpedfrom L_DELETE
 L_ADD:
         DEC     HL              ; point to high byte of length.
         DEC     HL              ; to low byte.
@@ -2577,14 +3125,23 @@ L_ADD:
 
 ; the jump was here with a new string variable.
 
-;; L-NEW$
+;;; @brief ; L-NEW$
+;;;
+;;; ; L-NEW$
+;;; @jumpedfrom L_TEST_CH
+;;; @fallthrough L_STRING
 L_NEW:
         LD      A,$DF           ; indicator mask %11011111 for
                                 ;                %010xxxxx will be result
         LD      HL,(DEST)      ; address DEST first character.
         AND     (HL)            ; combine mask with character.
 
-;; L-STRING
+;;; @brief ; L-STRING
+;;;
+;;; ; L-STRING
+;;; @calls STK_FETCH, MAKE_ROOM
+;;; @calledby L_ADD
+;;; @fallthrough L_FIRST
 L_STRING:
         PUSH    AF              ; save first character and mask.
         CALL    STK_FETCH           ; routine STK-FETCH fetches parameters of
@@ -2615,7 +3172,10 @@ L_STRING:
         LD      (HL),C          ; insert that byte
         POP     AF              ; restore character and mask
 
-;; L-FIRST
+;;; @brief ; L-FIRST
+;;;
+;;; ; L-FIRST
+;;; @calledby L_SINGLE
 L_FIRST:
         DEC     HL              ; address variable name
         LD      (HL),A          ; and insert character.
@@ -2623,13 +3183,10 @@ L_FIRST:
         DEC     HL              ; now end of VARS area.
         RET                     ; return
 
-; ------------------------------------
-; Get last value from calculator stack
-; ------------------------------------
-;
-;
-
-;; STK-FETCH
+;;; @brief Get last value from calculator stack
+;;;
+;;; ; STK-FETCH
+;;; @calledby L0609, OPEN_2, VAR_A_2, PR_ITEM_3, SLICING, L_DELETE, L_STRING, USR_NO, STR_NO, STRS_ADD, +3 more
 STK_FETCH:
         LD      HL,(STKEND)      ; STKEND
         DEC     HL              ;
@@ -2645,21 +3202,28 @@ STK_FETCH:
         LD      (STKEND),HL      ; STKEND
         RET                     ;
 
-; ------------------
-; Handle DIM command
-; ------------------
-; e.g. DIM a(2,3,4,7): DIM a$(32) : DIM b$(20,2,768) : DIM c$(20000)
-; the only limit to dimensions is memory so, for example,
-; DIM a(2,2,2,2,2,2,2,2,2,2,2,2,2) is possible and creates a multi-
-; dimensional array of zeros. String arrays are initialized to spaces.
-; It is not possible to erase an array, but it can be re-dimensioned to
-; a minimal size of 1, after use, to free up memory.
-
-;; DIM
+;;; @brief Handle DIM command
+;;;
+;;; e.g. DIM a(2,3,4,7): DIM a$(32) : DIM b$(20,2,768) : DIM c$(20000)
+;;; the only limit to dimensions is memory so, for example,
+;;; DIM a(2,2,2,2,2,2,2,2,2,2,2,2,2) is possible and creates a multi-
+;;; dimensional array of zeros. String arrays are initialized to spaces.
+;;; It is not possible to erase an array, but it can be re-dimensioned to
+;;; a minimal size of 1, after use, to free up memory.
+;;;
+;;; ; DIM
+;;; @calls LOOK_VARS
+;;; @fallthrough D_RPORT_C
 DIM:
         CALL    LOOK_VARS           ; routine LOOK-VARS
 
-;; D-RPORT-C
+;;; @brief ; D-RPORT-C
+;;;
+;;; ; D-RPORT-C
+;;; @calls SYNTAX_Z, STK_VAR, CHECK_END
+;;; @jumps REPORT_C, D_RUN
+;;; @jumpedfrom D_NO_LOOP
+;;; @fallthrough D_RUN
 D_RPORT_C:
         JP      NZ,REPORT_C        ; jump to REPORT-C if a long-name variable.
                                 ; DIM lottery numbers(49) doesn't work.
@@ -2675,7 +3239,13 @@ D_RPORT_C:
 
 ; the branch was here in runtime.
 
-;; D-RUN
+;;; @brief ; D-RUN
+;;;
+;;; ; D-RUN
+;;; @calls NEXT_ONE, RECLAIM_2
+;;; @jumps D_LETTER
+;;; @jumpedfrom D_RPORT_C
+;;; @fallthrough D_LETTER
 D_RUN:
         JR      C,D_LETTER         ; skip to D-LETTER if variable did not exist.
                                 ; else reclaim the old one.
@@ -2687,7 +3257,12 @@ D_RUN:
                                 ; space between.
         POP     BC              ; pop the type.
 
-;; D-LETTER
+;;; @brief ; D-LETTER
+;;;
+;;; ; D-LETTER
+;;; @jumps D_SIZE
+;;; @jumpedfrom D_RUN
+;;; @fallthrough D_SIZE
 D_LETTER:
         SET     7,C             ; signal array.
         LD      B,$00           ; initialize dimensions to zero and
@@ -2698,13 +3273,22 @@ D_LETTER:
 
         LD      L,$05           ; make elements 5 bytes as is numeric.
 
-;; D-SIZE
+;;; @brief ; D-SIZE
+;;;
+;;; ; D-SIZE
+;;; @jumpedfrom D_LETTER
+;;; @fallthrough D_NO_LOOP
 D_SIZE:
         EX      DE,HL           ; save the element size in DE.
 
 ; now enter a loop to parse each of the integers in the list.
 
-;; D-NO-LOOP
+;;; @brief ; D-NO-LOOP
+;;;
+;;; ; D-NO-LOOP
+;;; @calls INT_EXP1, GET_HL_DE, MAKE_ROOM
+;;; @jumps REPORT_3, D_RPORT_C, REPORT_4, DIM_CLEAR
+;;; @fallthrough DIM_CLEAR
 D_NO_LOOP:
         RST     20H             ; NEXT-CHAR
         LD      H,$FF           ; disable limit check by setting HL high
@@ -2796,7 +3380,11 @@ D_NO_LOOP:
 
         LD      (HL),$20        ; place a space character in HL
 
-;; DIM-CLEAR
+;;; @brief ; DIM-CLEAR
+;;;
+;;; ; DIM-CLEAR
+;;; @jumpedfrom D_NO_LOOP
+;;; @fallthrough DIM_SIZES
 DIM_CLEAR:
         POP     BC              ; pop the data length
 
@@ -2806,7 +3394,9 @@ DIM_CLEAR:
 ; A loop is now entered to insert the size of each dimension that was pushed
 ; during the D-NO-LOOP working downwards from position before start of data.
 
-;; DIM-SIZES
+;;; @brief ; DIM-SIZES
+;;;
+;;; ; DIM-SIZES
 DIM_SIZES:
         POP     BC              ; pop a dimension size                    ***
         LD      (HL),B          ; insert high byte at position
@@ -2818,13 +3408,15 @@ DIM_SIZES:
 
         RET                     ; return.
 
-; -----------------------------
-; Check whether digit or letter
-; -----------------------------
-; This routine checks that the character in A is alphanumeric
-; returning with carry set if so.
-
-;; ALPHANUM
+;;; @brief Check whether digit or letter
+;;;
+;;; This routine checks that the character in A is alphanumeric
+;;; returning with carry set if so.
+;;;
+;;; ; ALPHANUM
+;;; @calls NUMERIC
+;;; @calledby S_ALPHNUM, LOOK_VARS, V_CHAR, V_SPACES, V_PASS, L_TEST_CH
+;;; @fallthrough ALPHA
 ALPHANUM:
         CALL    NUMERIC           ; routine NUMERIC will reset carry if so.
         CCF                     ; Complement Carry Flag
@@ -2833,7 +3425,11 @@ ALPHANUM:
 
 ; This routine checks that the character in A is alphabetic
 
-;; ALPHA
+;;; @brief ; ALPHA
+;;;
+;;; ; ALPHA
+;;; @calledby L1510, DEF_FN_1, DEF_FN_3, IN_ITEM_3, S_FN_SBRN, LOOK_VARS, USR_NO
+;;; @jumpedfrom RTL_GLYPH_GUARD
 ALPHA:
         CP      $41             ; less than 'A' ?
         CCF                     ; Complement Carry Flag
@@ -2849,22 +3445,27 @@ ALPHA:
         CP      $7B             ; less than 'z'+1 ?
         RET                     ; carry set if within a-z.
 
-; -------------------------
-; Decimal to floating point
-; -------------------------
-; This routine finds the floating point number represented by an expression
-; beginning with BIN, '.' or a digit.
-; Note that BIN need not have any '0's or '1's after it.
-; BIN is really just a notational symbol and not a function.
-
-;; DEC-TO-FP
+;;; @brief Decimal to floating point
+;;;
+;;; This routine finds the floating point number represented by an expression
+;;; beginning with BIN, '.' or a digit.
+;;; Note that BIN need not have any '0's or '1's after it.
+;;; BIN is really just a notational symbol and not a function.
+;;;
+;;; ; DEC-TO-FP
+;;; @jumps NOT_BIN
+;;; @calledby L139E
+;;; @fallthrough BIN_DIGIT
 DEC_TO_FP:
         CP      $C4             ; 'BIN' token ?
         JR      NZ,NOT_BIN        ; to NOT-BIN if not
 
         LD      DE,$0000        ; initialize 16 bit buffer register.
 
-;; BIN-DIGIT
+;;; @brief ; BIN-DIGIT
+;;;
+;;; ; BIN-DIGIT
+;;; @jumps BIN_END, REPORT_6
 BIN_DIGIT:
         RST     20H             ; NEXT-CHAR
         SUB     $31             ; '1'
@@ -2885,7 +3486,11 @@ BIN_DIGIT:
 
 ; ---
 
-;; BIN-END
+;;; @brief ; BIN-END
+;;;
+;;; ; BIN-END
+;;; @jumps STACK_BC
+;;; @jumpedfrom BIN_DIGIT
 BIN_END:
         LD      B,D             ; transfer 16 bit buffer
         LD      C,E             ; to BC register pair.
@@ -2895,7 +3500,12 @@ BIN_END:
 
 ; continue here with .1,  42, 3.14, 5., 2.3 E -4
 
-;; NOT-BIN
+;;; @brief ; NOT-BIN
+;;;
+;;; ; NOT-BIN
+;;; @calls INT_TO_FP, NUMERIC
+;;; @jumps DECIMAL, E_FORMAT, DEC_STO_1
+;;; @jumpedfrom DEC_TO_FP
 NOT_BIN:
         CP      $2E             ; '.' - leading decimal point ?
         JR      Z,DECIMAL         ; skip to DECIMAL if so.
@@ -2917,12 +3527,21 @@ NOT_BIN:
 
 ; a leading decimal point has been found in a number.
 
-;; DECIMAL
+;;; @brief ; DECIMAL
+;;;
+;;; ; DECIMAL
+;;; @calls NUMERIC
+;;; @jumpedfrom NOT_BIN
+;;; @fallthrough DEC_RPT_C
 DECIMAL:
         RST     20H             ; NEXT-CHAR
         CALL    NUMERIC           ; routine NUMERIC will reset carry if digit
 
-;; DEC-RPT-C
+;;; @brief ; DEC-RPT-C
+;;;
+;;; ; DEC-RPT-C
+;;; @jumps REPORT_C
+;;; @jumpedfrom ST_E_PART
 DEC_RPT_C:
         JP      C,REPORT_C         ; to REPORT-C if just a '.'
                                 ; raise 'Nonsense in BASIC'
@@ -2938,7 +3557,10 @@ DEC_RPT_C:
 ; Now store 1 in mem-0.
 ; Note. At each pass of the digit loop this will be divided by ten.
 
-;; DEC-STO-1
+;;; @brief ; DEC-STO-1
+;;;
+;;; ; DEC-STO-1
+;;; @jumpedfrom NOT_BIN
 DEC_STO_1:
         RST     28H             ;; FP-CALC
         DB          $A1             ;;stk-one   ;x or 0,1.
@@ -2947,7 +3569,11 @@ DEC_STO_1:
         DB          $38             ;;end-calc
 
 
-;; NXT-DGT-1
+;;; @brief ; NXT-DGT-1
+;;;
+;;; ; NXT-DGT-1
+;;; @calls STK_DIGIT
+;;; @jumps E_FORMAT
 NXT_DGT_1:
         RST     18H             ; GET-CHAR
         CALL    STK_DIGIT           ; routine STK-DIGIT stacks single digit 'd'
@@ -2975,7 +3601,12 @@ NXT_DGT_1:
 
 ; Finally see if an exponent has been input.
 
-;; E-FORMAT
+;;; @brief ; E-FORMAT
+;;;
+;;; ; E-FORMAT
+;;; @jumps SIGN_FLAG
+;;; @jumpedfrom NOT_BIN, NXT_DGT_1
+;;; @fallthrough SIGN_FLAG
 E_FORMAT:
         CP      $45             ; is character 'E' ?
         JR      Z,SIGN_FLAG         ; to SIGN-FLAG if so
@@ -2983,7 +3614,12 @@ E_FORMAT:
         CP      $5D                     ; compare A with $5D
         RET     NZ              ; return as no exponent.
 
-;; SIGN-FLAG
+;;; @brief ; SIGN-FLAG
+;;;
+;;; ; SIGN-FLAG
+;;; @jumps SIGN_DONE, ST_E_PART
+;;; @jumpedfrom E_FORMAT
+;;; @fallthrough SIGN_DONE
 SIGN_FLAG:
         LD      B,$FF           ; initialize temporary sign byte to $FF
 
@@ -3000,11 +3636,21 @@ SIGN_FLAG:
 ; Note. incidentally this is the only occasion in Spectrum BASIC when an
 ; expression may not be used when a number is expected.
 
-;; SIGN-DONE
+;;; @brief ; SIGN-DONE
+;;;
+;;; ; SIGN-DONE
+;;; @jumpedfrom SIGN_FLAG
+;;; @fallthrough ST_E_PART
 SIGN_DONE:
         RST     20H             ; NEXT-CHAR
 
-;; ST-E-PART
+;;; @brief ; ST-E-PART
+;;;
+;;; ; ST-E-PART
+;;; @calls NUMERIC, INT_TO_FP, FP_TO_A
+;;; @jumps DEC_RPT_C, REPORT_6, E_FP_JUMP
+;;; @jumpedfrom SIGN_FLAG
+;;; @fallthrough E_FP_JUMP
 ST_E_PART:
         CALL    NUMERIC           ; routine NUMERIC
         JR      C,DEC_RPT_C         ; to DEC-RPT-C if not
@@ -3031,19 +3677,23 @@ ST_E_PART:
 
         NEG                     ; Negate the exponent.
 
-;; E-FP-JUMP
+;;; @brief ; E-FP-JUMP
+;;;
+;;; ; E-FP-JUMP
+;;; @jumps E_TO_FP
+;;; @jumpedfrom ST_E_PART
 E_FP_JUMP:
         JP      E_TO_FP           ; JUMP forward to E-TO-FP to assign to
                                 ; last value x on stack x * 10 to power A
                                 ; a relative jump would have done.
 
-; ---------------------
-; Check for valid digit
-; ---------------------
-; This routine checks that the ASCII character in A is numeric
-; returning with carry reset if so.
-
-;; NUMERIC
+;;; @brief Check for valid digit
+;;;
+;;; This routine checks that the ASCII character in A is numeric
+;;; returning with carry reset if so.
+;;;
+;;; ; NUMERIC
+;;; @calledby L13E2, L13FC, L1543, OUT_CHAR, ALPHANUM, NOT_BIN, DECIMAL, ST_E_PART, STK_DIGIT, RTL_GLYPH_GUARD
 NUMERIC:
         CP      $30             ; '0'
         RET     C               ; return if less than zero character.
@@ -3052,36 +3702,37 @@ NUMERIC:
         CCF                     ; Complement Carry Flag
         RET                     ; Return - carry clear if character '0' - '9'
 
-; -----------
-; Stack Digit
-; -----------
-; This subroutine is called from INT-TO-FP and DEC-TO-FP to stack a digit
-; on the calculator stack.
-
-;; STK-DIGIT
+;;; @brief Stack Digit
+;;;
+;;; This subroutine is called from INT-TO-FP and DEC-TO-FP to stack a digit
+;;; on the calculator stack.
+;;;
+;;; ; STK-DIGIT
+;;; @calls NUMERIC
+;;; @calledby NXT_DGT_1, NXT_DGT_2
+;;; @fallthrough STACK_A
 STK_DIGIT:
         CALL    NUMERIC           ; routine NUMERIC
         RET     C               ; return if not numeric character
 
         SUB     $30             ; convert from ASCII to digit
 
-; -----------------
-; Stack accumulator
-; -----------------
-;
-;
-
-;; STACK-A
+;;; @brief Stack accumulator
+;;;
+;;; ; STACK-A
+;;; @calledby DR_PRMS, ARC_START, ARC_END, DRAW_SAVE, LN
+;;; @jumpedfrom POINT_LP, S_ATTR_S, PEEK, CODE
+;;; @fallthrough STACK_BC
 STACK_A:
         LD      C,A             ; transfer to C
         LD      B,$00           ; and make B zero
 
-; ----------------------
-; Stack BC register pair
-; ----------------------
-;
-
-;; STACK-BC
+;;; @brief Stack BC register pair
+;;;
+;;; ; STACK-BC
+;;; @calls STK_STORE
+;;; @calledby S_RND
+;;; @jumpedfrom BIN_END, USR_NO, LEN
 STACK_BC:
         LD      IY,ERR_NR        ; re-initialize ERR_NR
 
@@ -3098,14 +3749,15 @@ STACK_BC:
         AND     A               ; clear carry
         RET                     ; before returning
 
-; -------------------------
-; Integer to floating point
-; -------------------------
-; This routine places one or more digits found in a BASIC line
-; on the calculator stack multiplying the previous value by ten each time
-; before adding in the new digit to form a last value on calculator stack.
-
-;; INT-TO-FP
+;;; @brief Integer to floating point
+;;;
+;;; This routine places one or more digits found in a BASIC line
+;;; on the calculator stack multiplying the previous value by ten each time
+;;; before adding in the new digit to form a last value on calculator stack.
+;;;
+;;; ; INT-TO-FP
+;;; @calledby NOT_BIN, ST_E_PART
+;;; @fallthrough NXT_DGT_2
 INT_TO_FP:
         PUSH    AF              ; save first character
 
@@ -3115,7 +3767,10 @@ INT_TO_FP:
 
         POP     AF              ; fetch first character back.
 
-;; NXT-DGT-2
+;;; @brief ; NXT-DGT-2
+;;;
+;;; ; NXT-DGT-2
+;;; @calls STK_DIGIT, CH_ADD_1
 NXT_DGT_2:
         CALL    STK_DIGIT           ; routine STK-DIGIT puts 0-9 on stack
         RET     C               ; will return when character is not numeric >
