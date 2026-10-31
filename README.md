@@ -38,8 +38,11 @@ Output:
 Other targets:
 
 ```
-make clean       # remove build/
-make distclean   # also remove the downloaded assembler
+make edit-persian  # start the graphical Persian ROM editor (Tkinter GUI)
+make check-persian # validate the Persian language data headless
+make genflags      # refresh generated Persian .asm files from fixtures
+make clean         # remove build/
+make distclean     # also remove the downloaded assembler
 ```
 
 ## Running

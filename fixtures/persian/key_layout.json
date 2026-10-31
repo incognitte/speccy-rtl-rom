@@ -1,0 +1,486 @@
+{
+  "_doc": "Persian key lookup: uppercase ASCII slots map Caps Shift; lowercase slots map unshifted keys. E remains the exponent marker ($5D).",
+  "entries": [
+    {
+      "ascii": "A",
+      "ascii_hex": "41",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "B",
+      "ascii_hex": "42",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "C",
+      "ascii_hex": "43",
+      "key_code": "O",
+      "code_hex": "4F",
+      "arabic": "ژ",
+      "unmapped": false
+    },
+    {
+      "ascii": "D",
+      "ascii_hex": "44",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "E",
+      "ascii_hex": "45",
+      "key_code": "]",
+      "code_hex": "5D",
+      "arabic": null,
+      "unmapped": false
+    },
+    {
+      "ascii": "F",
+      "ascii_hex": "46",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "G",
+      "ascii_hex": "47",
+      "key_code": "b",
+      "code_hex": "62",
+      "arabic": "لا",
+      "unmapped": false
+    },
+    {
+      "ascii": "H",
+      "ascii_hex": "48",
+      "key_code": "A",
+      "code_hex": "41",
+      "arabic": "آ",
+      "unmapped": false
+    },
+    {
+      "ascii": "I",
+      "ascii_hex": "49",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "J",
+      "ascii_hex": "4A",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "K",
+      "ascii_hex": "4B",
+      "key_code": "Z",
+      "code_hex": "5A",
+      "arabic": "ک",
+      "unmapped": false
+    },
+    {
+      "ascii": "L",
+      "ascii_hex": "4C",
+      "key_code": "a",
+      "code_hex": "61",
+      "arabic": "گ",
+      "unmapped": false
+    },
+    {
+      "ascii": "M",
+      "ascii_hex": "4D",
+      "key_code": "g",
+      "code_hex": "67",
+      "arabic": "ؤ",
+      "unmapped": false
+    },
+    {
+      "ascii": "N",
+      "ascii_hex": "4E",
+      "key_code": "f",
+      "code_hex": "66",
+      "arabic": "و",
+      "unmapped": false
+    },
+    {
+      "ascii": "O",
+      "ascii_hex": "4F",
+      "key_code": "G",
+      "code_hex": "47",
+      "arabic": "ج",
+      "unmapped": false
+    },
+    {
+      "ascii": "P",
+      "ascii_hex": "50",
+      "key_code": "H",
+      "code_hex": "48",
+      "arabic": "چ",
+      "unmapped": false
+    },
+    {
+      "ascii": "Q",
+      "ascii_hex": "51",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "R",
+      "ascii_hex": "52",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "S",
+      "ascii_hex": "53",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "T",
+      "ascii_hex": "54",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "U",
+      "ascii_hex": "55",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "V",
+      "ascii_hex": "56",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "W",
+      "ascii_hex": "57",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "X",
+      "ascii_hex": "58",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "Y",
+      "ascii_hex": "59",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "Z",
+      "ascii_hex": "5A",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "[",
+      "ascii_hex": "5B",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "\\",
+      "ascii_hex": "5C",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "]",
+      "ascii_hex": "5D",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "^",
+      "ascii_hex": "5E",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "_",
+      "ascii_hex": "5F",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "`",
+      "ascii_hex": "60",
+      "key_code": "?",
+      "code_hex": "3F",
+      "arabic": null,
+      "unmapped": true
+    },
+    {
+      "ascii": "a",
+      "ascii_hex": "61",
+      "key_code": "Q",
+      "code_hex": "51",
+      "arabic": "ش",
+      "unmapped": false
+    },
+    {
+      "ascii": "b",
+      "ascii_hex": "62",
+      "key_code": "L",
+      "code_hex": "4C",
+      "arabic": "ذ",
+      "unmapped": false
+    },
+    {
+      "ascii": "c",
+      "ascii_hex": "63",
+      "key_code": "N",
+      "code_hex": "4E",
+      "arabic": "ز",
+      "unmapped": false
+    },
+    {
+      "ascii": "d",
+      "ascii_hex": "64",
+      "key_code": "i",
+      "code_hex": "69",
+      "arabic": "ی",
+      "unmapped": false
+    },
+    {
+      "ascii": "e",
+      "ascii_hex": "65",
+      "key_code": "F",
+      "code_hex": "46",
+      "arabic": "ث",
+      "unmapped": false
+    },
+    {
+      "ascii": "f",
+      "ascii_hex": "66",
+      "key_code": "C",
+      "code_hex": "43",
+      "arabic": "ب",
+      "unmapped": false
+    },
+    {
+      "ascii": "g",
+      "ascii_hex": "67",
+      "key_code": "c",
+      "code_hex": "63",
+      "arabic": "ل",
+      "unmapped": false
+    },
+    {
+      "ascii": "h",
+      "ascii_hex": "68",
+      "key_code": "B",
+      "code_hex": "42",
+      "arabic": "ا",
+      "unmapped": false
+    },
+    {
+      "ascii": "i",
+      "ascii_hex": "69",
+      "key_code": "h",
+      "code_hex": "68",
+      "arabic": "ه",
+      "unmapped": false
+    },
+    {
+      "ascii": "j",
+      "ascii_hex": "6A",
+      "key_code": "E",
+      "code_hex": "45",
+      "arabic": "ت",
+      "unmapped": false
+    },
+    {
+      "ascii": "k",
+      "ascii_hex": "6B",
+      "key_code": "e",
+      "code_hex": "65",
+      "arabic": "ن",
+      "unmapped": false
+    },
+    {
+      "ascii": "l",
+      "ascii_hex": "6C",
+      "key_code": "d",
+      "code_hex": "64",
+      "arabic": "م",
+      "unmapped": false
+    },
+    {
+      "ascii": "m",
+      "ascii_hex": "6D",
+      "key_code": "D",
+      "code_hex": "44",
+      "arabic": "پ",
+      "unmapped": false
+    },
+    {
+      "ascii": "n",
+      "ascii_hex": "6E",
+      "key_code": "K",
+      "code_hex": "4B",
+      "arabic": "د",
+      "unmapped": false
+    },
+    {
+      "ascii": "o",
+      "ascii_hex": "6F",
+      "key_code": "J",
+      "code_hex": "4A",
+      "arabic": "خ",
+      "unmapped": false
+    },
+    {
+      "ascii": "p",
+      "ascii_hex": "70",
+      "key_code": "I",
+      "code_hex": "49",
+      "arabic": "ح",
+      "unmapped": false
+    },
+    {
+      "ascii": "q",
+      "ascii_hex": "71",
+      "key_code": "S",
+      "code_hex": "53",
+      "arabic": "ض",
+      "unmapped": false
+    },
+    {
+      "ascii": "r",
+      "ascii_hex": "72",
+      "key_code": "Y",
+      "code_hex": "59",
+      "arabic": "ق",
+      "unmapped": false
+    },
+    {
+      "ascii": "s",
+      "ascii_hex": "73",
+      "key_code": "P",
+      "code_hex": "50",
+      "arabic": "س",
+      "unmapped": false
+    },
+    {
+      "ascii": "t",
+      "ascii_hex": "74",
+      "key_code": "X",
+      "code_hex": "58",
+      "arabic": "ف",
+      "unmapped": false
+    },
+    {
+      "ascii": "u",
+      "ascii_hex": "75",
+      "key_code": "V",
+      "code_hex": "56",
+      "arabic": "ع",
+      "unmapped": false
+    },
+    {
+      "ascii": "v",
+      "ascii_hex": "76",
+      "key_code": "M",
+      "code_hex": "4D",
+      "arabic": "ر",
+      "unmapped": false
+    },
+    {
+      "ascii": "w",
+      "ascii_hex": "77",
+      "key_code": "R",
+      "code_hex": "52",
+      "arabic": "ص",
+      "unmapped": false
+    },
+    {
+      "ascii": "x",
+      "ascii_hex": "78",
+      "key_code": "T",
+      "code_hex": "54",
+      "arabic": "ط",
+      "unmapped": false
+    },
+    {
+      "ascii": "y",
+      "ascii_hex": "79",
+      "key_code": "W",
+      "code_hex": "57",
+      "arabic": "غ",
+      "unmapped": false
+    },
+    {
+      "ascii": "z",
+      "ascii_hex": "7A",
+      "key_code": "U",
+      "code_hex": "55",
+      "arabic": "ظ",
+      "unmapped": false
+    }
+  ],
+  "symbol_shift_digits": {
+    "range": "03AB-03B4",
+    "bytes_hex": "5F 21 40 23 24 25 26 27 29 28",
+    "by_digit": {
+      "0": "_",
+      "1": "!",
+      "2": "@",
+      "3": "#",
+      "4": "$",
+      "5": "%",
+      "6": "&",
+      "7": "'",
+      "8": ")",
+      "9": "("
+    },
+    "note": "keys 8 and 9 produce ')' and '(' (swapped vs legend) = bracket mirroring for RTL"
+  }
+}

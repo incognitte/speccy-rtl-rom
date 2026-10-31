@@ -1,0 +1,1157 @@
+{
+  "_doc": "Persian ROM text in stored RTL order: digit runs reversed, parentheses mirrored, each <ZWNJ> one $00 byte, and redundant markers removed.",
+  "keywords": [
+    {
+      "text": "تصادفی",
+      "byte_length": 6,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "A5",
+      "english": "RND",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "کلید$",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "A6",
+      "english": "INKEY$",
+      "arabic_bytes_reference": 6
+    },
+    {
+      "text": "[",
+      "byte_length": 1,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "A7",
+      "english": "PI",
+      "arabic_bytes_reference": 1
+    },
+    {
+      "text": "تابع",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "A8",
+      "english": "FN",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "نقطه",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "A9",
+      "english": "POINT",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "متن$",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "AA",
+      "english": "SCREEN$",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "رنگ",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "AB",
+      "english": "ATTR",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "در",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "AC",
+      "english": "AT",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "فاصله",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "AD",
+      "english": "TAB",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "نشانه$",
+      "byte_length": 6,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "AE",
+      "english": "VAL$",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "کد",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "AF",
+      "english": "CODE",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "عدد",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B0",
+      "english": "VAL",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "طول",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B1",
+      "english": "LEN",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "سین",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B2",
+      "english": "SIN",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "کسین",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B3",
+      "english": "COS",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "تان",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B4",
+      "english": "TAN",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "آسین",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B5",
+      "english": "ASN",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "آرکسین",
+      "byte_length": 6,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B6",
+      "english": "ACS",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "آتان",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B7",
+      "english": "ATN",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "لگاریتم",
+      "byte_length": 7,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B8",
+      "english": "LN",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "توان",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "B9",
+      "english": "EXP",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "کف",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "BA",
+      "english": "INT",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "جذر",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "BB",
+      "english": "SQR",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "علامت",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "BC",
+      "english": "SGN",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "مطلق",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "BD",
+      "english": "ABS",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "بیاب",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "BE",
+      "english": "PEEK",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "ورودی",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "BF",
+      "english": "IN",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "اجرا",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C0",
+      "english": "USR",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "رشته$",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C1",
+      "english": "STR$",
+      "arabic_bytes_reference": 7
+    },
+    {
+      "text": "حرف$",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C2",
+      "english": "CHR$",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "نقض",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C3",
+      "english": "NOT",
+      "arabic_bytes_reference": 1
+    },
+    {
+      "text": "دودو",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C4",
+      "english": "BIN",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "یا",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C5",
+      "english": "OR",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "و",
+      "byte_length": 1,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C6",
+      "english": "AND",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "<=",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C7",
+      "english": "<=",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": ">=",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C8",
+      "english": ">=",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "<>",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "C9",
+      "english": "<>",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "خط",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "CA",
+      "english": "LINE",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "سپس",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "CB",
+      "english": "THEN",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "تا",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "CC",
+      "english": "TO",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "گام",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "CD",
+      "english": "STEP",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "تعریف",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "CE",
+      "english": "DEF FN",
+      "arabic_bytes_reference": 10
+    },
+    {
+      "text": "فهرست",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "CF",
+      "english": "CAT",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "فرمت",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D0",
+      "english": "FORMAT",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "جابجا",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D1",
+      "english": "MOVE",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "حذف",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D2",
+      "english": "ERASE",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "باز#",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D3",
+      "english": "OPEN #",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "بسته#",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D4",
+      "english": "CLOSE #",
+      "arabic_bytes_reference": 6
+    },
+    {
+      "text": "ادغام",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D5",
+      "english": "MERGE",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "تایید",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D6",
+      "english": "VERIFY",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "بوق",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D7",
+      "english": "BEEP",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "دایره",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D8",
+      "english": "CIRCLE",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "قلم",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "D9",
+      "english": "INK",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "برگ",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "DA",
+      "english": "PAPER",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "چشمک",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "DB",
+      "english": "FLASH",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "روشن",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "DC",
+      "english": "BRIGHT",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "معکوس",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "DD",
+      "english": "INVERSE",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "رو",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "DE",
+      "english": "OVER",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "خروج",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "DF",
+      "english": "OUT",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "چاپگر",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E0",
+      "english": "LPRINT",
+      "arabic_bytes_reference": 6
+    },
+    {
+      "text": "لیست<ZWNJ>چ",
+      "byte_length": 6,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "token": "E1",
+      "english": "LLIST",
+      "arabic_bytes_reference": 6
+    },
+    {
+      "text": "ایست",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E2",
+      "english": "STOP",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "بخوان",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E3",
+      "english": "READ",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "داده",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E4",
+      "english": "DATA",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "نوسازی",
+      "byte_length": 6,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E5",
+      "english": "RESTORE",
+      "arabic_bytes_reference": 6
+    },
+    {
+      "text": "نو",
+      "byte_length": 2,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E6",
+      "english": "NEW",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "قاب",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E7",
+      "english": "BORDER",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "ادامه",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E8",
+      "english": "CONTINUE",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "بعد",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "E9",
+      "english": "DIM",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "یاد",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "EA",
+      "english": "REM",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "برای",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "EB",
+      "english": "FOR",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "برو",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "EC",
+      "english": "GO TO",
+      "arabic_bytes_reference": 8
+    },
+    {
+      "text": "زیر",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "ED",
+      "english": "GO SUB",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "ورود",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "EE",
+      "english": "INPUT",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "بار",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "EF",
+      "english": "LOAD",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "لیست",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F0",
+      "english": "LIST",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "فرض",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F1",
+      "english": "LET",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "مکث",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F2",
+      "english": "PAUSE",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "بعدی",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F3",
+      "english": "NEXT",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "ثبت",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F4",
+      "english": "POKE",
+      "arabic_bytes_reference": 2
+    },
+    {
+      "text": "چاپ",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F5",
+      "english": "PRINT",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "رسم",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F6",
+      "english": "PLOT",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "اجرا",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F7",
+      "english": "RUN",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "ذخیره",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F8",
+      "english": "SAVE",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "شانس",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "F9",
+      "english": "RANDOMIZE",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "اگر",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "FA",
+      "english": "IF",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "پاکساز",
+      "byte_length": 6,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "FB",
+      "english": "CLS",
+      "arabic_bytes_reference": 5
+    },
+    {
+      "text": "رسم",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "FC",
+      "english": "DRAW",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "تخلیه",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "FD",
+      "english": "CLEAR",
+      "arabic_bytes_reference": 3
+    },
+    {
+      "text": "برگشت",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "FE",
+      "english": "RETURN",
+      "arabic_bytes_reference": 4
+    },
+    {
+      "text": "کپی",
+      "byte_length": 3,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "token": "FF",
+      "english": "COPY",
+      "arabic_bytes_reference": 3
+    }
+  ],
+  "reports": [
+    {
+      "text": "آماده",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 0,
+      "english": "OK"
+    },
+    {
+      "text": "بدون<ZWNJ>برای",
+      "byte_length": 9,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 1,
+      "english": "NEXT without FOR"
+    },
+    {
+      "text": "متغیرنیست",
+      "byte_length": 9,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 2,
+      "english": "Variable not found"
+    },
+    {
+      "text": "اندیس<ZWNJ>غلط",
+      "byte_length": 9,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 3,
+      "english": "Subscript wrong"
+    },
+    {
+      "text": "حافظه<ZWNJ>پر",
+      "byte_length": 8,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 4,
+      "english": "Out of memory"
+    },
+    {
+      "text": "صفحه<ZWNJ>پر",
+      "byte_length": 7,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 5,
+      "english": "Out of screen"
+    },
+    {
+      "text": "عددبزرگ",
+      "byte_length": 7,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 6,
+      "english": "Number too big"
+    },
+    {
+      "text": "بدون<ZWNJ>برو",
+      "byte_length": 8,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 7,
+      "english": "RETURN without GOSUB"
+    },
+    {
+      "text": "پایان<ZWNJ>فایل",
+      "byte_length": 10,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 8,
+      "english": "End of file"
+    },
+    {
+      "text": "ایست",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 9,
+      "english": "STOP statement"
+    },
+    {
+      "text": "نامعتبر",
+      "byte_length": 7,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 10,
+      "english": "Invalid argument"
+    },
+    {
+      "text": "خارج<ZWNJ>ازحد",
+      "byte_length": 9,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 11,
+      "english": "Integer out of range"
+    },
+    {
+      "text": "خطاساختاری",
+      "byte_length": 10,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 12,
+      "english": "Nonsense in BASIC"
+    },
+    {
+      "text": "قطع<ZWNJ>شده",
+      "byte_length": 7,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 13,
+      "english": "BREAK - CONT repeats"
+    },
+    {
+      "text": "بدون<ZWNJ>داده",
+      "byte_length": 9,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 14,
+      "english": "Out of DATA"
+    },
+    {
+      "text": "اسم<ZWNJ>غلط",
+      "byte_length": 7,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 15,
+      "english": "Invalid file name"
+    },
+    {
+      "text": "جدیدپر",
+      "byte_length": 6,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 16,
+      "english": "No room for line"
+    },
+    {
+      "text": "ایست",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 17,
+      "english": "STOP in INPUT"
+    },
+    {
+      "text": "بدون<ZWNJ>بعدی",
+      "byte_length": 9,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 18,
+      "english": "FOR without NEXT"
+    },
+    {
+      "text": "دستگاه<ZWNJ>غلط",
+      "byte_length": 10,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 19,
+      "english": "Invalid I/O device"
+    },
+    {
+      "text": "رنگ<ZWNJ>غلط",
+      "byte_length": 7,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 20,
+      "english": "Invalid colour"
+    },
+    {
+      "text": "توقف",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 21,
+      "english": "BREAK into program"
+    },
+    {
+      "text": "سقف<ZWNJ>رم<ZWNJ>غلط",
+      "byte_length": 10,
+      "zwnj_count": 2,
+      "max_bytes": null,
+      "code": 22,
+      "english": "RAMTOP no good"
+    },
+    {
+      "text": "دستورغلط",
+      "byte_length": 8,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 23,
+      "english": "Statement lost"
+    },
+    {
+      "text": "جریان<ZWNJ>غلط",
+      "byte_length": 9,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 24,
+      "english": "Invalid stream"
+    },
+    {
+      "text": "بدون<ZWNJ>تعریف",
+      "byte_length": 10,
+      "zwnj_count": 1,
+      "max_bytes": null,
+      "code": 25,
+      "english": "FN without DEF"
+    },
+    {
+      "text": "مقدارغلط",
+      "byte_length": 8,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 26,
+      "english": "Parameter error"
+    },
+    {
+      "text": "خطانوار",
+      "byte_length": 7,
+      "zwnj_count": 0,
+      "max_bytes": null,
+      "code": 27,
+      "english": "Tape loading error"
+    }
+  ],
+  "other": [
+    {
+      "text": "نوار را شروع و کلیدی بفشار",
+      "byte_length": 26,
+      "zwnj_count": 0,
+      "max_bytes": 30,
+      "item": "Tape message 0",
+      "english": "Start tape, then press any key."
+    },
+    {
+      "text": "برنامه",
+      "byte_length": 6,
+      "zwnj_count": 0,
+      "max_bytes": 8,
+      "item": "Tape message 1",
+      "english": "Program:"
+    },
+    {
+      "text": "آرایه<ZWNJ>عددی",
+      "byte_length": 10,
+      "zwnj_count": 1,
+      "max_bytes": 12,
+      "item": "Tape message 2",
+      "english": "Number array:"
+    },
+    {
+      "text": "آرایه<ZWNJ>متنی",
+      "byte_length": 10,
+      "zwnj_count": 1,
+      "max_bytes": 12,
+      "item": "Tape message 3",
+      "english": "Character array:"
+    },
+    {
+      "text": "بایت",
+      "byte_length": 4,
+      "zwnj_count": 0,
+      "max_bytes": 5,
+      "item": "Tape message 4",
+      "english": "Bytes:"
+    },
+    {
+      "text": "6202 نسخه فارسی",
+      "byte_length": 15,
+      "zwnj_count": 0,
+      "max_bytes": 22,
+      "item": "Copyright text",
+      "english": ""
+    },
+    {
+      "text": "ادامه",
+      "byte_length": 5,
+      "zwnj_count": 0,
+      "max_bytes": 5,
+      "item": "Scroll prompt",
+      "english": "scroll?"
+    }
+  ],
+  "cursor_letters": [
+    {
+      "mode": "K",
+      "text": "ک",
+      "byte_length": 1,
+      "zwnj_count": 0,
+      "max_bytes": 1
+    },
+    {
+      "mode": "L",
+      "text": "ح",
+      "byte_length": 1,
+      "zwnj_count": 0,
+      "max_bytes": 1
+    },
+    {
+      "mode": "E",
+      "text": "ت",
+      "byte_length": 1,
+      "zwnj_count": 0,
+      "max_bytes": 1
+    },
+    {
+      "mode": "G",
+      "text": "گ",
+      "byte_length": 1,
+      "zwnj_count": 0,
+      "max_bytes": 1
+    }
+  ],
+  "totals": {
+    "keywords": {
+      "used_bytes": 342,
+      "budget_bytes": 343
+    },
+    "reports": {
+      "used_bytes": 217,
+      "budget_bytes": 301,
+      "soft_target_bytes": 244
+    },
+    "tape_messages": {
+      "used_bytes": 56,
+      "budget_bytes": 67
+    },
+    "copyright": {
+      "characters": 15,
+      "budget_characters": 22
+    }
+  }
+}

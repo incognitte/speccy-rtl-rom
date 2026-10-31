@@ -1,0 +1,750 @@
+{
+  "letters": [
+    {
+      "rank": 1,
+      "letter": "آ",
+      "joins_forward": false,
+      "include": true,
+      "code": 65,
+      "flag_hex": "6F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": false
+      },
+      "forms": [
+        "iso",
+        "fin"
+      ],
+      "form_fallbacks": {}
+    },
+    {
+      "rank": 2,
+      "letter": "ا",
+      "joins_forward": false,
+      "include": true,
+      "code": 66,
+      "flag_hex": "6F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": false
+      },
+      "forms": [
+        "iso",
+        "fin"
+      ],
+      "form_fallbacks": {}
+    },
+    {
+      "rank": 3,
+      "letter": "ب",
+      "joins_forward": true,
+      "include": true,
+      "code": 67,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 4,
+      "letter": "پ",
+      "joins_forward": true,
+      "include": true,
+      "code": 68,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 5,
+      "letter": "ت",
+      "joins_forward": true,
+      "include": true,
+      "code": 69,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 6,
+      "letter": "ث",
+      "joins_forward": true,
+      "include": true,
+      "code": 70,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 7,
+      "letter": "ج",
+      "joins_forward": true,
+      "include": true,
+      "code": 71,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 8,
+      "letter": "چ",
+      "joins_forward": true,
+      "include": true,
+      "code": 72,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 9,
+      "letter": "ح",
+      "joins_forward": true,
+      "include": true,
+      "code": 73,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 10,
+      "letter": "خ",
+      "joins_forward": true,
+      "include": true,
+      "code": 74,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 11,
+      "letter": "د",
+      "joins_forward": false,
+      "include": true,
+      "code": 75,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 12,
+      "letter": "ذ",
+      "joins_forward": false,
+      "include": true,
+      "code": 76,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 13,
+      "letter": "ر",
+      "joins_forward": false,
+      "include": true,
+      "code": 77,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 14,
+      "letter": "ز",
+      "joins_forward": false,
+      "include": true,
+      "code": 78,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 15,
+      "letter": "ژ",
+      "joins_forward": false,
+      "include": true,
+      "code": 79,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 16,
+      "letter": "س",
+      "joins_forward": true,
+      "include": true,
+      "code": 80,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 17,
+      "letter": "ش",
+      "joins_forward": true,
+      "include": true,
+      "code": 81,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 18,
+      "letter": "ص",
+      "joins_forward": true,
+      "include": true,
+      "code": 82,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 19,
+      "letter": "ض",
+      "joins_forward": true,
+      "include": true,
+      "code": 83,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 20,
+      "letter": "ط",
+      "joins_forward": true,
+      "include": true,
+      "code": 84,
+      "flag_hex": "FF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "init": "iso",
+        "med": "iso",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 21,
+      "letter": "ظ",
+      "joins_forward": true,
+      "include": true,
+      "code": 85,
+      "flag_hex": "FF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "init": "iso",
+        "med": "iso",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 22,
+      "letter": "ع",
+      "joins_forward": true,
+      "include": true,
+      "code": 86,
+      "flag_hex": "8F",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": false,
+        "b4_no_final": false
+      },
+      "forms": [
+        "iso",
+        "init",
+        "med",
+        "fin"
+      ],
+      "form_fallbacks": {}
+    },
+    {
+      "rank": 23,
+      "letter": "غ",
+      "joins_forward": true,
+      "include": true,
+      "code": 87,
+      "flag_hex": "8F",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": false,
+        "b4_no_final": false
+      },
+      "forms": [
+        "iso",
+        "init",
+        "med",
+        "fin"
+      ],
+      "form_fallbacks": {}
+    },
+    {
+      "rank": 24,
+      "letter": "ف",
+      "joins_forward": true,
+      "include": true,
+      "code": 88,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 25,
+      "letter": "ق",
+      "joins_forward": true,
+      "include": true,
+      "code": 89,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 26,
+      "letter": "ک",
+      "joins_forward": true,
+      "include": true,
+      "code": 90,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 27,
+      "letter": "گ",
+      "joins_forward": true,
+      "include": true,
+      "code": 97,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 28,
+      "letter": "لا",
+      "joins_forward": false,
+      "include": true,
+      "code": 98,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 29,
+      "letter": "ل",
+      "joins_forward": true,
+      "include": true,
+      "code": 99,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 30,
+      "letter": "م",
+      "joins_forward": true,
+      "include": true,
+      "code": 100,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 31,
+      "letter": "ن",
+      "joins_forward": true,
+      "include": true,
+      "code": 101,
+      "flag_hex": "BF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init"
+      ],
+      "form_fallbacks": {
+        "med": "init",
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 32,
+      "letter": "و",
+      "joins_forward": false,
+      "include": true,
+      "code": 102,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 33,
+      "letter": "ؤ",
+      "joins_forward": false,
+      "include": true,
+      "code": 103,
+      "flag_hex": "7F",
+      "flag_bits": {
+        "b7_joins_forward": false,
+        "b6_no_initial": true,
+        "b5_no_medial": true,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 34,
+      "letter": "ه",
+      "joins_forward": true,
+      "include": true,
+      "code": 104,
+      "flag_hex": "9F",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": false,
+        "b4_no_final": true
+      },
+      "forms": [
+        "iso",
+        "init",
+        "med"
+      ],
+      "form_fallbacks": {
+        "fin": "iso"
+      }
+    },
+    {
+      "rank": 37,
+      "letter": "ی",
+      "joins_forward": true,
+      "include": true,
+      "code": 105,
+      "flag_hex": "AF",
+      "flag_bits": {
+        "b7_joins_forward": true,
+        "b6_no_initial": false,
+        "b5_no_medial": true,
+        "b4_no_final": false
+      },
+      "forms": [
+        "iso",
+        "init",
+        "fin"
+      ],
+      "form_fallbacks": {
+        "med": "init"
+      }
+    }
+  ]
+}
